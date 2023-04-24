@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+  @apply bg-darkDarkPurple;
+  /* @apply bg-gradient-to-r from-pink-900 via-blue-900 to-slate-900; */
+}
