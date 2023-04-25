@@ -11,6 +11,7 @@ export default {
         lightViolet: "#e57cd8",
         togglPeach: "#e87161",
         lightTogglPeach: "#fbe9e6",
+        togglBtnGray: "#95899a"
       },
     },
   },

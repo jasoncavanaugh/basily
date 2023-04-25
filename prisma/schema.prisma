@@ -14,31 +14,25 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Day {
-  id        String    @id @default(cuid())
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  expenses  Expense[]
-}
-
 model Expense {
-  id                  String          @id @default(cuid())
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-  day_id              String
-  expense_amount      Decimal
-  habit               Day             @relation(fields: [day_id], references: [id], onDelete: Cascade)
-  expense_category_id String
-  expense_category    ExpenseCategory @relation(fields: [expense_category_id], references: [id], onDelete: Cascade)
+  id          String          @id @default(cuid())
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  amount      Decimal
+  category_id String
+  category    ExpenseCategory @relation(fields: [category_id], references: [id], onDelete: Cascade)
 }
 
 model ExpenseCategory {
   id        String    @id @default(cuid())
+  user_id   String
+  user      User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  name      String
   expenses  Expense[]
   color     String
+
+  @@unique([user_id, name])
 }
 
 // Necessary for Next auth
@@ -69,13 +63,14 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
+  id                 String            @id @default(cuid())
+  name               String?
+  email              String?           @unique
+  emailVerified      DateTime?
+  image              String?
+  accounts           Account[]
+  sessions           Session[]
+  expense_categories ExpenseCategory[]
 }
 
 model VerificationToken {
