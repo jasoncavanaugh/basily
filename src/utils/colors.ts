@@ -16,10 +16,6 @@ export const COLOR_OPTIONS = [
   "amber-500",
   "orange-500",
   "red-500",
-  "stone-500",
-  "neutral-500",
-  "zinc-500",
-  "gray-500",
   "slate-500",
 ] as const;
 export type ColorOption = (typeof COLOR_OPTIONS)[number];

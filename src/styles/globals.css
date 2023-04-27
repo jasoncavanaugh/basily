@@ -30,6 +30,11 @@ body {
   }
 }
 
+.maureen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
 .modal-open-animation {
   animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
 }

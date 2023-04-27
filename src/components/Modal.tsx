@@ -4,10 +4,16 @@ interface ModalProps {
   open?: boolean;
   on_open_change?: () => void;
   className?: string;
-  children?: React.ReactNode
+  children?: React.ReactNode;
 }
 
-export const Modal: React.FunctionComponent<ModalProps> = ({ trigger, open, on_open_change, className = "", children }) => {
+export const Modal: React.FunctionComponent<ModalProps> = ({
+  trigger,
+  open,
+  on_open_change,
+  className = "",
+  children,
+}) => {
   return (
     <RadixModal.Root onOpenChange={on_open_change} open={open}>
       <RadixModal.Trigger asChild>{trigger}</RadixModal.Trigger>
@@ -21,6 +27,5 @@ export const Modal: React.FunctionComponent<ModalProps> = ({ trigger, open, on_o
       </RadixModal.Portal>
     </RadixModal.Root>
   );
-
 };
 export default Modal;
