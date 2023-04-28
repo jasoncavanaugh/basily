@@ -38,7 +38,7 @@ export const expenseRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      await ctx.prisma.expenseCategory.create({
+      return await ctx.prisma.expenseCategory.create({
         data: {
           name: input.name,
           color: input.color,
@@ -47,6 +47,15 @@ export const expenseRouter = createTRPCRouter({
       });
     }),
   delete_category: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .mutation(async ({ input, ctx }) => {}),
+    .input(z.object({ name: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      await ctx.prisma.expenseCategory.deleteMany({ //Not sure why this needs to be "deleteMany" and not just "delete"
+        where: {
+          AND: [
+            { name: input.name },
+            { user_id: ctx.session.user.id }
+          ]
+        }
+      });
+    }),
 });

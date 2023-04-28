@@ -153,16 +153,19 @@ function AddNewExpenseButtonAndModal({ expense_categories }: ExpenseListProps) {
   const [color, set_color] = useState<ColorOption>("pink-500");
 
   const api_utils = api.useContext();
-  const create_category = api.expense.create_category.useMutation({
-    onError: (err, data, ctx) => {
-      alert("error");
-    },
-  });
 
   const create_expense = api.expense.create.useMutation({
     onSuccess: () => {
       api_utils.expense.get_all_categories.invalidate();
       set_is_modal_open(false); //TODO: Have to figure out how to close the modal once the new data comes in
+    },
+    onError: (err, data, ctx) => {
+      alert("error");
+    },
+  });
+  const create_category_and_expense = api.expense.create_category.useMutation({
+    onSuccess: (data, variables, context) => {
+      // create_expense.mutate();
     },
     onError: (err, data, ctx) => {
       alert("error");
@@ -204,7 +207,7 @@ function AddNewExpenseButtonAndModal({ expense_categories }: ExpenseListProps) {
           <div className="h-4" />
           <label htmlFor="habit-name">Category</label>
           <div className="flex items-center gap-3">
-            <CategoryColorSelection on_select_color={(color) => set_color(color)} cur_color={color}/>
+            <CategoryColorSelection on_select_color={(color) => set_color(color)} cur_color={color} />
             <input
               name="habit-name"
               onChange={(e) => {
@@ -269,10 +272,10 @@ function AddNewExpenseButtonAndModal({ expense_categories }: ExpenseListProps) {
                 expense_categories.filter((exp) => exp.name === name).length > 0;
 
               if (!does_category_exist) {
-                // create_category.mutate({
-                //   name: name,
-                //   color
-                // });
+                create_category_and_expense.mutate({
+                  name: name,
+                  color: color
+                });
               }
             }}
           >
@@ -303,7 +306,7 @@ function CategoryColorSelection(props: { on_select_color: (color: ColorOption) =
               <div
                 key={option}
                 onClick={() => props.on_select_color(option)}
-                className={`bg-${option} h-4 w-4 rounded-full border-2 ${props.cur_color === option ? "border-slate-900 brightness-110" : "border-white hover:cursor-pointer hover:border-slate-900 hover:brightness-110" } md:h-6 md:w-6`}
+                className={`bg-${option} h-4 w-4 rounded-full border-2 ${props.cur_color === option ? "border-slate-900 brightness-110" : "border-white hover:cursor-pointer hover:border-slate-900 hover:brightness-110"} md:h-6 md:w-6`}
               />
             );
           })}
@@ -328,8 +331,8 @@ function ColorSelection(props: {
           <div
             key={option}
             className={`bg-${option} h-6 w-6 rounded-md border-2 ${props.selected_color === option
-                ? "border-slate-900 brightness-110"
-                : "border-white hover:cursor-pointer hover:border-slate-900 hover:brightness-110"
+              ? "border-slate-900 brightness-110"
+              : "border-white hover:cursor-pointer hover:border-slate-900 hover:brightness-110"
               } lg:h-8 lg:w-8`}
             onClick={() => props.on_select_color(option)}
           />
