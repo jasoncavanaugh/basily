@@ -18,7 +18,7 @@ model Expense {
   id          String          @id @default(cuid())
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
-  amount      Decimal
+  amount      Int
   category_id String
   category    ExpenseCategory @relation(fields: [category_id], references: [id], onDelete: Cascade)
 }
@@ -30,7 +30,7 @@ model ExpenseCategory {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   expenses  Expense[]
-  color     String
+  color     String    
   name      String
 
   @@unique([user_id, name])

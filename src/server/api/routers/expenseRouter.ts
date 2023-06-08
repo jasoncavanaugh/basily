@@ -1,7 +1,17 @@
-import { COLOR_OPTIONS } from "src/utils/colors";
+import { COLOR_OPTIONS, ColorOption } from "src/utils/colors";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
-
+import { Expense, ExpenseCategory } from "@prisma/client";
+//Types
+type ExpenseWithColorOption = Omit<ExpenseCategory, "color"> & { color: ColorOption };
+export type ExpenseCategoryWithExpenses = ExpenseWithColorOption & { expenses: Expense[]; };
+//Utils
+function convert_to_cents(amount: string) {
+  const [dollars_str, cents_str] = amount.split(".");
+  const dollars = parseInt(dollars_str!);
+  const cents = parseInt(cents_str!);
+  return dollars * 100 + cents;
+}
 export const expenseRouter = createTRPCRouter({
   get_all_categories: protectedProcedure.query(async ({ input, ctx }) => {
     return ctx.prisma.expenseCategory.findMany({
@@ -11,22 +21,27 @@ export const expenseRouter = createTRPCRouter({
       include: {
         expenses: true,
       },
-    });
+    }) as Promise<ExpenseCategoryWithExpenses[]>;
   }),
   create: protectedProcedure
-    .input(z.object({ category_id: z.string(), amount: z.number() }))
+    .input(
+      z.object({
+        category_id: z.string(),
+        amount: z.string().regex(/^\d*\.?\d*$/),
+      })
+    )
     .mutation(async ({ input, ctx }) => {
       await ctx.prisma.expense.create({
         data: {
-          amount: input.amount,
+          amount: convert_to_cents(input.amount),
           category_id: input.category_id,
         },
       });
     }),
-  delete: publicProcedure
+  delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      await ctx.prisma.expense.deleteMany({
+      await ctx.prisma.expense.delete({
         where: { id: input.id },
       });
     }),
@@ -49,13 +64,11 @@ export const expenseRouter = createTRPCRouter({
   delete_category: protectedProcedure
     .input(z.object({ name: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      await ctx.prisma.expenseCategory.deleteMany({ //Not sure why this needs to be "deleteMany" and not just "delete"
+      await ctx.prisma.expenseCategory.deleteMany({
+        //Not sure why this needs to be "deleteMany" and not just "delete"
         where: {
-          AND: [
-            { name: input.name },
-            { user_id: ctx.session.user.id }
-          ]
-        }
+          AND: [{ name: input.name }, { user_id: ctx.session.user.id }],
+        },
       });
     }),
 });
