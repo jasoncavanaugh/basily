@@ -1,18 +1,62 @@
-import { COLOR_OPTIONS, ColorOption } from "src/utils/colors";
+import { BASE_COLORS, BaseColor } from "src/utils/colors";
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { Expense, ExpenseCategory } from "@prisma/client";
+
 //Types
-type ExpenseWithColorOption = Omit<ExpenseCategory, "color"> & { color: ColorOption };
-export type ExpenseCategoryWithExpenses = ExpenseWithColorOption & { expenses: Expense[]; };
+
+//Use 'BaseColor' type instead of the 'string' type that comes back from Prisma
+type ExpenseWithBaseColor = Omit<ExpenseCategory, "color"> & {
+  color: BaseColor;
+};
+export type ExpenseCategoryWithExpenses = ExpenseWithBaseColor & {
+  expenses: Expense[];
+};
+
 //Utils
 function convert_to_cents(amount: string) {
-  const [dollars_str, cents_str] = amount.split(".");
-  const dollars = parseInt(dollars_str!);
-  const cents = parseInt(cents_str!);
-  return dollars * 100 + cents;
+  const split_amount = amount.split(".");
+  if (split_amount.length > 2 || split_amount.length < 1) {
+    console.error("split_amount.length > 2 || split_amount.length < 1");
+    throw new Error(
+      "'amount' was formatted incorrectly in 'convert_to_cents' function"
+    );
+  }
+  const dollars = parseInt(split_amount[0]!);
+  let amount_in_cents = dollars * 100;
+  if (split_amount.length === 2) {
+    const cents = parseInt(split_amount[1]!);
+    amount_in_cents += cents;
+  }
+  return amount_in_cents;
 }
-export const expenseRouter = createTRPCRouter({
+
+const DateZodSchema = z.object({
+  month: z.number().gte(1).lte(12),
+  day: z.number().gte(1).lte(31),
+  year: z.number().gte(1),
+});
+
+export const router = createTRPCRouter({
+  get_expenses: protectedProcedure
+    .input(
+      z.object({
+        from_date: DateZodSchema,
+        to_date: DateZodSchema,
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      ctx.prisma.expense.findMany({
+        where: {
+          AND: [{
+            createdAt: {
+              lte: "2022-01-30",
+              gte: "2022-01-15",
+            },
+          }, { user_id: ctx.session.user.id }],
+        }
+      })
+    }),
   get_all_categories: protectedProcedure.query(async ({ input, ctx }) => {
     return ctx.prisma.expenseCategory.findMany({
       where: {
@@ -27,7 +71,7 @@ export const expenseRouter = createTRPCRouter({
     .input(
       z.object({
         category_id: z.string(),
-        amount: z.string().regex(/^\d*\.?\d*$/),
+        amount: z.string().regex(/^\d*(\.\d\d)?$/),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -35,6 +79,7 @@ export const expenseRouter = createTRPCRouter({
         data: {
           amount: convert_to_cents(input.amount),
           category_id: input.category_id,
+          user_id: ctx.session.user.id
         },
       });
     }),
@@ -49,7 +94,7 @@ export const expenseRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string(),
-        color: z.enum(COLOR_OPTIONS),
+        color: z.enum(BASE_COLORS),
       })
     )
     .mutation(async ({ input, ctx }) => {

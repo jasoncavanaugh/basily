@@ -16,6 +16,8 @@ datasource db {
 
 model Expense {
   id          String          @id @default(cuid())
+  user_id     String
+  user        User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   amount      Int
@@ -72,6 +74,7 @@ model User {
   accounts           Account[]
   sessions           Session[]
   expense_categories ExpenseCategory[]
+  expenses Expense[]
 }
 
 model VerificationToken {

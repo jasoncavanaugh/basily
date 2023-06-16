@@ -1,4 +1,4 @@
-import { expenseRouter } from "./routers/expenseRouter";
+import { router } from "./routers/router";
 import { createTRPCRouter } from "./trpc";
 
 /**
@@ -7,7 +7,7 @@ import { createTRPCRouter } from "./trpc";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  expense: expenseRouter,
+  router: router,
 });
 
 // export type definition of API
