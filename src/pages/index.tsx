@@ -12,26 +12,98 @@ import { api } from "src/utils/api";
 import Modal from "src/components/Modal";
 import { BASE_COLORS, BaseColor, construct_color } from "src/utils/colors";
 import { ExpenseCategoryWithExpenses } from "src/server/api/routers/router";
+import Spinner from "src/components/Spinner";
 
 const Home: NextPage = () => {
   const session = useSession();
-  const expense_categories = api.router.get_all_categories.useQuery();
+  const expense_categories_query = api.router.get_categories.useQuery();
+  const today_date = new Date();
+  const day = today_date.getDate();
+  const month = today_date.getMonth() + 1;
+  const year = today_date.getFullYear();
+  console.log("YEAR",year)
+  const expenses_query = api.router.get_expenses.useQuery({
+    from_date: {
+      day: day - 14,
+      month: month,
+      year: year,
+    },
+    to_date: {
+      day: day + 1,
+      month: month,
+      year: year
+    }
+  });
 
-  return (
-    <div className="p-1 md:p-4">
-      <div className="flex flex-col-reverse items-end justify-end gap-2 px-1 pt-2 md:flex-row md:pt-0">
+  console.log("expense_query.data", expenses_query.data);
+
+  if (session.status === "loading") {
+    return (
+      <div className="flex h-[95vh] items-center justify-center p-1 md:p-4">
+        <Spinner className="h-16 w-16 border-4 border-solid border-white lg:border-8" />
+      </div>
+    );
+  }
+
+  if (session.status === "unauthenticated") {
+    return (
+      <div className="flex h-[95vh] items-center justify-center p-1 md:p-4">
         <button
-          className="rounded-full bg-togglPeach px-3 py-1 text-sm font-semibold text-white shadow-sm shadow-red-300 hover:brightness-110 md:px-5 md:text-lg"
-          onClick={() => void signOut()}
+          className="bg-togglPeach rounded-full px-6 py-2 text-3xl font-semibold text-white shadow-sm shadow-red-300 hover:brightness-110"
+          onClick={() => void signIn()}
         >
-          Log Out
+          Sign In
         </button>
       </div>
-      <div className="h-2 md:h-4" />
-      <ChronologicalExpenseList expense_categories={expense_categories} />
-      <AddNewExpenseButtonAndModal expense_categories={expense_categories} />
-    </div>
-  );
+    );
+  }
+  //console.log(expense_categories_query.status, expense_categories_query.data);
+  
+ return (
+   <div className="p-1 md:p-4">
+     <div className="flex flex-col-reverse items-end justify-end gap-2 px-1 pt-2 md:flex-row md:pt-0">
+       <button
+         className="rounded-full bg-togglPeach px-3 py-1 text-sm font-semibold text-white shadow-sm shadow-red-300 hover:brightness-110 md:px-5 md:text-lg"
+         onClick={() => void signOut()}
+       >
+         Log Out
+       </button>
+     </div>
+     <div className="h-2 md:h-4" />
+
+     <ul className="flex flex-col gap-4">
+       {expense_categories_query.status === "loading" && (
+         <div className="flex h-[95vh] items-center justify-center">
+           <Spinner className="h-16 w-16 border-4 border-solid border-white lg:border-8" />
+         </div>
+       )}
+       {expense_categories_query.status === "error" && (
+         <div className="flex h-[95vh] items-center justify-center">
+           <h1 className="text-white">
+             Uh oh, there was a problem loading your expenses.
+           </h1>
+         </div>
+       )}
+       {expense_categories_query.status === "success" &&
+         expense_categories_query.data.length === 0 && (
+           <div className="flex h-[95vh] items-center justify-center">
+             <h1 className="text-white">
+               Click the '+' button to add a new expense.
+             </h1>
+           </div>
+         )}
+       {expense_categories_query.status === "success" &&
+         expense_categories_query.data.length > 0 && (
+           <ChronologicalExpenseList expense_categories={expense_categories_query.data} />
+         )}
+     </ul>
+     {expense_categories_query.status === "success" && (
+       <AddNewExpenseButtonAndModal
+         expense_categories={expense_categories_query.data}
+       />
+     )}
+   </div>
+ );
 };
 
 export default Home;
@@ -56,9 +128,8 @@ function process_expense_data(
     const category = expense_categories[i]!;
     for (let j = 0; j < category.expenses.length; j++) {
       const exp = category.expenses[j]!;
-      const exp_creation_date = `${exp.createdAt.getFullYear()}/${
-        exp.createdAt.getMonth() + 1
-      }/${exp.createdAt.getDate()}`;
+      const exp_creation_date = `${exp.createdAt.getFullYear()}/${exp.createdAt.getMonth() + 1
+        }/${exp.createdAt.getDate()}`;
       if (!date_to_expense.has(exp_creation_date)) {
         date_to_expense.set(exp_creation_date, []);
         dates.push(exp_creation_date);
@@ -80,7 +151,7 @@ function ChronologicalExpenseList({ expense_categories }: Props) {
       [expense_categories]
     );
   const output = [];
-  console.log(sorted_dates, date_to_expense, category_id_to_category_name);
+  console.log("sorted_dates", sorted_dates, "date_to_expense", date_to_expense, "category_id_to_category_name", category_id_to_category_name);
   let c = 0;
   for (const d of sorted_dates) {
     c++;
@@ -100,9 +171,9 @@ function ChronologicalExpenseList({ expense_categories }: Props) {
     );
   }
   return (
-    <ul className="flex flex-col gap-4 rounded bg-darkDarkPurple text-white">
+    <>
       {output}
-    </ul>
+    </>
   );
 }
 
@@ -207,10 +278,10 @@ function AddNewExpenseButtonAndModal({ expense_categories }: Props) {
 
   const api_utils = api.useContext();
 
-  const create_expense = api.router.create.useMutation({
+  const create_expense = api.router.create_expense.useMutation({
     onSuccess: () => {
       set_is_modal_open(false);
-      return api_utils.router.get_all_categories.invalidate();
+      return api_utils.router.get_categories.invalidate();
     },
     onError: (err, data, ctx) => {
       console.log(err, data);
@@ -381,11 +452,10 @@ function AddNewExpenseButtonAndModal({ expense_categories }: Props) {
             Cancel
           </button>
           <button
-            className={`rounded-full border bg-togglPeach px-3 py-2 text-xs font-semibold text-white lg:px-5 lg:py-3 lg:text-base lg:font-bold ${
-              is_create_expense_button_disabled
-                ? "opacity-50"
-                : "hover:cursor-pointer hover:brightness-110"
-            }`}
+            className={`rounded-full border bg-togglPeach px-3 py-2 text-xs font-semibold text-white lg:px-5 lg:py-3 lg:text-base lg:font-bold ${is_create_expense_button_disabled
+              ? "opacity-50"
+              : "hover:cursor-pointer hover:brightness-110"
+              }`}
             type="submit"
             disabled={is_create_expense_button_disabled}
           >
@@ -422,15 +492,13 @@ function CategoryColorSelection({
     >
       <RadixPopover.Trigger asChild>
         <button
-          className={`h-4 w-4 shrink-0 rounded-full md:h-6 md:w-6 ${
-            cur_color !== ""
-              ? construct_color("bg", cur_color, 500)
-              : construct_color("bg", "pink", 500)
-          } ${
-            disabled
+          className={`h-4 w-4 shrink-0 rounded-full md:h-6 md:w-6 ${cur_color !== ""
+            ? construct_color("bg", cur_color, 500)
+            : construct_color("bg", "pink", 500)
+            } ${disabled
               ? "hover:cursor-not-allowed"
               : "hover:cursor-pointer hover:brightness-110"
-          }`}
+            }`}
         ></button>
       </RadixPopover.Trigger>
       <RadixPopover.Portal>
@@ -448,11 +516,10 @@ function CategoryColorSelection({
                   "bg",
                   option,
                   500
-                )} h-4 w-4 rounded-full border-2 ${
-                  cur_color === option
-                    ? "border-slate-900 brightness-110"
-                    : "border-white hover:cursor-pointer hover:border-slate-900 hover:brightness-110"
-                } md:h-6 md:w-6`}
+                )} h-4 w-4 rounded-full border-2 ${cur_color === option
+                  ? "border-slate-900 brightness-110"
+                  : "border-white hover:cursor-pointer hover:border-slate-900 hover:brightness-110"
+                  } md:h-6 md:w-6`}
               />
             );
           })}
