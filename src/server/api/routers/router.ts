@@ -47,35 +47,54 @@ export const router = createTRPCRouter({
     )
     .query(async ({ input, ctx }) => {
       const { from_date, to_date } = input;
-      const s = await ctx.prisma.expense.findMany({ where: { user_id: ctx.session.user.id } });
+      const s = await ctx.prisma.expense.findMany({
+        where: { user_id: ctx.session.user.id },
+      });
       console.log("USER_ID", ctx.session.user.id);
       console.log("JASON", s);
 
-    const from = new Date(`${from_date.year}-${from_date.month}-${from_date.day}`);
-    const to = new Date(`${to_date.year}-${to_date.month}-${to_date.day}`);
-    console.log("FROM", from);
-    console.log("TO", to);
+      const from = new Date(
+        `${from_date.year}-${from_date.month}-${from_date.day}`
+      );
+      const to = new Date(`${to_date.year}-${to_date.month}-${to_date.day}`);
+      console.log("FROM", from);
+      console.log("TO", to);
       return ctx.prisma.expense.findMany({
         where: {
-          AND: [{
-            createdAt: {
-              lte: to,
-              gte: from
+          AND: [
+            {
+              createdAt: {
+                lte: to,
+                gte: from,
+              },
             },
-          }, { user_id: ctx.session.user.id }],
-        }
-      })
+            { user_id: ctx.session.user.id },
+          ],
+        },
+        orderBy: [{ createdAt: "desc" }]
+      });
     }),
-  get_categories: protectedProcedure.query(async ({ input, ctx }) => {
-    return ctx.prisma.expenseCategory.findMany({
-      where: {
-        user_id: ctx.session.user.id,
-      },
-      include: {
-        expenses: true,
-      },
-    }) as Promise<ExpenseCategoryWithExpenses[]>;
-  }),
+  get_categories_without_expenses: protectedProcedure.query(
+    async ({ input, ctx }) => {
+      return ctx.prisma.expenseCategory.findMany({
+        where: {
+          user_id: ctx.session.user.id,
+        },
+      }) as Promise<ExpenseCategoryWithExpenses[]>;
+    }
+  ),
+  get_categories_with_expenses: protectedProcedure.query(
+    async ({ input, ctx }) => {
+      return ctx.prisma.expenseCategory.findMany({
+        where: {
+          user_id: ctx.session.user.id,
+        },
+        include: {
+          expenses: true,
+        },
+      }) as Promise<ExpenseCategoryWithExpenses[]>;
+    }
+  ),
   create_expense: protectedProcedure
     .input(
       z.object({
@@ -88,7 +107,7 @@ export const router = createTRPCRouter({
         data: {
           amount: convert_to_cents(input.amount),
           category_id: input.category_id,
-          user_id: ctx.session.user.id
+          user_id: ctx.session.user.id,
         },
       });
     }),

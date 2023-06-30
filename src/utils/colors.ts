@@ -54,7 +54,11 @@ export function construct_color(
   base_color: BaseColor,
   color_value: ColorValue
 ) {
-  return `${base_color_prefix}-${base_color}-${color_value}`;
+  const color_classname = `${base_color_prefix}-${base_color}-${color_value}`;
+  if (!tailwind_colors_set.has(color_classname)) {
+    return "INVALID_COLOR_CLASSNAME";
+  }
+  return color_classname;
 }
 // //Tailwind purge
 // export const COLOR_TO_CLASSNAME = {
@@ -547,3 +551,4 @@ const tailwind_colors = [
   "border-slate-900",
   "border-slate-950",
 ];
+const tailwind_colors_set = new Set(tailwind_colors);
