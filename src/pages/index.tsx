@@ -274,7 +274,7 @@ function AddNewExpenseButtonAndModal({
         set_is_category_color_selection_disabled(false);
         set_color("pink");
       }}
-      className="left-1/2 top-1/3 flex w-[30rem] -translate-x-1/2 -translate-y-1/2 flex-col border-t-8 border-t-togglPeach px-5 py-3 lg:top-1/2 lg:top-1/2 lg:px-8 lg:py-6"
+      className="left-1/2 top-1/3 flex w-[30rem] -translate-x-1/2 -translate-y-1/2 flex-col border-t-8 border-t-togglPeach px-5 py-3 lg:top-1/2 lg:px-8 lg:py-6"
       trigger={
         <button
           type="button"
@@ -340,7 +340,7 @@ function AddNewExpenseButtonAndModal({
               ></input>
               <div className="relative m-0 h-0 p-0">
                 {category_text.length > 0 && is_dropdown_open && (
-                  <ul className="absolute z-20 flex max-h-[200px] w-full flex-col gap-2 overflow-y-scroll rounded border border bg-white p-3">
+                  <ul className="absolute z-20 flex max-h-[200px] w-full flex-col gap-2 overflow-y-scroll rounded border bg-white p-3">
                     {expense_categories
                       .filter(
                         (cat) =>
