@@ -1,28 +1,23 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "sqlite"
-  // NOTE: When using postgresql, mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-  // Further reading:
-  // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-  // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
   url      = env("DATABASE_URL")
 }
 
 model Expense {
   id          String          @id @default(cuid())
-  user_id     String
-  user        User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   amount      Int
+  user_id     String
+  user        User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
   category_id String
   category    ExpenseCategory @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  day_id      String
+  day         Day             @relation(fields: [day_id], references: [id], onDelete: Cascade)
 }
 
 model ExpenseCategory {
@@ -32,10 +27,23 @@ model ExpenseCategory {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   expenses  Expense[]
-  color     String    
+  color     String
   name      String
 
   @@unique([user_id, name])
+}
+
+model Day {
+  id       String    @id @default(cuid())
+  user_id  String
+  user     User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  createdAt   DateTime        @default(now())
+  month    Int
+  day      Int
+  year     Int
+  expenses Expense[]
+
+  @@unique([user_id, month, day, year])
 }
 
 // Necessary for Next auth
@@ -75,6 +83,7 @@ model User {
   sessions           Session[]
   expense_categories ExpenseCategory[]
   expenses           Expense[]
+  days               Day[]
 }
 
 model VerificationToken {

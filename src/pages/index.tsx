@@ -1,6 +1,6 @@
 import { type NextPage } from "next";
 import * as RadixModal from "@radix-ui/react-dialog";
-import { Expense } from "@prisma/client";
+import { Day, Expense } from "@prisma/client";
 //import Head from "next/head";
 //import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
@@ -10,39 +10,19 @@ import { useMemo, useState } from "react";
 import { api } from "src/utils/api";
 //import Spinner from "src/components/Spinner";
 import Modal from "src/components/Modal";
-import { BASE_COLORS, BaseColor, construct_color } from "src/utils/colors";
+import { BASE_COLORS, BaseColor } from "src/utils/colors";
 import { ExpenseCategoryWithExpenses } from "src/server/api/routers/router";
 import Spinner from "src/components/Spinner";
-import { use_expenses } from "src/utils/useExpenses";
+import { ExpenseDataByDay, use_expenses } from "src/utils/useExpenses";
+import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
+import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
 
 const Home: NextPage = () => {
   const session = useSession();
-  const processed_expenses = use_expenses();
-  console.log("PROCESSED", processed_expenses);
+  const expense_data_query = use_expenses();
+  console.log("PROCESSED", expense_data_query);
   const expense_categories_with_expenses_query =
     api.router.get_categories_with_expenses.useQuery();
-  const expense_categories_query =
-    api.router.get_categories_without_expenses.useQuery();
-
-  const today_date = new Date();
-  const day = today_date.getDate();
-  const month = today_date.getMonth() + 1;
-  const year = today_date.getFullYear();
-  console.log("YEAR", year);
-  const expenses_query = api.router.get_expenses.useQuery({
-    from_date: {
-      day: day - 14,
-      month: month,
-      year: year,
-    },
-    to_date: {
-      day: day + 1,
-      month: month,
-      year: year,
-    },
-  });
-
-  console.log("expense_query.data", expenses_query.data);
 
   if (session.status === "loading") {
     return (
@@ -79,35 +59,36 @@ const Home: NextPage = () => {
       <div className="h-2 md:h-4" />
 
       <ul className="flex flex-col gap-4">
-        {expense_categories_with_expenses_query.status === "loading" && (
+        {expense_data_query.status === "loading" && (
           <div className="flex h-[95vh] items-center justify-center">
             <Spinner className="h-16 w-16 border-4 border-solid border-white lg:border-8" />
           </div>
         )}
-        {expense_categories_with_expenses_query.status === "error" && (
+        {expense_data_query.status === "error" && (
           <div className="flex h-[95vh] items-center justify-center">
             <h1 className="text-white">
               Uh oh, there was a problem loading your expenses.
             </h1>
           </div>
         )}
-        {expense_categories_with_expenses_query.status === "success" &&
-          expense_categories_with_expenses_query.data.length === 0 && (
+        {expense_data_query.status === "success" &&
+          expense_data_query.data.expenses.length === 0 && (
             <div className="flex h-[95vh] items-center justify-center">
               <h1 className="text-white">
                 Click the '+' button to add a new expense.
               </h1>
             </div>
           )}
-        {expense_categories_with_expenses_query.status === "success" &&
-          expense_categories_with_expenses_query.data.length > 0 && (
+        {expense_data_query.status === "success" &&
+          expense_data_query.data.expenses.length > 0 && (
             <ChronologicalExpenseList
-              expense_categories={expense_categories_with_expenses_query.data}
+              expenses_by_day={expense_data_query.data.expenses}
+              category_id_to_color={
+                expense_data_query.data.category_id_to_color
+              }
+              category_id_to_name={expense_data_query.data.category_id_to_name}
             />
           )}
-        {expenses_query.status === "success" && (
-          <Jason expenses={expenses_query.data} />
-        )}
       </ul>
       {expense_categories_with_expenses_query.status === "success" && (
         <AddNewExpenseButtonAndModal
@@ -120,135 +101,35 @@ const Home: NextPage = () => {
 
 export default Home;
 
-function Jason({ expenses }: { expenses: Expense[] }) {
-  //Sort the expenses by date
-  expenses.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-
-  //Within each date, group expenses into the same category
-  // { date: { expense_category: expense[] }}
-  const jason = new Map<string, Map<string, Expense[]>>();
-  let dates: string[] = [];
-  for (const ex of expenses) {
-    const date_key = `${ex.createdAt.getFullYear()}-${
-      ex.createdAt.getMonth() + 1
-    }-${ex.createdAt.getDate()}`;
-    if (dates.length === 0 || dates[dates.length - 1] !== date_key) {
-      dates.push(date_key);
-    }
-    if (!jason.has(date_key)) {
-      jason.set(date_key, new Map<string, Expense[]>());
-    }
-    if (!jason.get(date_key)!.has(ex.category_id)) {
-      jason.get(date_key)!.set(ex.category_id, []);
-    }
-    jason.get(date_key)!.get(ex.category_id)!.push(ex);
-  }
-
-  //Render
-  //
-  return (
-    <div className="bg-white">
-      {dates.map((d) => {
-        return (
-          <div>
-            <h1>{d}</h1>
-            <Maureen category_to_expense={jason.get(d)!} />
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function Maureen({
-  category_to_expense,
+function ChronologicalExpenseList({
+  expenses_by_day,
+  category_id_to_name,
+  category_id_to_color,
 }: {
-  category_to_expense: Map<string, Expense[]>;
+  expenses_by_day: ExpenseDataByDay[];
+  category_id_to_color: Map<string, BaseColor>;
+  category_id_to_name: Map<string, string>;
 }) {
   let output = [];
-  for (const cat_id of category_to_expense.keys()) {
+  for (const dwe of expenses_by_day) {
     output.push(
-      <li>
-        <h2>{cat_id}</h2>
-        <ul>
-          {category_to_expense.get(cat_id)!.map((ex) => (
-            <li>
-              {Math.floor(ex.amount / 100)}.{ex.amount % 100}
-            </li>
-          ))}
-        </ul>
-      </li>
-    );
-  }
-  return <>{output}</>;
-}
-
-//Utils
-function process_expense_data(
-  expense_categories: ExpenseCategoryWithExpenses[]
-) {
-  const category_id_to_category_name = new Map<string, string>();
-  for (const category of expense_categories) {
-    category_id_to_category_name.set(category.id, category.name);
-  }
-
-  // for (let i = 0; i < expense_categories.length; i++) {
-  //   const category = expense_categories[i]!;
-  //   category_id_to_category_name.set(category.id, category.name);
-  // }
-
-  const date_to_expense = new Map<string, Expense[]>();
-  const dates = [];
-  for (let i = 0; i < expense_categories.length; i++) {
-    const category = expense_categories[i]!;
-    for (let j = 0; j < category.expenses.length; j++) {
-      const exp = category.expenses[j]!;
-      const exp_creation_date = `${exp.createdAt.getFullYear()}/${
-        exp.createdAt.getMonth() + 1
-      }/${exp.createdAt.getDate()}`;
-      if (!date_to_expense.has(exp_creation_date)) {
-        date_to_expense.set(exp_creation_date, []);
-        dates.push(exp_creation_date);
-      }
-      date_to_expense.get(exp_creation_date)!.push(exp);
-    }
-  }
-  dates.sort((a, b) => (new Date(a) < new Date(b) ? -1 : 1)).reverse();
-  return { sorted_dates: dates, date_to_expense, category_id_to_category_name };
-}
-
-interface Props {
-  expense_categories: ExpenseCategoryWithExpenses[];
-}
-function ChronologicalExpenseList({ expense_categories }: Props) {
-  const { sorted_dates, date_to_expense, category_id_to_category_name } =
-    useMemo(
-      () => process_expense_data(expense_categories),
-      [expense_categories]
-    );
-  const output = [];
-  console.log(
-    "sorted_dates",
-    sorted_dates,
-    "date_to_expense",
-    date_to_expense,
-    "category_id_to_category_name",
-    category_id_to_category_name
-  );
-  let c = 0;
-  for (const d of sorted_dates) {
-    c++;
-    output.push(
-      <li key={c} className="p-4">
-        <h1 className="inline rounded-lg bg-togglPeach p-2 font-bold">
-          {d.replaceAll("/", "-")}
+      <li key={dwe.id} className="p-4">
+        <h1 className="inline rounded-lg bg-togglPeach p-2 font-bold text-white">
+          {dwe.date_display}
         </h1>
         <div className="h-4" />
-        <ul className="flex flex-col gap-6 rounded-lg border p-4">
+        <ul className="flex flex-col gap-3 rounded-lg border p-4">
           <ExpenseListForDay
-            expenses={date_to_expense.get(d)!}
-            category_id_to_category_name={category_id_to_category_name}
+            category_id_to_expenses_for_day={dwe.category_id_to_expenses}
+            category_id_to_color={category_id_to_color}
+            category_id_to_name={category_id_to_name}
           />
+          <li className="flex justify-between">
+            <p className="font-semibold text-togglPeach">Total: </p>
+            <p className="font-semibold text-togglPeach">
+              {cents_to_dollars_display(dwe.total_for_day)}
+            </p>
+          </li>
         </ul>
       </li>
     );
@@ -256,69 +137,40 @@ function ChronologicalExpenseList({ expense_categories }: Props) {
   return <>{output}</>;
 }
 
-// {date_to_expense.get(d)!.map((exp) => {
-//   return (
-//     <li key={exp.id} className="border bg-purple-300 p-2 flex gap-4 items-center">
-//       <p className="border bg-pink-500 p-2 rounded-lg font-semibold">{category_id_to_category_name.get(exp.category_id)}</p>
-//       <p className="bg-purple-800 px-2 py-1 rounded-full">{`$${Math.floor(exp.amount / 100)}.${exp.amount % 100}`}</p>
-//     </li>
-//   );
-// })}
-
-/*
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
-  amount: number;
-  category_id: string;
-*/
 function ExpenseListForDay({
-  expenses,
-  category_id_to_category_name,
+  category_id_to_expenses_for_day,
+  category_id_to_color,
+  category_id_to_name,
 }: {
-  expenses: Expense[];
-  category_id_to_category_name: Map<string, string>;
+  category_id_to_expenses_for_day: Map<string, Expense[]>;
+  category_id_to_color: Map<string, BaseColor>;
+  category_id_to_name: Map<string, string>;
 }) {
-  const name_to_list_of_expenses = ((
-    _expenses: Expense[],
-    _category_id_to_category_name: Map<string, string>
-  ) => {
-    const out = new Map<string, number[]>();
-    for (const e of _expenses) {
-      const name = _category_id_to_category_name.get(e.category_id)!;
-      if (!out.has(name)) {
-        out.set(name, []);
-      }
-      out.get(name)!.push(e.amount);
-    }
-    return out;
-  })(expenses, category_id_to_category_name);
-
-  console.log("name_to_cost", name_to_list_of_expenses);
-  const keys = name_to_list_of_expenses.keys();
-  console.log("keys", keys);
   let output = [];
-  // <h2 className="bg-lightTogglPeach text-togglPeach px-2 py-1 rounded-lg font-bold">
-  for (const k of keys) {
-    const expense_list = name_to_list_of_expenses.get(k)!;
-    const sum_of_expenses = expense_list.reduce((acc, e) => e + acc, 0);
+  for (const category_id of category_id_to_expenses_for_day.keys()) {
+    const expense_list = category_id_to_expenses_for_day.get(category_id)!;
+    const sum_of_expenses = expense_list.reduce((acc, e) => e.amount + acc, 0);
+    const category_color = category_id_to_color.get(category_id)!;
     output.push(
-      <li key={k} className="">
+      <li key={category_id}>
         <div className="flex justify-between">
           <h2
-            className={`rounded-lg bg-amber-200 px-2 py-1 font-bold text-amber-700`}
+            className={`rounded-lg ${TW_COLORS_MP["bg"][category_color][200]} px-2 py-1 font-bold ${TW_COLORS_MP["text"][category_color][700]}`}
           >
-            {k}
+            {category_id_to_name.get(category_id)}
           </h2>
-          <p className="font-semibold text-togglPeach">
-            ${Math.floor(sum_of_expenses / 100)}.{sum_of_expenses % 100}
+          <p className={`font-semibold text-togglPeach`}>
+            {cents_to_dollars_display(sum_of_expenses)}
           </p>
         </div>
         <ul className="flex gap-1 py-2">
           {expense_list.map((expense, i) => {
             return (
-              <li key={i} className="rounded-full bg-pink-700 px-2">
-                ${Math.floor(expense / 100)}.{expense % 100}
+              <li
+                key={i}
+                className={`rounded-full ${TW_COLORS_MP["bg"][category_color][500]} px-2 text-white`}
+              >
+                {cents_to_dollars_display(expense.amount)}
               </li>
             );
           })}
@@ -326,16 +178,8 @@ function ExpenseListForDay({
       </li>
     );
   }
-  console.log(output);
   return <>{output}</>;
 }
-// lightBeige: "#fef9f7",
-// darkDarkPurple: "#220a2e",
-// darkPurple: "#2c1338",
-// lightViolet: "#e57cd8",
-// togglPeach: "#e87161",
-// lightTogglPeach: "#fbe9e6",
-// togglBtnGray: "#95899a",
 
 function is_valid_amount(amount: string) {
   const amount_regex = new RegExp(/^\d*(\.\d\d)?$/);
@@ -344,7 +188,11 @@ function is_valid_amount(amount: string) {
   return amount_regex.test(amount) && !is_zero_amount;
 }
 
-function AddNewExpenseButtonAndModal({ expense_categories }: Props) {
+function AddNewExpenseButtonAndModal({
+  expense_categories,
+}: {
+  expense_categories: ExpenseCategoryWithExpenses[];
+}) {
   const [amount, set_amount] = useState("");
   const [is_modal_open, set_is_modal_open] = useState(false);
   const [category_text, set_category_text] = useState("");
@@ -354,6 +202,12 @@ function AddNewExpenseButtonAndModal({ expense_categories }: Props) {
     is_category_color_selection_disabled,
     set_is_category_color_selection_disabled,
   ] = useState(false);
+
+  const [today] = useState({
+    day: new Date().getDate(),
+    month: new Date().getMonth(),
+    year: new Date().getFullYear(),
+  });
 
   const api_utils = api.useContext();
 
@@ -369,7 +223,11 @@ function AddNewExpenseButtonAndModal({ expense_categories }: Props) {
   });
   const create_category_and_expense = api.router.create_category.useMutation({
     onSuccess: (data, variables, context) => {
-      create_expense.mutate({ category_id: data.id, amount: amount });
+      create_expense.mutate({
+        category_id: data.id,
+        amount: amount,
+        date: { day: today.day, month_idx: today.month, year: today.year },
+      });
     },
     onError: (err, data, ctx) => {
       alert("error in create_caegory_and_expense");
@@ -388,7 +246,11 @@ function AddNewExpenseButtonAndModal({ expense_categories }: Props) {
       const id = expense_categories.find((c) => c.name === category_text)?.id;
       console.log("id", id, "amount", amount);
       if (!id) throw new Error("id undefined");
-      create_expense.mutate({ category_id: id, amount: amount });
+      create_expense.mutate({
+        category_id: id,
+        amount: amount,
+        date: { day: today.day, month_idx: today.month, year: today.year },
+      });
     }
   }
 
@@ -498,7 +360,9 @@ function AddNewExpenseButtonAndModal({ expense_categories }: Props) {
                             }}
                           >
                             <div
-                              className={`bg-${exp.color} h-4 w-4 rounded-full`}
+                              className={`${
+                                TW_COLORS_MP["bg"][exp.color][500]
+                              } h-4 w-4 rounded-full`}
                             />
                             <p className="">{exp.name}</p>
                           </li>
@@ -574,8 +438,8 @@ function CategoryColorSelection({
         <button
           className={`h-4 w-4 shrink-0 rounded-full md:h-6 md:w-6 ${
             cur_color !== ""
-              ? construct_color("bg", cur_color, 500)
-              : construct_color("bg", "pink", 500)
+              ? TW_COLORS_MP["bg"][cur_color][500]
+              : TW_COLORS_MP["bg"]["pink"][500]
           } ${
             disabled
               ? "hover:cursor-not-allowed"
@@ -594,11 +458,9 @@ function CategoryColorSelection({
               <div
                 key={option}
                 onClick={() => on_select_color(option)}
-                className={`${construct_color(
-                  "bg",
-                  option,
-                  500
-                )} h-4 w-4 rounded-full border-2 ${
+                className={`${
+                  TW_COLORS_MP["bg"][option][500]
+                } h-4 w-4 rounded-full border-2 ${
                   cur_color === option
                     ? "border-slate-900 brightness-110"
                     : "border-white hover:cursor-pointer hover:border-slate-900 hover:brightness-110"

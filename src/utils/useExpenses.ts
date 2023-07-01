@@ -2,40 +2,36 @@ import { Expense } from "@prisma/client";
 import { api } from "./api";
 import { BaseColor } from "./colors";
 
+export type ExpenseDataByDay = {
+  id: string;
+  total_for_day: number;
+  date_display: string;
+  category_id_to_expenses: Map<string, Expense[]>;
+};
 export function use_expenses() {
-  const today_date = new Date();
-  const day = today_date.getDate();
-  const month = today_date.getMonth() + 1;
-  const year = today_date.getFullYear();
+  const expense_categories_query = api.router.get_categories.useQuery();
 
-  const expense_categories_query =
-    api.router.get_categories_without_expenses.useQuery();
+  const expenses_by_days_query =
+    api.router.get_expenses_paginated_by_days.useQuery({ page: 0 });
 
-  console.log("YEAR", year);
-  const expenses_query = api.router.get_expenses.useQuery({
-    from_date: {
-      day: day - 14,
-      month: month,
-      year: year,
-    },
-    to_date: {
-      day: day + 1,
-      month: month,
-      year: year,
-    },
-  });
-  
-  const date_to_category_to_expenses = new Map<string, Map<string, Expense[]>>();
-  if (expenses_query.status === "loading" || expense_categories_query.status === "loading") {
-    return { status: "loading", error: undefined, data: undefined };
+  if (
+    expense_categories_query.status === "loading" ||
+    expenses_by_days_query.status === "loading"
+  ) {
+    return { status: "loading", error: undefined, data: undefined } as const;
   }
-  if (expenses_query.status === "error") {
-    return { status: "error", error: expenses_query.error, data: undefined };
+  if (
+    expense_categories_query.status === "error" ||
+    expenses_by_days_query.status === "error"
+  ) {
+    return {
+      status: "error",
+      error: expense_categories_query.error || expenses_by_days_query.error,
+      data: undefined,
+    } as const;
   }
-  if (expense_categories_query.status === "error") {
-    return { status: "error", error: expense_categories_query.error, data: undefined };
-  }
-  //Within each date, group expenses into the same category
+  console.log(expense_categories_query.status);
+
   const expense_categories = expense_categories_query.data;
 
   const category_id_to_name = new Map<string, string>();
@@ -50,26 +46,40 @@ export function use_expenses() {
       category_id_to_color.set(cat.id, cat.color);
     }
   }
-  
-  // { date: { expense_category_name: expense[] }}
-  const expenses = expenses_query.data;
-  let dates: string[] = [];
-  for (const ex of expenses) {
-    const date_key = `${ex.createdAt.getFullYear()}-${
-      ex.createdAt.getMonth() + 1
-    }-${ex.createdAt.getDate()}`;
-    if (dates.length === 0 || dates[dates.length - 1] !== date_key) {
-      dates.push(date_key);
+
+  /*
+   * [{ date: string, id_to_expenses: { id: expenses }], id_to_name: { id: name }, id_to_color: { id: color } }
+   *
+   */
+
+  const days_with_expenses = expenses_by_days_query.data;
+  let processed_expense_data: ExpenseDataByDay[] = [];
+  for (const dwe of days_with_expenses) {
+    const category_id_to_expenses = new Map<string, Expense[]>();
+    const expenses_for_day = dwe.expenses;
+    let total_expenses_for_day = 0;
+    for (const ex of expenses_for_day) {
+      if (!category_id_to_expenses.has(ex.category_id)) {
+        category_id_to_expenses.set(ex.category_id, []);
+      }
+      category_id_to_expenses.get(ex.category_id)!.push(ex);
+      total_expenses_for_day += ex.amount;
     }
-    if (!date_to_category_to_expenses.has(date_key)) {
-      date_to_category_to_expenses.set(date_key, new Map<string, Expense[]>());
-    }
-    const category_name = category_id_to_name.get(ex.category_id)!
-    if (!date_to_category_to_expenses.get(date_key)!.has(category_name)) {
-      date_to_category_to_expenses.get(date_key)!.set(category_name, []);
-    }
-    date_to_category_to_expenses.get(date_key)!.get(category_name)!.push(ex);
+    processed_expense_data.push({
+      id: dwe.id,
+      total_for_day: total_expenses_for_day,
+      date_display: `${dwe.month + 1}-${dwe.day}-${dwe.year}`,
+      category_id_to_expenses,
+    });
   }
 
-  return { status: "success", error: undefined, data: { dates, date_to_category_to_expenses, category_id_to_name, category_id_to_color } };
+  return {
+    status: "success",
+    error: undefined,
+    data: {
+      expenses: processed_expense_data,
+      category_id_to_name,
+      category_id_to_color,
+    },
+  } as const;
 }

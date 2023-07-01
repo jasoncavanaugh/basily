@@ -3,17 +3,26 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { Expense, ExpenseCategory } from "@prisma/client";
 
-//Types
+/*
+ * TYPES
+ */
 
 //Use 'BaseColor' type instead of the 'string' type that comes back from Prisma
-type ExpenseWithBaseColor = Omit<ExpenseCategory, "color"> & {
+type ExpenseCategoryWithBaseColor = Omit<ExpenseCategory, "color"> & {
   color: BaseColor;
 };
-export type ExpenseCategoryWithExpenses = ExpenseWithBaseColor & {
+export type ExpenseCategoryWithExpenses = ExpenseCategoryWithBaseColor & {
   expenses: Expense[];
 };
+const DateZodSchema = z.object({
+  day: z.number(),
+  month_idx: z.number(),
+  year: z.number(),
+});
 
-//Utils
+/*
+ * UTILS
+ */
 function convert_to_cents(amount: string) {
   const split_amount = amount.split(".");
   if (split_amount.length > 2 || split_amount.length < 1) {
@@ -31,14 +40,27 @@ function convert_to_cents(amount: string) {
   return amount_in_cents;
 }
 
-const DateZodSchema = z.object({
-  month: z.number().gte(1).lte(12),
-  day: z.number().gte(1).lte(31),
-  year: z.number().gte(1),
-});
-
+const _NUMBER_OF_ROWS_PER_PAGE = 30;
+/*
+ * ROUTES
+ */
 export const router = createTRPCRouter({
-  get_expenses: protectedProcedure
+  get_expenses_paginated_by_days: protectedProcedure
+    .input(z.object({ page: z.number().gte(0) }))
+    .query(async ({ input, ctx }) => {
+      return ctx.prisma.day.findMany({
+        where: {
+          user_id: ctx.session.user.id,
+        },
+        include: {
+          expenses: true,
+        },
+        orderBy: [{ createdAt: "desc" }],
+        skip: input.page * _NUMBER_OF_ROWS_PER_PAGE,
+        take: _NUMBER_OF_ROWS_PER_PAGE,
+      });
+    }),
+  get_expenses_over_date_range: protectedProcedure
     .input(
       z.object({
         from_date: DateZodSchema,
@@ -47,18 +69,8 @@ export const router = createTRPCRouter({
     )
     .query(async ({ input, ctx }) => {
       const { from_date, to_date } = input;
-      const s = await ctx.prisma.expense.findMany({
-        where: { user_id: ctx.session.user.id },
-      });
-      console.log("USER_ID", ctx.session.user.id);
-      console.log("JASON", s);
-
-      const from = new Date(
-        `${from_date.year}-${from_date.month}-${from_date.day}`
-      );
-      const to = new Date(`${to_date.year}-${to_date.month}-${to_date.day}`);
-      console.log("FROM", from);
-      console.log("TO", to);
+      const from = new Date(from_date.year, from_date.month_idx, from_date.day);
+      const to = new Date(to_date.year, to_date.month_idx, to_date.day);
       return ctx.prisma.expense.findMany({
         where: {
           AND: [
@@ -71,43 +83,61 @@ export const router = createTRPCRouter({
             { user_id: ctx.session.user.id },
           ],
         },
-        orderBy: [{ createdAt: "desc" }]
+        orderBy: [{ createdAt: "desc" }],
       });
     }),
-  get_categories_without_expenses: protectedProcedure.query(
-    async ({ input, ctx }) => {
-      return ctx.prisma.expenseCategory.findMany({
-        where: {
-          user_id: ctx.session.user.id,
-        },
-      }) as Promise<ExpenseCategoryWithExpenses[]>;
-    }
-  ),
-  get_categories_with_expenses: protectedProcedure.query(
-    async ({ input, ctx }) => {
-      return ctx.prisma.expenseCategory.findMany({
-        where: {
-          user_id: ctx.session.user.id,
-        },
-        include: {
-          expenses: true,
-        },
-      }) as Promise<ExpenseCategoryWithExpenses[]>;
-    }
-  ),
+  get_categories: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.prisma.expenseCategory.findMany({
+      where: {
+        user_id: ctx.session.user.id,
+      },
+    }) as Promise<ExpenseCategoryWithBaseColor[]>;
+  }),
+  get_categories_with_expenses: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.prisma.expenseCategory.findMany({
+      where: {
+        user_id: ctx.session.user.id,
+      },
+      include: {
+        expenses: true,
+      },
+    }) as Promise<ExpenseCategoryWithExpenses[]>;
+  }),
   create_expense: protectedProcedure
     .input(
       z.object({
         category_id: z.string(),
         amount: z.string().regex(/^\d*(\.\d\d)?$/),
+        date: DateZodSchema,
       })
     )
     .mutation(async ({ input, ctx }) => {
+      let day = await ctx.prisma.day.findUnique({
+        where: {
+          user_id_month_day_year: {
+            user_id: ctx.session.user.id,
+            month: input.date.month_idx,
+            day: input.date.day,
+            year: input.date.year,
+          },
+        },
+      });
+      if (!day) {
+        day = await ctx.prisma.day.create({
+          data: {
+            user_id: ctx.session.user.id,
+            month: input.date.month_idx,
+            day: input.date.day,
+            year: input.date.year,
+          },
+        });
+      }
       await ctx.prisma.expense.create({
         data: {
           amount: convert_to_cents(input.amount),
           category_id: input.category_id,
           user_id: ctx.session.user.id,
+          day_id: day.id,
         },
       });
     }),
@@ -137,10 +167,9 @@ export const router = createTRPCRouter({
   delete_category: protectedProcedure
     .input(z.object({ name: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      await ctx.prisma.expenseCategory.deleteMany({
-        //Not sure why this needs to be "deleteMany" and not just "delete"
+      await ctx.prisma.expenseCategory.delete({
         where: {
-          AND: [{ name: input.name }, { user_id: ctx.session.user.id }],
+          user_id_name: { user_id: ctx.session.user.id, name: input.name },
         },
       });
     }),
