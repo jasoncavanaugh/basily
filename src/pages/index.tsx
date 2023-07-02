@@ -297,7 +297,7 @@ function AddNewExpenseButtonAndModal() {
           <div className="h-2" />
           <input
             name="amount"
-            inputMode="numeric"
+            inputMode="text"
             placeholder="0.01"
             onChange={(e) => {
               set_amount(e.target.value.trim());
