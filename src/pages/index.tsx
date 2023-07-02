@@ -334,7 +334,7 @@ function AddNewExpenseButtonAndModal() {
                 type="text"
               ></input>
               <div className="relative m-0 h-0 p-0">
-                {is_dropdown_open && (
+                {category_text.length > 0 && is_dropdown_open && (
                   <ul className="absolute z-20 flex max-h-[200px] w-full flex-col gap-2 overflow-y-scroll rounded border bg-white p-3">
                     {expense_categories_query.data?.filter(
                         (cat) =>
