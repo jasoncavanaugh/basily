@@ -10,6 +10,7 @@ export type ExpenseDataByDay = {
 };
 export function use_expenses() {
   const expense_categories_query = api.router.get_categories.useQuery();
+  const api_utils = api.useContext();
 
   const expenses_by_days_query =
     api.router.get_expenses_paginated_by_days.useQuery({ page: 0 });
@@ -18,7 +19,7 @@ export function use_expenses() {
     expense_categories_query.status === "loading" ||
     expenses_by_days_query.status === "loading"
   ) {
-    return { status: "loading", error: undefined, data: undefined } as const;
+    return { status: "loading", error: undefined, data: undefined, invalidate_queries: () => {} } as const;
   }
   if (
     expense_categories_query.status === "error" ||
@@ -28,6 +29,7 @@ export function use_expenses() {
       status: "error",
       error: expense_categories_query.error || expenses_by_days_query.error,
       data: undefined,
+      invalidate_queries: () => {}
     } as const;
   }
   console.log(expense_categories_query.status);
@@ -81,5 +83,9 @@ export function use_expenses() {
       category_id_to_name,
       category_id_to_color,
     },
+    invalidate_queries: () => {
+      api_utils.router.get_categories.invalidate();
+      api_utils.router.get_expenses_paginated_by_days.invalidate({ page: 0 });
+    }
   } as const;
 }

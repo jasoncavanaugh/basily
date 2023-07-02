@@ -8,7 +8,7 @@ import { Expense, ExpenseCategory } from "@prisma/client";
  */
 
 //Use 'BaseColor' type instead of the 'string' type that comes back from Prisma
-type ExpenseCategoryWithBaseColor = Omit<ExpenseCategory, "color"> & {
+export type ExpenseCategoryWithBaseColor = Omit<ExpenseCategory, "color"> & {
   color: BaseColor;
 };
 export type ExpenseCategoryWithExpenses = ExpenseCategoryWithBaseColor & {

@@ -11,7 +11,7 @@ import { api } from "src/utils/api";
 //import Spinner from "src/components/Spinner";
 import Modal from "src/components/Modal";
 import { BASE_COLORS, BaseColor } from "src/utils/colors";
-import { ExpenseCategoryWithExpenses } from "src/server/api/routers/router";
+import { ExpenseCategoryWithBaseColor, ExpenseCategoryWithExpenses } from "src/server/api/routers/router";
 import Spinner from "src/components/Spinner";
 import { ExpenseDataByDay, use_expenses } from "src/utils/useExpenses";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
@@ -20,9 +20,6 @@ import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
 const Home: NextPage = () => {
   const session = useSession();
   const expense_data_query = use_expenses();
-  console.log("PROCESSED", expense_data_query);
-  const expense_categories_with_expenses_query =
-    api.router.get_categories_with_expenses.useQuery();
 
   if (session.status === "loading") {
     return (
@@ -44,7 +41,6 @@ const Home: NextPage = () => {
       </div>
     );
   }
-  //console.log(expense_categories_query.status, expense_categories_query.data);
 
   return (
     <div className="p-1 md:p-4">
@@ -90,11 +86,7 @@ const Home: NextPage = () => {
             />
           )}
       </ul>
-      {expense_categories_with_expenses_query.status === "success" && (
-        <AddNewExpenseButtonAndModal
-          expense_categories={expense_categories_with_expenses_query.data}
-        />
-      )}
+      <AddNewExpenseButtonAndModal />
     </div>
   );
 };
@@ -188,15 +180,11 @@ function is_valid_amount(amount: string) {
   return amount_regex.test(amount) && !is_zero_amount;
 }
 
-function AddNewExpenseButtonAndModal({
-  expense_categories,
-}: {
-  expense_categories: ExpenseCategoryWithExpenses[];
-}) {
+function AddNewExpenseButtonAndModal() {
   const [amount, set_amount] = useState("");
   const [is_modal_open, set_is_modal_open] = useState(false);
   const [category_text, set_category_text] = useState("");
-  const [is_dropdown_open, set_is_dropdown_open] = useState(false);
+  const [is_dropdown_open, set_is_dropdown_open] = useState(true);
   const [color, set_color] = useState<BaseColor>("pink");
   const [
     is_category_color_selection_disabled,
@@ -210,11 +198,14 @@ function AddNewExpenseButtonAndModal({
   });
 
   const api_utils = api.useContext();
+  const expense_data_query = use_expenses();
+  const expense_categories_query = api.router.get_categories.useQuery();
+
 
   const create_expense = api.router.create_expense.useMutation({
     onSuccess: () => {
       set_is_modal_open(false);
-      return api_utils.router.get_categories_with_expenses.invalidate();
+      expense_data_query.invalidate_queries();
     },
     onError: (err, data, ctx) => {
       console.log(err, data);
@@ -234,7 +225,7 @@ function AddNewExpenseButtonAndModal({
     },
   });
 
-  function handle_create_expense() {
+  function handle_create_expense(expense_categories: ExpenseCategoryWithBaseColor[]) {
     const does_category_exist =
       expense_categories.filter((exp) => exp.name === category_text).length > 0;
     if (!does_category_exist) {
@@ -253,6 +244,9 @@ function AddNewExpenseButtonAndModal({
       });
     }
   }
+  if (expense_categories_query.status === "error") {
+    console.error(expense_categories_query.error);
+  }
 
   const is_create_expense_button_disabled =
     category_text.length === 0 ||
@@ -262,7 +256,7 @@ function AddNewExpenseButtonAndModal({
     is_dropdown_open; //This is because if the dropdown is still open, that indicates that the user hasn't selected something yet
 
   const does_category_exist =
-    expense_categories.filter((cat) => cat.name === category_text).length === 0;
+    expense_categories_query.data?.filter((cat) => cat.name === category_text).length !== 0;
 
   return (
     <Modal
@@ -279,6 +273,7 @@ function AddNewExpenseButtonAndModal({
         <button
           type="button"
           className="fixed bottom-5 right-5 h-14 w-14 rounded-full bg-togglPeach text-3xl font-bold text-white md:bottom-16 md:right-16 lg:shadow-md lg:shadow-red-300 lg:transition-all lg:hover:-translate-y-1 lg:hover:shadow-lg lg:hover:shadow-red-300 lg:hover:brightness-110"
+          disabled={expense_categories_query.status === "loading" || expense_categories_query.status === "error"}
           onClick={() => set_is_modal_open(true)}
         >
           +
@@ -288,7 +283,7 @@ function AddNewExpenseButtonAndModal({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          handle_create_expense();
+          handle_create_expense(expense_categories_query.data!);
         }}
       >
         <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-slate-700">
@@ -339,10 +334,9 @@ function AddNewExpenseButtonAndModal({
                 type="text"
               ></input>
               <div className="relative m-0 h-0 p-0">
-                {category_text.length > 0 && is_dropdown_open && (
+                {is_dropdown_open && (
                   <ul className="absolute z-20 flex max-h-[200px] w-full flex-col gap-2 overflow-y-scroll rounded border bg-white p-3">
-                    {expense_categories
-                      .filter(
+                    {expense_categories_query.data?.filter(
                         (cat) =>
                           cat.name.includes(category_text) ||
                           category_text.includes(cat.name)
@@ -368,7 +362,7 @@ function AddNewExpenseButtonAndModal({
                           </li>
                         );
                       })}
-                    {does_category_exist && (
+                    {!does_category_exist && category_text.length > 0 && (
                       <li
                         className="rounded p-2 hover:cursor-pointer hover:bg-purple-100"
                         onClick={() => set_is_dropdown_open(false)}
