@@ -15,7 +15,7 @@ import { ExpenseCategoryWithBaseColor, ExpenseCategoryWithExpenses } from "src/s
 import Spinner from "src/components/Spinner";
 import { ExpenseDataByDay, use_expenses } from "src/utils/useExpenses";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
-import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
+
 //I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getServerAuthSession(ctx);
