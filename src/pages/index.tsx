@@ -1,6 +1,6 @@
 import { GetServerSideProps, type NextPage } from "next";
 import * as RadixModal from "@radix-ui/react-dialog";
-import { Day, Expense } from "@prisma/client";
+import { Day, Expense as ExpenseButton } from "@prisma/client";
 //import Head from "next/head";
 //import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
@@ -145,7 +145,7 @@ function ExpenseListForDay({
   category_id_to_color,
   category_id_to_name,
 }: {
-  category_id_to_expenses_for_day: Map<string, Expense[]>;
+  category_id_to_expenses_for_day: Map<string, ExpenseButton[]>;
   category_id_to_color: Map<string, BaseColor>;
   category_id_to_name: Map<string, string>;
 }) {
@@ -169,12 +169,7 @@ function ExpenseListForDay({
         <ul className="flex gap-1 py-2">
           {expense_list.map((expense, i) => {
             return (
-              <li
-                key={i}
-                className={`rounded-full ${TW_COLORS_MP["bg"][category_color][500]} px-2 text-white`}
-              >
-                {cents_to_dollars_display(expense.amount)}
-              </li>
+              <ExpenseButton expense={expense} category_color={category_color} />
             );
           })}
         </ul>
@@ -182,6 +177,76 @@ function ExpenseListForDay({
     );
   }
   return <>{output}</>;
+}
+
+function ExpenseButton({
+  expense,
+  category_color,
+}: {
+  expense: ExpenseButton;
+  category_color: BaseColor;
+}) {
+  const [is_modal_open, set_is_modal_open] = useState(false);
+  const expense_data_query = use_expenses();
+  const api_utils = api.useContext();
+  const delete_expense = api.router.delete_expense.useMutation({
+    onSuccess: () => {
+      expense_data_query.invalidate_queries();
+      set_is_modal_open(false); //TODO: Have to figure out how to close the modal once the new data comes in
+    },
+    onError: () => {
+      alert("error");
+    },
+  });
+  return (
+    <Modal
+      open={is_modal_open}
+      trigger={
+        <li
+          key={expense.id}
+          className={`rounded-full ${TW_COLORS_MP["bg"][category_color][500]} px-2 text-white hover:cursor-pointer`}
+          onClick={() => set_is_modal_open(true)}
+        >
+          {cents_to_dollars_display(expense.amount)}
+        </li>
+      }
+      className="left-1/2 top-1/2 flex w-[20rem] -translate-x-1/2 -translate-y-1/2 flex-col border-t-8 border-t-red-500 px-5 py-3 lg:top-1/2 lg:w-[30rem] lg:px-8 lg:py-6"
+    >
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          delete_expense.mutate({ id: expense.id });
+        }}
+      >
+        <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-slate-700">
+          Delete Expense
+        </RadixModal.Title>
+        <div className="h-1 lg:h-4" />
+        <div className="flex w-full flex-col gap-4">
+          Are you sure you wish to delete this expense?
+        </div>
+        <div className="h-8" />
+        <div className="flex justify-center gap-5">
+          <button
+            className="rounded-full bg-slate-500 px-5 py-3 text-xs font-semibold text-white outline-none hover:brightness-110 lg:text-base lg:font-bold"
+            type="button"
+            onClick={() => set_is_modal_open(false)}
+          >
+            Cancel
+          </button>
+          <button
+            className="rounded-full bg-red-500 px-5 py-3 text-xs font-semibold text-white outline-none hover:brightness-110 lg:text-base lg:font-bold"
+            type="submit"
+          >
+            {delete_expense.status === "loading" && (
+              <Spinner className="h-4 w-4 border-2 border-solid border-white lg:mx-[1.33rem] lg:my-1" />
+            )}
+            {delete_expense.status !== "loading" && "Delete"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
 }
 
 const AMOUNT_REGEX = new RegExp(/^\d*(\.\d\d)?$/);
