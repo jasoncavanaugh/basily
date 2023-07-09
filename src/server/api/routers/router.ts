@@ -55,7 +55,6 @@ export const router = createTRPCRouter({
         include: {
           expenses: true,
         },
-        orderBy: [{ createdAt: "desc" }],
         skip: input.page * _NUMBER_OF_ROWS_PER_PAGE,
         take: _NUMBER_OF_ROWS_PER_PAGE,
       });

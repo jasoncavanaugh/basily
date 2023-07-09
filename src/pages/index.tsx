@@ -11,7 +11,10 @@ import { api } from "src/utils/api";
 //import Spinner from "src/components/Spinner";
 import Modal from "src/components/Modal";
 import { BASE_COLORS, BaseColor } from "src/utils/colors";
-import { ExpenseCategoryWithBaseColor, ExpenseCategoryWithExpenses } from "src/server/api/routers/router";
+import {
+  ExpenseCategoryWithBaseColor,
+  ExpenseCategoryWithExpenses,
+} from "src/server/api/routers/router";
 import Spinner from "src/components/Spinner";
 import { ExpenseDataByDay, use_expenses } from "src/utils/useExpenses";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
@@ -181,13 +184,36 @@ function ExpenseListForDay({
   return <>{output}</>;
 }
 
+const AMOUNT_REGEX = new RegExp(/^\d*(\.\d\d)?$/);
 function is_valid_amount(amount: string) {
-  const amount_regex = new RegExp(/^\d*(\.\d\d)?$/);
   const is_zero_amount =
     amount.split("").filter((c) => c !== "." && c !== "0").length === 0;
-  return amount_regex.test(amount) && !is_zero_amount;
+  return AMOUNT_REGEX.test(amount) && !is_zero_amount;
 }
-
+const DATE_REGEX = new RegExp(
+  /^(0?[1-9]|1[012])[/](0?[1-9]|[12][0-9]|3[01])[/](19|20)\d\d$/
+);
+function is_valid_date(date_str: string) {
+  return DATE_REGEX.test(date_str);
+}
+function extract_date_fields(date_str: string) {
+  if (!is_valid_date(date_str)) {
+    throw new Error(
+      "Invalid date string passed to 'extract_date_fields' function"
+    );
+  }
+  const split = date_str.trim().split("/");
+  return {
+    day: parseInt(split[1]!),
+    month_idx: parseInt(split[0]!) - 1,
+    year: parseInt(split[2]!),
+  };
+}
+function get_today() {
+  return `${
+    new Date().getMonth() + 1
+  }/${new Date().getDate()}/${new Date().getFullYear()}`;
+}
 function AddNewExpenseButtonAndModal() {
   const [amount, set_amount] = useState("");
   const [is_modal_open, set_is_modal_open] = useState(false);
@@ -199,16 +225,11 @@ function AddNewExpenseButtonAndModal() {
     set_is_category_color_selection_disabled,
   ] = useState(false);
 
-  const [today] = useState({
-    day: new Date().getDate(),
-    month: new Date().getMonth(),
-    year: new Date().getFullYear(),
-  });
+  const [date, set_date] = useState(get_today());
 
   const api_utils = api.useContext();
   const expense_data_query = use_expenses();
   const expense_categories_query = api.router.get_categories.useQuery();
-
 
   const create_expense = api.router.create_expense.useMutation({
     onSuccess: () => {
@@ -225,7 +246,7 @@ function AddNewExpenseButtonAndModal() {
       create_expense.mutate({
         category_id: data.id,
         amount: amount,
-        date: { day: today.day, month_idx: today.month, year: today.year },
+        date: extract_date_fields(date),
       });
     },
     onError: (err, data, ctx) => {
@@ -233,7 +254,9 @@ function AddNewExpenseButtonAndModal() {
     },
   });
 
-  function handle_create_expense(expense_categories: ExpenseCategoryWithBaseColor[]) {
+  function handle_create_expense(
+    expense_categories: ExpenseCategoryWithBaseColor[]
+  ) {
     const does_category_exist =
       expense_categories.filter((exp) => exp.name === category_text).length > 0;
     if (!does_category_exist) {
@@ -248,7 +271,7 @@ function AddNewExpenseButtonAndModal() {
       create_expense.mutate({
         category_id: id,
         amount: amount,
-        date: { day: today.day, month_idx: today.month, year: today.year },
+        date: extract_date_fields(date),
       });
     }
   }
@@ -261,10 +284,12 @@ function AddNewExpenseButtonAndModal() {
     color.length === 0 ||
     amount.length === 0 ||
     !is_valid_amount(amount) ||
+    !is_valid_date(date) ||
     is_dropdown_open; //This is because if the dropdown is still open, that indicates that the user hasn't selected something yet
 
   const does_category_exist =
-    expense_categories_query.data?.filter((cat) => cat.name === category_text).length !== 0;
+    expense_categories_query.data?.filter((cat) => cat.name === category_text)
+      .length !== 0;
 
   return (
     <Modal
@@ -272,6 +297,7 @@ function AddNewExpenseButtonAndModal() {
       on_open_change={() => {
         set_amount("");
         set_category_text("");
+        set_date(get_today());
         set_is_dropdown_open(false);
         set_is_category_color_selection_disabled(false);
         set_color("pink");
@@ -281,7 +307,10 @@ function AddNewExpenseButtonAndModal() {
         <button
           type="button"
           className="fixed bottom-5 right-5 h-14 w-14 rounded-full bg-togglPeach text-3xl font-bold text-white md:bottom-16 md:right-16 lg:shadow-md lg:shadow-red-300 lg:transition-all lg:hover:-translate-y-1 lg:hover:shadow-lg lg:hover:shadow-red-300 lg:hover:brightness-110"
-          disabled={expense_categories_query.status === "loading" || expense_categories_query.status === "error"}
+          disabled={
+            expense_categories_query.status === "loading" ||
+            expense_categories_query.status === "error"
+          }
           onClick={() => set_is_modal_open(true)}
         >
           +
@@ -311,6 +340,7 @@ function AddNewExpenseButtonAndModal() {
               set_amount(e.target.value.trim());
               set_is_category_color_selection_disabled(false);
             }}
+            value={amount}
             className="w-full rounded border border-slate-600 px-2 py-1 focus:outline-slate-400"
             autoComplete="off"
             type="text"
@@ -320,6 +350,25 @@ function AddNewExpenseButtonAndModal() {
               <p className="text-sm text-red-600">Invalid amount</p>
             )}
           </div>
+          <label htmlFor="date" className="block">
+            Date
+          </label>
+          <div className="h-1" />
+          <input
+            name="date"
+            inputMode="text"
+            value={date}
+            onChange={(e) => set_date(e.target.value)}
+            className="w-full rounded border border-slate-600 px-2 py-1 focus:outline-slate-400"
+            autoComplete="off"
+            type="text"
+          ></input>
+          <div className="m-0 h-7">
+            {!is_valid_date(date) && (
+              <p className="text-sm text-red-600">Invalid date</p>
+            )}
+          </div>
+          <div className="h-1" />
           <label htmlFor="category">Category</label>
           <div className="h-2" />
           <div className="flex items-center gap-3">
@@ -344,7 +393,8 @@ function AddNewExpenseButtonAndModal() {
               <div className="relative m-0 h-0 p-0">
                 {category_text.length > 0 && is_dropdown_open && (
                   <ul className="absolute z-20 flex max-h-[200px] w-full flex-col gap-2 overflow-y-scroll rounded border bg-white p-3">
-                    {expense_categories_query.data?.filter(
+                    {expense_categories_query.data
+                      ?.filter(
                         (cat) =>
                           cat.name.includes(category_text) ||
                           category_text.includes(cat.name)
