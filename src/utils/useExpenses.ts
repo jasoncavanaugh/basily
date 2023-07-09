@@ -19,7 +19,12 @@ export function use_expenses() {
     expense_categories_query.status === "loading" ||
     expenses_by_days_query.status === "loading"
   ) {
-    return { status: "loading", error: undefined, data: undefined, invalidate_queries: () => {} } as const;
+    return {
+      status: "loading",
+      error: undefined,
+      data: undefined,
+      invalidate_queries: () => {},
+    } as const;
   }
   if (
     expense_categories_query.status === "error" ||
@@ -29,7 +34,7 @@ export function use_expenses() {
       status: "error",
       error: expense_categories_query.error || expenses_by_days_query.error,
       data: undefined,
-      invalidate_queries: () => {}
+      invalidate_queries: () => {},
     } as const;
   }
   console.log(expense_categories_query.status);
@@ -86,6 +91,6 @@ export function use_expenses() {
     invalidate_queries: () => {
       api_utils.router.get_categories.invalidate();
       api_utils.router.get_expenses_paginated_by_days.invalidate({ page: 0 });
-    }
+    },
   } as const;
 }

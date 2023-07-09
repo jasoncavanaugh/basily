@@ -6,17 +6,21 @@ import { Day, Expense } from "@prisma/client";
 import { signIn, signOut, useSession } from "next-auth/react";
 
 import * as RadixPopover from "@radix-ui/react-popover";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "src/utils/api";
 //import Spinner from "src/components/Spinner";
 import Modal from "src/components/Modal";
 import { BASE_COLORS, BaseColor } from "src/utils/colors";
-import { ExpenseCategoryWithBaseColor, ExpenseCategoryWithExpenses } from "src/server/api/routers/router";
+import {
+  ExpenseCategoryWithBaseColor,
+  ExpenseCategoryWithExpenses,
+} from "src/server/api/routers/router";
 import Spinner from "src/components/Spinner";
 import { ExpenseDataByDay, use_expenses } from "src/utils/useExpenses";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
 import { getServerAuthSession } from "src/server/auth";
 import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
+import { ThemeButton } from "src/components/ThemeButton";
 
 //I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
@@ -25,9 +29,23 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     props: { session },
   };
 };
+function get_is_dark() {
+  if (typeof localStorage === "undefined") {
+    return false;
+  }
+  const is_dark = localStorage.getItem("is_dark");
+  return !!is_dark ? true : false;
+}
 const Home: NextPage = () => {
   const session = useSession();
   const expense_data_query = use_expenses();
+
+  const [is_dark_theme, set_is_dark_theme] = useState<boolean>(get_is_dark());
+
+  console.log("Rendering index.tsx Home: NextPage");
+  useEffect(() => {
+    console.log("Rendering index.tsx Home: NextPage in useEffect");
+  }, []);
 
   if (session.status === "loading") {
     return (
@@ -51,8 +69,12 @@ const Home: NextPage = () => {
   }
 
   return (
-    <div className="p-1 md:p-4">
+    <div className={`p-1 md:p-4 ${is_dark_theme ? "dark" : ""}`}>
       <div className="flex flex-col-reverse items-end justify-end gap-2 px-1 pt-2 md:flex-row md:pt-0">
+        <ThemeButton
+          is_dark_theme={is_dark_theme}
+          set_is_dark_theme={(theme) => set_is_dark_theme(theme)}
+        />
         <button
           className="rounded-full bg-togglPeach px-3 py-1 text-sm font-semibold text-white shadow-sm shadow-red-300 hover:brightness-110 md:px-5 md:text-lg"
           onClick={() => void signOut()}
@@ -114,11 +136,11 @@ function ChronologicalExpenseList({
   for (const dwe of expenses_by_day) {
     output.push(
       <li key={dwe.id} className="p-4">
-        <h1 className="inline rounded-lg bg-togglPeach p-2 font-bold text-white">
+        <h1 className="inline rounded-lg bg-togglPeach px-2 py-1 font-bold text-white md:p-2">
           {dwe.date_display}
         </h1>
         <div className="h-4" />
-        <ul className="flex flex-col gap-3 rounded-lg border p-4">
+        <ul className="flex flex-col gap-3 rounded-lg bg-mobileDarkPurple p-4">
           <ExpenseListForDay
             category_id_to_expenses_for_day={dwe.category_id_to_expenses}
             category_id_to_color={category_id_to_color}
@@ -151,13 +173,14 @@ function ExpenseListForDay({
     const expense_list = category_id_to_expenses_for_day.get(category_id)!;
     const sum_of_expenses = expense_list.reduce((acc, e) => e.amount + acc, 0);
     const category_color = category_id_to_color.get(category_id)!;
+    const category_name = category_id_to_name.get(category_id);
     output.push(
       <li key={category_id}>
         <div className="flex justify-between">
           <h2
-            className={`rounded-lg ${TW_COLORS_MP["bg"][category_color][200]} px-2 py-1 font-bold ${TW_COLORS_MP["text"][category_color][700]}`}
+            className={`flex items-center rounded-lg ${TW_COLORS_MP["bg"][category_color][200]} px-2 text-sm font-bold md:py-1 md:text-base ${TW_COLORS_MP["text"][category_color][700]}`}
           >
-            {category_id_to_name.get(category_id)}
+            {category_name}
           </h2>
           <p className={`font-semibold text-togglPeach`}>
             {cents_to_dollars_display(sum_of_expenses)}
@@ -168,7 +191,7 @@ function ExpenseListForDay({
             return (
               <li
                 key={i}
-                className={`rounded-full ${TW_COLORS_MP["bg"][category_color][500]} px-2 text-white`}
+                className={`rounded-full ${TW_COLORS_MP["bg"][category_color][500]} px-2 font-semibold text-white`}
               >
                 {cents_to_dollars_display(expense.amount)}
               </li>
@@ -209,7 +232,6 @@ function AddNewExpenseButtonAndModal() {
   const expense_data_query = use_expenses();
   const expense_categories_query = api.router.get_categories.useQuery();
 
-
   const create_expense = api.router.create_expense.useMutation({
     onSuccess: () => {
       set_is_modal_open(false);
@@ -233,7 +255,9 @@ function AddNewExpenseButtonAndModal() {
     },
   });
 
-  function handle_create_expense(expense_categories: ExpenseCategoryWithBaseColor[]) {
+  function handle_create_expense(
+    expense_categories: ExpenseCategoryWithBaseColor[]
+  ) {
     const does_category_exist =
       expense_categories.filter((exp) => exp.name === category_text).length > 0;
     if (!does_category_exist) {
@@ -264,7 +288,8 @@ function AddNewExpenseButtonAndModal() {
     is_dropdown_open; //This is because if the dropdown is still open, that indicates that the user hasn't selected something yet
 
   const does_category_exist =
-    expense_categories_query.data?.filter((cat) => cat.name === category_text).length !== 0;
+    expense_categories_query.data?.filter((cat) => cat.name === category_text)
+      .length !== 0;
 
   return (
     <Modal
@@ -276,15 +301,28 @@ function AddNewExpenseButtonAndModal() {
         set_is_category_color_selection_disabled(false);
         set_color("pink");
       }}
-      className="left-1/2 top-1/3 flex w-[30rem] -translate-x-1/2 -translate-y-1/2 flex-col border-t-8 border-t-togglPeach px-5 py-3 lg:top-1/2 lg:px-8 lg:py-6"
+      className="left-1/2 top-1/3 flex w-[30rem] -translate-x-1/2 -translate-y-1/2 flex-col border-t-8 border-t-togglPeach bg-mobileTextViolet px-5 py-3 lg:top-1/2 lg:px-8 lg:py-6"
       trigger={
         <button
           type="button"
-          className="fixed bottom-5 right-5 h-14 w-14 rounded-full bg-togglPeach text-3xl font-bold text-white md:bottom-16 md:right-16 lg:shadow-md lg:shadow-red-300 lg:transition-all lg:hover:-translate-y-1 lg:hover:shadow-lg lg:hover:shadow-red-300 lg:hover:brightness-110"
-          disabled={expense_categories_query.status === "loading" || expense_categories_query.status === "error"}
+          className="fixed bottom-5 right-5 h-12 w-12 rounded-full bg-togglPeach p-0 shadow shadow-red-300 md:bottom-14 md:right-14 md:h-14 md:w-14 lg:shadow-md lg:shadow-red-300 lg:transition-all lg:hover:-translate-y-0.5 lg:hover:shadow-lg lg:hover:shadow-red-300 lg:hover:brightness-110"
+          disabled={
+            expense_categories_query.status === "loading" ||
+            expense_categories_query.status === "error"
+          }
           onClick={() => set_is_modal_open(true)}
         >
-          +
+          {/* https://tailwindcomponents.com/component/tailwind-css-fab-buttons */}
+          <svg
+            viewBox="0 0 20 20"
+            enableBackground="new 0 0 20 20"
+            className="inline-block h-6 w-6"
+          >
+            <path
+              fill="#FFFFFF"
+              d="M16,10c0,0.553-0.048,1-0.601,1H11v4.399C11,15.951,10.553,16,10,16c-0.553,0-1-0.049-1-0.601V11H4.601 C4.049,11,4,10.553,4,10c0-0.553,0.049-1,0.601-1H9V4.601C9,4.048,9.447,4,10,4c0.553,0,1,0.048,1,0.601V9h4.399 C15.952,9,16,9.447,16,10z"
+            />
+          </svg>
         </button>
       }
     >
@@ -294,12 +332,12 @@ function AddNewExpenseButtonAndModal() {
           handle_create_expense(expense_categories_query.data!);
         }}
       >
-        <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-slate-700">
+        <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-white">
           Add Expense
         </RadixModal.Title>
         <div className="h-1 lg:h-4" />
         <div className="w-full">
-          <label htmlFor="amount" className="block">
+          <label htmlFor="amount" className="block text-white">
             Amount
           </label>
           <div className="h-2" />
@@ -317,10 +355,12 @@ function AddNewExpenseButtonAndModal() {
           ></input>
           <div className="m-0 h-7">
             {amount.length > 0 && !is_valid_amount(amount) && (
-              <p className="text-sm text-red-600">Invalid amount</p>
+              <p className="text-sm text-red-500">Invalid amount</p>
             )}
           </div>
-          <label htmlFor="category">Category</label>
+          <label htmlFor="category" className="text-white">
+            Category
+          </label>
           <div className="h-2" />
           <div className="flex items-center gap-3">
             <CategoryColorSelection
@@ -344,7 +384,8 @@ function AddNewExpenseButtonAndModal() {
               <div className="relative m-0 h-0 p-0">
                 {category_text.length > 0 && is_dropdown_open && (
                   <ul className="absolute z-20 flex max-h-[200px] w-full flex-col gap-2 overflow-y-scroll rounded border bg-white p-3">
-                    {expense_categories_query.data?.filter(
+                    {expense_categories_query.data
+                      ?.filter(
                         (cat) =>
                           cat.name.includes(category_text) ||
                           category_text.includes(cat.name)

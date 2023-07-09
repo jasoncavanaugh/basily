@@ -20,7 +20,7 @@ export const Modal: React.FunctionComponent<ModalProps> = ({
       <RadixModal.Portal>
         <RadixModal.Overlay className="modal-overlay bg-gray-500" />
         <RadixModal.Content
-          className={`modal-open-animation fixed z-20 flex max-w-full rounded-lg bg-white drop-shadow-lg ${className}`}
+          className={`modal-open-animation fixed z-20 flex max-w-full rounded-lg drop-shadow-lg ${className}`}
         >
           {children}
         </RadixModal.Content>

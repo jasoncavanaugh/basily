@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  @apply bg-darkDarkPurple;
+  @apply bg-mobileDarkDarkPurple;
 }
 
 ::-webkit-scrollbar {
