@@ -166,7 +166,7 @@ function ExpenseListForDay({
             {cents_to_dollars_display(sum_of_expenses)}
           </p>
         </div>
-        <ul className="flex gap-1 py-2">
+        <ul className="flex gap-1 py-2 flex-wrap">
           {expense_list.map((expense, i) => {
             return (
               <ExpenseButton expense={expense} category_color={category_color} />
