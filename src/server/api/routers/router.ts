@@ -55,7 +55,6 @@ export const router = createTRPCRouter({
         include: {
           expenses: true,
         },
-        orderBy: [{ createdAt: "desc" }],
         skip: input.page * _NUMBER_OF_ROWS_PER_PAGE,
         take: _NUMBER_OF_ROWS_PER_PAGE,
       });
@@ -144,9 +143,15 @@ export const router = createTRPCRouter({
   delete_expense: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      await ctx.prisma.expense.delete({
+      const deleted_expense = await ctx.prisma.expense.delete({
         where: { id: input.id },
       });
+      const other_expenses_for_day = await ctx.prisma.expense.findMany({
+        where: { day_id: deleted_expense.day_id },
+      });
+      if (other_expenses_for_day.length === 0) {
+        await ctx.prisma.day.delete({ where: { id: deleted_expense.day_id } });
+      }
     }),
   create_category: protectedProcedure
     .input(

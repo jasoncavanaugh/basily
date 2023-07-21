@@ -59,7 +59,19 @@ export function use_expenses() {
    *
    */
 
-  const days_with_expenses = expenses_by_days_query.data;
+  const days_with_expenses = expenses_by_days_query.data.sort((a, b) => {
+    //Reverse sort
+    if (a.year !== b.year) {
+      return b.year - a.year;
+    }
+    if (a.month !== b.month) {
+      return b.month - a.month;
+    }
+    if (a.day !== b.day) {
+      return b.day - a.day;
+    }
+    return 0;
+  });
   let processed_expense_data: ExpenseDataByDay[] = [];
   for (const dwe of days_with_expenses) {
     const category_id_to_expenses = new Map<string, Expense[]>();

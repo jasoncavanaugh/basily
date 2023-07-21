@@ -1,20 +1,14 @@
 import { GetServerSideProps, type NextPage } from "next";
 import * as RadixModal from "@radix-ui/react-dialog";
-import { Day, Expense } from "@prisma/client";
-//import Head from "next/head";
-//import Link from "next/link";
+import { Expense } from "@prisma/client";
 import { signIn, signOut, useSession } from "next-auth/react";
 
 import * as RadixPopover from "@radix-ui/react-popover";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "src/utils/api";
-//import Spinner from "src/components/Spinner";
 import Modal from "src/components/Modal";
 import { BASE_COLORS, BaseColor } from "src/utils/colors";
-import {
-  ExpenseCategoryWithBaseColor,
-  ExpenseCategoryWithExpenses,
-} from "src/server/api/routers/router";
+import { ExpenseCategoryWithBaseColor } from "src/server/api/routers/router";
 import Spinner from "src/components/Spinner";
 import { ExpenseDataByDay, use_expenses } from "src/utils/useExpenses";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
@@ -186,15 +180,13 @@ function ExpenseListForDay({
             {cents_to_dollars_display(sum_of_expenses)}
           </p>
         </div>
-        <ul className="flex gap-1 py-2">
+        <ul className="flex flex-wrap gap-1 py-2">
           {expense_list.map((expense, i) => {
             return (
-              <li
-                key={i}
-                className={`rounded-full ${TW_COLORS_MP["bg"][category_color][500]} px-2 font-semibold text-white`}
-              >
-                {cents_to_dollars_display(expense.amount)}
-              </li>
+              <ExpenseButton
+                expense={expense}
+                category_color={category_color}
+              />
             );
           })}
         </ul>
@@ -204,13 +196,106 @@ function ExpenseListForDay({
   return <>{output}</>;
 }
 
-function is_valid_amount(amount: string) {
-  const amount_regex = new RegExp(/^\d*(\.\d\d)?$/);
-  const is_zero_amount =
-    amount.split("").filter((c) => c !== "." && c !== "0").length === 0;
-  return amount_regex.test(amount) && !is_zero_amount;
+function ExpenseButton({
+  expense,
+  category_color,
+}: {
+  expense: Expense;
+  category_color: BaseColor;
+}) {
+  const [is_modal_open, set_is_modal_open] = useState(false);
+  const expense_data_query = use_expenses();
+  const api_utils = api.useContext();
+  const delete_expense = api.router.delete_expense.useMutation({
+    onSuccess: () => {
+      expense_data_query.invalidate_queries();
+      set_is_modal_open(false); //TODO: Have to figure out how to close the modal once the new data comes in
+    },
+    onError: () => {
+      alert("error");
+    },
+  });
+  return (
+    <Modal
+      open={is_modal_open}
+      trigger={
+        <li
+          key={expense.id}
+          className={`rounded-full ${TW_COLORS_MP["bg"][category_color][500]} px-2 text-white hover:cursor-pointer`}
+          onClick={() => set_is_modal_open(true)}
+        >
+          {cents_to_dollars_display(expense.amount)}
+        </li>
+      }
+      className="left-1/2 top-1/2 flex w-[20rem] -translate-x-1/2 -translate-y-1/2 flex-col border-t-8 border-t-red-500 px-5 py-3 lg:top-1/2 lg:w-[30rem] lg:px-8 lg:py-6"
+    >
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          delete_expense.mutate({ id: expense.id });
+        }}
+      >
+        <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-slate-700">
+          Delete Expense
+        </RadixModal.Title>
+        <div className="h-1 lg:h-4" />
+        <div className="flex w-full flex-col gap-4">
+          Are you sure you wish to delete this expense?
+        </div>
+        <div className="h-8" />
+        <div className="flex justify-center gap-5">
+          <button
+            className="rounded-full bg-slate-500 px-5 py-3 text-xs font-semibold text-white outline-none hover:brightness-110 lg:text-base lg:font-bold"
+            type="button"
+            onClick={() => set_is_modal_open(false)}
+          >
+            Cancel
+          </button>
+          <button
+            className="rounded-full bg-red-500 px-5 py-3 text-xs font-semibold text-white outline-none hover:brightness-110 lg:text-base lg:font-bold"
+            type="submit"
+          >
+            {delete_expense.status === "loading" && (
+              <Spinner className="h-4 w-4 border-2 border-solid border-white lg:mx-[1.33rem] lg:my-1" />
+            )}
+            {delete_expense.status !== "loading" && "Delete"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
 }
 
+const AMOUNT_REGEX = new RegExp(/^\d*(\.\d\d)?$/);
+function is_valid_amount(amount: string) {
+  const is_zero_amount =
+    amount.split("").filter((c) => c !== "." && c !== "0").length === 0;
+  return AMOUNT_REGEX.test(amount) && !is_zero_amount;
+}
+const DATE_REGEX = new RegExp(
+  /^(0?[1-9]|1[012])[/](0?[1-9]|[12][0-9]|3[01])[/](19|20)\d\d$/
+);
+function is_valid_date(date_str: string) {
+  return DATE_REGEX.test(date_str);
+}
+function extract_date_fields(date_str: string) {
+  if (!is_valid_date(date_str)) {
+    throw new Error(
+      "Invalid date string passed to 'extract_date_fields' function"
+    );
+  }
+  const split = date_str.trim().split("/");
+  return {
+    day: parseInt(split[1]!),
+    month_idx: parseInt(split[0]!) - 1,
+    year: parseInt(split[2]!),
+  };
+}
+function get_today() {
+  return `${
+    new Date().getMonth() + 1
+  }/${new Date().getDate()}/${new Date().getFullYear()}`;
+}
 function AddNewExpenseButtonAndModal() {
   const [amount, set_amount] = useState("");
   const [is_modal_open, set_is_modal_open] = useState(false);
@@ -222,11 +307,7 @@ function AddNewExpenseButtonAndModal() {
     set_is_category_color_selection_disabled,
   ] = useState(false);
 
-  const [today] = useState({
-    day: new Date().getDate(),
-    month: new Date().getMonth(),
-    year: new Date().getFullYear(),
-  });
+  const [date, set_date] = useState(get_today());
 
   const api_utils = api.useContext();
   const expense_data_query = use_expenses();
@@ -247,7 +328,7 @@ function AddNewExpenseButtonAndModal() {
       create_expense.mutate({
         category_id: data.id,
         amount: amount,
-        date: { day: today.day, month_idx: today.month, year: today.year },
+        date: extract_date_fields(date),
       });
     },
     onError: (err, data, ctx) => {
@@ -272,7 +353,7 @@ function AddNewExpenseButtonAndModal() {
       create_expense.mutate({
         category_id: id,
         amount: amount,
-        date: { day: today.day, month_idx: today.month, year: today.year },
+        date: extract_date_fields(date),
       });
     }
   }
@@ -285,6 +366,7 @@ function AddNewExpenseButtonAndModal() {
     color.length === 0 ||
     amount.length === 0 ||
     !is_valid_amount(amount) ||
+    !is_valid_date(date) ||
     is_dropdown_open; //This is because if the dropdown is still open, that indicates that the user hasn't selected something yet
 
   const does_category_exist =
@@ -297,6 +379,7 @@ function AddNewExpenseButtonAndModal() {
       on_open_change={() => {
         set_amount("");
         set_category_text("");
+        set_date(get_today());
         set_is_dropdown_open(false);
         set_is_category_color_selection_disabled(false);
         set_color("pink");
@@ -349,6 +432,7 @@ function AddNewExpenseButtonAndModal() {
               set_amount(e.target.value.trim());
               set_is_category_color_selection_disabled(false);
             }}
+            value={amount}
             className="w-full rounded border border-slate-600 px-2 py-1 focus:outline-slate-400"
             autoComplete="off"
             type="text"
@@ -358,9 +442,26 @@ function AddNewExpenseButtonAndModal() {
               <p className="text-sm text-red-500">Invalid amount</p>
             )}
           </div>
-          <label htmlFor="category" className="text-white">
-            Category
+          <label htmlFor="date" className="block">
+            Date
           </label>
+          <div className="h-1" />
+          <input
+            name="date"
+            inputMode="text"
+            value={date}
+            onChange={(e) => set_date(e.target.value)}
+            className="w-full rounded border border-slate-600 px-2 py-1 focus:outline-slate-400"
+            autoComplete="off"
+            type="text"
+          ></input>
+          <div className="m-0 h-7">
+            {!is_valid_date(date) && (
+              <p className="text-sm text-red-600">Invalid date</p>
+            )}
+          </div>
+          <div className="h-1" />
+          <label htmlFor="category">Category</label>
           <div className="h-2" />
           <div className="flex items-center gap-3">
             <CategoryColorSelection
