@@ -24,6 +24,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   };
 };
 function get_is_dark() {
+  return true;
   if (typeof localStorage === "undefined") {
     return false;
   }
@@ -63,7 +64,11 @@ const Home: NextPage = () => {
   }
 
   return (
-    <div className={`p-1 md:p-4 ${is_dark_theme ? "dark" : ""}`}>
+    <div
+      className={`p-1 md:p-4 ${
+        is_dark_theme ? "dark bg-dbase_LowMid_Low" : "bg-base_LowLow_HighHigh"
+      }`}
+    >
       <div className="flex flex-col-reverse items-end justify-end gap-2 px-1 pt-2 md:flex-row md:pt-0">
         <ThemeButton
           is_dark_theme={is_dark_theme}
@@ -134,7 +139,7 @@ function ChronologicalExpenseList({
           {dwe.date_display}
         </h1>
         <div className="h-4" />
-        <ul className="flex flex-col gap-3 rounded-lg bg-mobileDarkPurple p-4">
+        <ul className="flex flex-col gap-3 rounded-lg bg-zero_zero_HighHigh p-4 shadow-sm dark:bg-dbase_Mid_Low dark:shadow-sm dark:shadow-dbase_Mid_Low">
           <ExpenseListForDay
             category_id_to_expenses_for_day={dwe.category_id_to_expenses}
             category_id_to_color={category_id_to_color}
@@ -384,7 +389,7 @@ function AddNewExpenseButtonAndModal() {
         set_is_category_color_selection_disabled(false);
         set_color("pink");
       }}
-      className="left-1/2 top-1/3 flex w-[30rem] -translate-x-1/2 -translate-y-1/2 flex-col border-t-8 border-t-togglPeach bg-mobileTextViolet px-5 py-3 lg:top-1/2 lg:px-8 lg:py-6"
+      className="left-1/2 top-1/3 flex w-[30rem] -translate-x-1/2 -translate-y-1/2 flex-col border-t-8 border-t-togglPeach bg-slate-100 px-5 py-3 dark:bg-dbase_LowLow_LowMid lg:top-1/2 lg:px-8 lg:py-6"
       trigger={
         <button
           type="button"
@@ -415,12 +420,15 @@ function AddNewExpenseButtonAndModal() {
           handle_create_expense(expense_categories_query.data!);
         }}
       >
-        <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-white">
+        <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-slate-700 dark:text-white">
           Add Expense
         </RadixModal.Title>
         <div className="h-1 lg:h-4" />
         <div className="w-full">
-          <label htmlFor="amount" className="block text-white">
+          <label
+            htmlFor="amount"
+            className="block text-slate-700 dark:text-white"
+          >
             Amount
           </label>
           <div className="h-2" />
@@ -433,7 +441,7 @@ function AddNewExpenseButtonAndModal() {
               set_is_category_color_selection_disabled(false);
             }}
             value={amount}
-            className="w-full rounded border border-slate-600 px-2 py-1 focus:outline-slate-400"
+            className="w-full rounded border border-slate-400 px-2 py-1 focus:outline-slate-400"
             autoComplete="off"
             type="text"
           ></input>
@@ -442,7 +450,7 @@ function AddNewExpenseButtonAndModal() {
               <p className="text-sm text-red-500">Invalid amount</p>
             )}
           </div>
-          <label htmlFor="date" className="block">
+          <label htmlFor="date" className="block dark:text-white">
             Date
           </label>
           <div className="h-1" />
@@ -451,7 +459,7 @@ function AddNewExpenseButtonAndModal() {
             inputMode="text"
             value={date}
             onChange={(e) => set_date(e.target.value)}
-            className="w-full rounded border border-slate-600 px-2 py-1 focus:outline-slate-400"
+            className="w-full rounded border border-slate-400 px-2 py-1 focus:outline-slate-400"
             autoComplete="off"
             type="text"
           ></input>
@@ -461,7 +469,9 @@ function AddNewExpenseButtonAndModal() {
             )}
           </div>
           <div className="h-1" />
-          <label htmlFor="category">Category</label>
+          <label htmlFor="category" className="dark:text-white">
+            Category
+          </label>
           <div className="h-2" />
           <div className="flex items-center gap-3">
             <CategoryColorSelection
@@ -478,7 +488,7 @@ function AddNewExpenseButtonAndModal() {
                   set_is_dropdown_open(true);
                   set_is_category_color_selection_disabled(false);
                 }}
-                className="w-full grow rounded border border-slate-600 px-2 py-1 focus:outline-slate-400"
+                className="w-full grow rounded border border-slate-400 px-2 py-1 focus:outline-slate-400"
                 autoComplete="off"
                 type="text"
               ></input>

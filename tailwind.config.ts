@@ -6,6 +6,11 @@ export default {
   theme: {
     extend: {
       colors: {
+        dbase_LowMid_Low: "hsla(277, 35%, 7%, 1)",
+        dbase_Mid_Low: "hsla(277, 20%, 17%, 1)",
+        dbase_LowLow_LowMid: "hsla(277, 33%, 25%, 1)",
+        base_LowLow_HighHigh: "hsla(0, 4%, 90%)",
+        zero_zero_HighHigh: "hsla(0, 6%, 96%)",
         mobileDarkDarkPurple: "#060208",
         mobileDarkPurple: "#181020",
         mobileTextViolet: "#d6bce8",
