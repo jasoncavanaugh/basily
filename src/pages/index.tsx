@@ -1,20 +1,14 @@
 import { GetServerSideProps, type NextPage } from "next";
 import * as RadixModal from "@radix-ui/react-dialog";
-import { Day, Expense as ExpenseButton } from "@prisma/client";
-//import Head from "next/head";
-//import Link from "next/link";
+import { Expense } from "@prisma/client";
 import { signIn, signOut, useSession } from "next-auth/react";
 
 import * as RadixPopover from "@radix-ui/react-popover";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { api } from "src/utils/api";
-//import Spinner from "src/components/Spinner";
 import Modal from "src/components/Modal";
 import { BASE_COLORS, BaseColor } from "src/utils/colors";
-import {
-  ExpenseCategoryWithBaseColor,
-  ExpenseCategoryWithExpenses,
-} from "src/server/api/routers/router";
+import { ExpenseCategoryWithBaseColor } from "src/server/api/routers/router";
 import Spinner from "src/components/Spinner";
 import { ExpenseDataByDay, use_expenses } from "src/utils/useExpenses";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
@@ -145,7 +139,7 @@ function ExpenseListForDay({
   category_id_to_color,
   category_id_to_name,
 }: {
-  category_id_to_expenses_for_day: Map<string, ExpenseButton[]>;
+  category_id_to_expenses_for_day: Map<string, Expense[]>;
   category_id_to_color: Map<string, BaseColor>;
   category_id_to_name: Map<string, string>;
 }) {
@@ -166,10 +160,13 @@ function ExpenseListForDay({
             {cents_to_dollars_display(sum_of_expenses)}
           </p>
         </div>
-        <ul className="flex gap-1 py-2 flex-wrap">
+        <ul className="flex flex-wrap gap-1 py-2">
           {expense_list.map((expense, i) => {
             return (
-              <ExpenseButton expense={expense} category_color={category_color} />
+              <ExpenseButton
+                expense={expense}
+                category_color={category_color}
+              />
             );
           })}
         </ul>
@@ -183,7 +180,7 @@ function ExpenseButton({
   expense,
   category_color,
 }: {
-  expense: ExpenseButton;
+  expense: Expense;
   category_color: BaseColor;
 }) {
   const [is_modal_open, set_is_modal_open] = useState(false);
