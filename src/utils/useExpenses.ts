@@ -1,4 +1,5 @@
-import { Expense } from "@prisma/client";
+import { Day, Expense } from "@prisma/client";
+import { ExpenseCategoryWithBaseColor } from "src/server/api/routers/router";
 import { api } from "./api";
 import { BaseColor } from "./colors";
 
@@ -8,12 +9,71 @@ export type ExpenseDataByDay = {
   date_display: string;
   category_id_to_expenses: Map<string, Expense[]>;
 };
+function getExpenseCategories() {
+  const data: ExpenseCategoryWithBaseColor[] = [
+    {
+      id: "1",
+      name: "Groceries",
+      color: "blue",
+      user_id: "1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: "2",
+      name: "Eating Out",
+      color: "red",
+      user_id: "1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: "3",
+      name: "Night Life",
+      color: "purple",
+      user_id: "1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+  return { status: "success", error: undefined, data: data };
+}
+
+function getExpensesByDays() {
+  const data: (Day & {
+    expenses: Expense[];
+  })[] = [
+    {
+      id: "1",
+      user_id: "1",
+      createdAt: new Date(),
+      month: 1,
+      day: 2,
+      year: 2023,
+      expenses: [
+        {
+          id: "1",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          amount: 2000,
+          user_id: "1",
+          category_id: "1",
+          day_id: "1",
+        },
+      ],
+    },
+  ];
+
+  return { status: "success", error: undefined, data: data };
+}
 export function use_expenses() {
-  const expense_categories_query = api.router.get_categories.useQuery();
+  // const expense_categories_query = api.router.get_categories.useQuery();
+  const expense_categories_query = getExpenseCategories();
   const api_utils = api.useContext();
 
-  const expenses_by_days_query =
-    api.router.get_expenses_paginated_by_days.useQuery({ page: 0 });
+  // const expenses_by_days_query =
+  //   api.router.get_expenses_paginated_by_days.useQuery({ page: 0 });
+  const expenses_by_days_query = getExpensesByDays();
 
   if (
     expense_categories_query.status === "loading" ||
@@ -101,8 +161,8 @@ export function use_expenses() {
       category_id_to_color,
     },
     invalidate_queries: () => {
-      api_utils.router.get_categories.invalidate();
-      api_utils.router.get_expenses_paginated_by_days.invalidate({ page: 0 });
+      // api_utils.router.get_categories.invalidate();
+      // api_utils.router.get_expenses_paginated_by_days.invalidate({ page: 0 });
     },
   } as const;
 }

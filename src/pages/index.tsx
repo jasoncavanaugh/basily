@@ -17,14 +17,13 @@ import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
 import { ThemeButton } from "src/components/ThemeButton";
 
 //I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const session = await getServerAuthSession(ctx);
-  return {
-    props: { session },
-  };
-};
+// export const getServerSideProps: GetServerSideProps = async (ctx) => {
+//   const session = await getServerAuthSession(ctx);
+//   return {
+//     props: { session },
+//   };
+// };
 function get_is_dark() {
-  return true;
   if (typeof localStorage === "undefined") {
     return false;
   }
@@ -32,40 +31,41 @@ function get_is_dark() {
   return !!is_dark ? true : false;
 }
 const Home: NextPage = () => {
-  const session = useSession();
+  // const session = useSession();
   const expense_data_query = use_expenses();
 
-  const [is_dark_theme, set_is_dark_theme] = useState<boolean>(get_is_dark());
+  const [is_dark_theme, set_is_dark_theme] = useState<boolean>(false);
 
   console.log("Rendering index.tsx Home: NextPage");
   useEffect(() => {
+    set_is_dark_theme(get_is_dark());
     console.log("Rendering index.tsx Home: NextPage in useEffect");
   }, []);
 
-  if (session.status === "loading") {
-    return (
-      <div className="flex h-[95vh] items-center justify-center p-1 md:p-4">
-        <Spinner className="h-16 w-16 border-4 border-solid border-white lg:border-8" />
-      </div>
-    );
-  }
+  // if (session.status === "loading") {
+  //   return (
+  //     <div className="flex h-[95vh] items-center justify-center p-1 md:p-4">
+  //       <Spinner className="h-16 w-16 border-4 border-solid border-white lg:border-8" />
+  //     </div>
+  //   );
+  // }
 
-  if (session.status === "unauthenticated") {
-    return (
-      <div className="flex h-[95vh] items-center justify-center p-1 md:p-4">
-        <button
-          className="rounded-full bg-togglPeach px-6 py-2 text-3xl font-semibold text-white shadow-sm shadow-red-300 hover:brightness-110"
-          onClick={() => void signIn()}
-        >
-          Sign In
-        </button>
-      </div>
-    );
-  }
+  // if (session.status === "unauthenticated") {
+  //   return (
+  //     <div className="flex h-[95vh] items-center justify-center p-1 md:p-4">
+  //       <button
+  //         className="rounded-full bg-togglPeach px-6 py-2 text-3xl font-semibold text-white shadow-sm shadow-red-300 hover:brightness-110"
+  //         onClick={() => void signIn()}
+  //       >
+  //         Sign In
+  //       </button>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div
-      className={`p-1 md:p-4 ${
+      className={`h-screen p-1 md:p-4 ${
         is_dark_theme ? "dark bg-dbase_LowMid_Low" : "bg-base_LowLow_HighHigh"
       }`}
     >
