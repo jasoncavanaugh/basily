@@ -38,7 +38,7 @@ const Home: NextPage = () => {
     return (
       <div className="flex h-[95vh] items-center justify-center p-1 md:p-4">
         <button
-          className="rounded-full bg-togglPeach px-6 py-2 text-3xl font-semibold text-white shadow-sm shadow-red-300 hover:brightness-110"
+          className="bg-togglPeach rounded-full px-6 py-2 text-3xl font-semibold text-white shadow-sm shadow-red-300 hover:brightness-110"
           onClick={() => void signIn()}
         >
           Sign In
@@ -51,7 +51,7 @@ const Home: NextPage = () => {
     <div className="p-1 md:p-4">
       <div className="flex flex-col-reverse items-end justify-end gap-2 px-1 pt-2 md:flex-row md:pt-0">
         <button
-          className="rounded-full bg-togglPeach px-3 py-1 text-sm font-semibold text-white shadow-sm shadow-red-300 hover:brightness-110 md:px-5 md:text-lg"
+          className="bg-togglPeach rounded-full px-3 py-1 text-sm font-semibold text-white shadow-sm shadow-red-300 hover:brightness-110 md:px-5 md:text-lg"
           onClick={() => void signOut()}
         >
           Log Out
@@ -111,7 +111,7 @@ function ChronologicalExpenseList({
   for (const dwe of expenses_by_day) {
     output.push(
       <li key={dwe.id} className="p-4">
-        <h1 className="inline rounded-lg bg-togglPeach p-2 font-bold text-white">
+        <h1 className="bg-togglPeach inline rounded-lg p-2 font-bold text-white">
           {dwe.date_display}
         </h1>
         <div className="h-4" />
@@ -122,8 +122,8 @@ function ChronologicalExpenseList({
             category_id_to_name={category_id_to_name}
           />
           <li className="flex justify-between">
-            <p className="font-semibold text-togglPeach">Total: </p>
-            <p className="font-semibold text-togglPeach">
+            <p className="text-togglPeach font-semibold">Total: </p>
+            <p className="text-togglPeach font-semibold">
               {cents_to_dollars_display(dwe.total_for_day)}
             </p>
           </li>
@@ -364,11 +364,11 @@ function AddNewExpenseButtonAndModal() {
         set_is_category_color_selection_disabled(false);
         set_color("pink");
       }}
-      className="left-1/2 top-1/3 flex w-[30rem] -translate-x-1/2 -translate-y-1/2 flex-col border-t-8 border-t-togglPeach px-5 py-3 lg:top-1/2 lg:px-8 lg:py-6"
+      className="border-t-togglPeach left-1/2 top-1/3 flex w-[30rem] -translate-x-1/2 -translate-y-1/2 flex-col border-t-8 px-5 py-3 lg:top-1/2 lg:px-8 lg:py-6"
       trigger={
         <button
           type="button"
-          className="fixed bottom-5 right-5 h-14 w-14 rounded-full bg-togglPeach text-3xl font-bold text-white md:bottom-16 md:right-16 lg:shadow-md lg:shadow-red-300 lg:transition-all lg:hover:-translate-y-1 lg:hover:shadow-lg lg:hover:shadow-red-300 lg:hover:brightness-110"
+          className="bg-togglPeach fixed bottom-5 right-5 h-14 w-14 rounded-full text-3xl font-bold text-white md:bottom-16 md:right-16 lg:shadow-md lg:shadow-red-300 lg:transition-all lg:hover:-translate-y-1 lg:hover:shadow-lg lg:hover:shadow-red-300 lg:hover:brightness-110"
           disabled={
             expense_categories_query.status === "loading" ||
             expense_categories_query.status === "error"
@@ -500,7 +500,7 @@ function AddNewExpenseButtonAndModal() {
         <div className="h-8" />
         <div className="flex justify-center gap-5">
           <button
-            className="rounded-full bg-togglBtnGray px-3 py-2 text-xs font-semibold text-white hover:brightness-110 lg:px-5 lg:py-3 lg:text-base lg:font-bold"
+            className="bg-togglBtnGray rounded-full px-3 py-2 text-xs font-semibold text-white hover:brightness-110 lg:px-5 lg:py-3 lg:text-base lg:font-bold"
             type="button"
             onClick={() => {
               set_is_modal_open(false);
