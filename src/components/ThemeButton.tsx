@@ -1,48 +1,35 @@
-import { useEffect } from "react";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+import { cn } from "src/utils/cn";
 
-export function ThemeButton({
-  is_dark_theme,
-  set_is_dark_theme,
-}: {
-  is_dark_theme: boolean;
-  set_is_dark_theme: (is_dark_theme: boolean) => void;
-}) {
-  console.log("Rendering ThemeButton.tsx");
+//I do not understand how this is interoping with Taiwind... I am not setting the "dark" attribute anywhere in my HTML tree
+export function ThemeButton() {
+  const { theme, setTheme } = useTheme();
+  
+  //Honestly, this stuff is ridiculous imo. How is this the official way to do things??
+  const [is_mounted, set_is_mounted] = useState(false);
+  useEffect(() => {
+    set_is_mounted(true);
+  }, []);
+
+  if (!is_mounted) {
+    return null;
+  }
   return (
     <button
       onClick={() => {
-        if (typeof localStorage === "undefined") {
-          return;
-        }
-        if (is_dark_theme) {
-          localStorage.removeItem("is_dark");
-        } else {
-          localStorage.setItem("is_dark", "true");
-        }
-        set_is_dark_theme(!is_dark_theme);
+        setTheme(theme === "dark" ? "light" : "dark");
       }}
-      className="flex
-      items-center
-      justify-center
-      rounded-full
-      border-2
-      border-transparent
-      p-2
-      text-lg
-      text-white
-      !outline-none
-      hover:bg-zero_zero_HighHigh
-      focus:border-gray-500
-      dark:text-gray-200
-      dark:hover:border-gray-700
-      dark:hover:bg-gray-700
-      dark:hover:text-gray-200
-      dark:focus:border-gray-700
-      dark:focus:text-gray-200"
-      title={is_dark_theme ? "Toggle light mode" : "Toggle dark mode"}
+      className={cn(
+        "flex items-center justify-center rounded-full border-2 border-transparent p-2 text-lg text-white !outline-none",
+        "hover:bg-pikachu focus:border-gray-300",
+        "dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200",
+        "dark:focus:border-gray-700 dark:focus:text-gray-200"
+      )}
+      title={theme === "dark" ? "Toggle light mode" : ("Toggle dark" + " mode")}//TailwindSort having some issues...
     >
-      {is_dark_theme && <DarkThemeIcon />}
-      {!is_dark_theme && <LightThemeIcon />}
+      {theme === "dark" && <DarkThemeIcon />}
+      {theme === "light" && <LightThemeIcon />}
     </button>
   );
 }

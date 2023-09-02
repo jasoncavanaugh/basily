@@ -67,13 +67,13 @@ function getExpensesByDays() {
   return { status: "success", error: undefined, data: data };
 }
 export function use_expenses() {
-  // const expense_categories_query = api.router.get_categories.useQuery();
-  const expense_categories_query = getExpenseCategories();
+  const expense_categories_query = api.router.get_categories.useQuery();
+  // const expense_categories_query = getExpenseCategories();
   const api_utils = api.useContext();
 
-  // const expenses_by_days_query =
-  //   api.router.get_expenses_paginated_by_days.useQuery({ page: 0 });
-  const expenses_by_days_query = getExpensesByDays();
+  const expenses_by_days_query =
+    api.router.get_expenses_paginated_by_days.useQuery({ page: 0 });
+  // const expenses_by_days_query = getExpensesByDays();
 
   if (
     expense_categories_query.status === "loading" ||
@@ -161,8 +161,8 @@ export function use_expenses() {
       category_id_to_color,
     },
     invalidate_queries: () => {
-      // api_utils.router.get_categories.invalidate();
-      // api_utils.router.get_expenses_paginated_by_days.invalidate({ page: 0 });
+      api_utils.router.get_categories.invalidate();
+      api_utils.router.get_expenses_paginated_by_days.invalidate({ page: 0 });
     },
   } as const;
 }
