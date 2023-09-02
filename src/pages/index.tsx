@@ -4,7 +4,7 @@ import { Expense } from "@prisma/client";
 import { signIn, signOut, useSession } from "next-auth/react";
 
 import * as RadixPopover from "@radix-ui/react-popover";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "src/utils/api";
 import Modal from "src/components/Modal";
 import { BASE_COLORS, BaseColor } from "src/utils/colors";
@@ -14,6 +14,9 @@ import { ExpenseDataByDay, use_expenses } from "src/utils/useExpenses";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
 import { getServerAuthSession } from "src/server/auth";
 import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
+import { ThemeButton } from "src/components/ThemeButton";
+import { cn } from "src/utils/cn";
+import { useTheme } from "next-themes";
 
 //I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
@@ -25,7 +28,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 const Home: NextPage = () => {
   const session = useSession();
   const expense_data_query = use_expenses();
-
+  
   if (session.status === "loading") {
     return (
       <div className="flex h-[95vh] items-center justify-center p-1 md:p-4">
@@ -48,10 +51,12 @@ const Home: NextPage = () => {
   }
 
   return (
-    <div className="p-1 md:p-4">
+    <div>
+      <div className="bg-charmander dark:bg-khazix h-full p-1 md:p-4">
       <div className="flex flex-col-reverse items-end justify-end gap-2 px-1 pt-2 md:flex-row md:pt-0">
+        <ThemeButton />
         <button
-          className="rounded-full bg-togglPeach px-3 py-1 text-sm font-semibold text-white shadow-sm shadow-red-300 hover:brightness-110 md:px-5 md:text-lg"
+          className="bg-togglPeach rounded-full px-3 py-1 text-sm font-semibold text-white shadow-sm shadow-red-300 hover:brightness-110 md:px-5 md:text-lg"
           onClick={() => void signOut()}
         >
           Log Out
@@ -93,6 +98,7 @@ const Home: NextPage = () => {
       </ul>
       <AddNewExpenseButtonAndModal />
     </div>
+  </div>
   );
 };
 
@@ -111,19 +117,19 @@ function ChronologicalExpenseList({
   for (const dwe of expenses_by_day) {
     output.push(
       <li key={dwe.id} className="p-4">
-        <h1 className="inline rounded-lg bg-togglPeach p-2 font-bold text-white">
+        <h1 className="bg-togglPeach inline rounded-lg px-2 py-1 font-bold text-white md:p-2">
           {dwe.date_display}
         </h1>
         <div className="h-4" />
-        <ul className="flex flex-col gap-3 rounded-lg border p-4">
+        <ul className="bg-pikachu dark:bg-leblanc dark:shadow-leblanc flex flex-col gap-3 rounded-lg p-4 shadow-sm dark:shadow-sm">
           <ExpenseListForDay
             category_id_to_expenses_for_day={dwe.category_id_to_expenses}
             category_id_to_color={category_id_to_color}
             category_id_to_name={category_id_to_name}
           />
           <li className="flex justify-between">
-            <p className="font-semibold text-togglPeach">Total: </p>
-            <p className="font-semibold text-togglPeach">
+            <p className="text-togglPeach font-semibold">Total: </p>
+            <p className="text-togglPeach font-semibold">
               {cents_to_dollars_display(dwe.total_for_day)}
             </p>
           </li>
@@ -148,13 +154,14 @@ function ExpenseListForDay({
     const expense_list = category_id_to_expenses_for_day.get(category_id)!;
     const sum_of_expenses = expense_list.reduce((acc, e) => e.amount + acc, 0);
     const category_color = category_id_to_color.get(category_id)!;
+    const category_name = category_id_to_name.get(category_id);
     output.push(
       <li key={category_id}>
         <div className="flex justify-between">
           <h2
-            className={`rounded-lg ${TW_COLORS_MP["bg"][category_color][200]} px-2 py-1 font-bold ${TW_COLORS_MP["text"][category_color][700]}`}
+            className={`flex items-center rounded-lg ${TW_COLORS_MP["bg"][category_color][200]} px-2 text-sm font-bold md:py-1 md:text-base ${TW_COLORS_MP["text"][category_color][700]}`}
           >
-            {category_id_to_name.get(category_id)}
+            {category_name}
           </h2>
           <p className={`font-semibold text-togglPeach`}>
             {cents_to_dollars_display(sum_of_expenses)}
@@ -272,9 +279,8 @@ function extract_date_fields(date_str: string) {
   };
 }
 function get_today() {
-  return `${
-    new Date().getMonth() + 1
-  }/${new Date().getDate()}/${new Date().getFullYear()}`;
+  return `${new Date().getMonth() + 1
+    }/${new Date().getDate()}/${new Date().getFullYear()}`;
 }
 function AddNewExpenseButtonAndModal() {
   const [amount, set_amount] = useState("");
@@ -364,18 +370,32 @@ function AddNewExpenseButtonAndModal() {
         set_is_category_color_selection_disabled(false);
         set_color("pink");
       }}
-      className="left-1/2 top-1/3 flex w-[30rem] -translate-x-1/2 -translate-y-1/2 flex-col border-t-8 border-t-togglPeach px-5 py-3 lg:top-1/2 lg:px-8 lg:py-6"
+      className={cn("border-t-togglPeach dark:bg-leblanc left-1/2 top-1/3 flex w-[30rem] -translate-x-1/2 -translate-y-1/2",
+        "flex-col border-t-8 bg-pikachu px-5 py-3", 
+        "lg:top-1/2 lg:px-8 lg:py-6")}
       trigger={
         <button
           type="button"
-          className="fixed bottom-5 right-5 h-14 w-14 rounded-full bg-togglPeach text-3xl font-bold text-white md:bottom-16 md:right-16 lg:shadow-md lg:shadow-red-300 lg:transition-all lg:hover:-translate-y-1 lg:hover:shadow-lg lg:hover:shadow-red-300 lg:hover:brightness-110"
+          className={cn("bg-togglPeach fixed bottom-5 right-5 h-12 w-12 rounded-full p-0 shadow shadow-red-300 hover:cursor-pointer",
+            "md:bottom-14 md:right-14 md:h-14 md:w-14",
+            "lg:shadow-md lg:shadow-red-300 lg:transition-all lg:hover:-translate-y-0.5 lg:hover:shadow-lg lg:hover:shadow-red-300 lg:hover:brightness-110")}
           disabled={
             expense_categories_query.status === "loading" ||
             expense_categories_query.status === "error"
           }
           onClick={() => set_is_modal_open(true)}
         >
-          +
+          {/* https://tailwindcomponents.com/component/tailwind-css-fab-buttons */}
+          <svg
+            viewBox="0 0 20 20"
+            enableBackground="new 0 0 20 20"
+            className="inline-block h-6 w-6"
+          >
+            <path
+              fill="#FFFFFF"
+              d="M16,10c0,0.553-0.048,1-0.601,1H11v4.399C11,15.951,10.553,16,10,16c-0.553,0-1-0.049-1-0.601V11H4.601 C4.049,11,4,10.553,4,10c0-0.553,0.049-1,0.601-1H9V4.601C9,4.048,9.447,4,10,4c0.553,0,1,0.048,1,0.601V9h4.399 C15.952,9,16,9.447,16,10z"
+            />
+          </svg>
         </button>
       }
     >
@@ -385,12 +405,15 @@ function AddNewExpenseButtonAndModal() {
           handle_create_expense(expense_categories_query.data!);
         }}
       >
-        <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-slate-700">
+        <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-slate-700 dark:text-white">
           Add Expense
         </RadixModal.Title>
         <div className="h-1 lg:h-4" />
         <div className="w-full">
-          <label htmlFor="amount" className="block">
+          <label
+            htmlFor="amount"
+            className="block text-slate-700 dark:text-white"
+          >
             Amount
           </label>
           <div className="h-2" />
@@ -403,16 +426,16 @@ function AddNewExpenseButtonAndModal() {
               set_is_category_color_selection_disabled(false);
             }}
             value={amount}
-            className="w-full rounded border border-slate-600 px-2 py-1 focus:outline-slate-400"
+            className="w-full rounded border border-slate-400 px-2 py-1 focus:outline-slate-400"
             autoComplete="off"
             type="text"
           ></input>
           <div className="m-0 h-7">
             {amount.length > 0 && !is_valid_amount(amount) && (
-              <p className="text-sm text-red-600">Invalid amount</p>
+              <p className="text-sm text-red-500">Invalid amount</p>
             )}
           </div>
-          <label htmlFor="date" className="block">
+          <label htmlFor="date" className="block dark:text-white">
             Date
           </label>
           <div className="h-1" />
@@ -421,7 +444,7 @@ function AddNewExpenseButtonAndModal() {
             inputMode="text"
             value={date}
             onChange={(e) => set_date(e.target.value)}
-            className="w-full rounded border border-slate-600 px-2 py-1 focus:outline-slate-400"
+            className="w-full rounded border border-slate-400 px-2 py-1 focus:outline-slate-400"
             autoComplete="off"
             type="text"
           ></input>
@@ -431,7 +454,9 @@ function AddNewExpenseButtonAndModal() {
             )}
           </div>
           <div className="h-1" />
-          <label htmlFor="category">Category</label>
+          <label htmlFor="category" className="dark:text-white">
+            Category
+          </label>
           <div className="h-2" />
           <div className="flex items-center gap-3">
             <CategoryColorSelection
@@ -448,7 +473,7 @@ function AddNewExpenseButtonAndModal() {
                   set_is_dropdown_open(true);
                   set_is_category_color_selection_disabled(false);
                 }}
-                className="w-full grow rounded border border-slate-600 px-2 py-1 focus:outline-slate-400"
+                className="w-full grow rounded border border-slate-400 px-2 py-1 focus:outline-slate-400"
                 autoComplete="off"
                 type="text"
               ></input>
@@ -474,9 +499,8 @@ function AddNewExpenseButtonAndModal() {
                             }}
                           >
                             <div
-                              className={`${
-                                TW_COLORS_MP["bg"][exp.color][500]
-                              } h-4 w-4 rounded-full`}
+                              className={`${TW_COLORS_MP["bg"][exp.color][500]
+                                } h-4 w-4 rounded-full`}
                             />
                             <p className="">{exp.name}</p>
                           </li>
@@ -500,7 +524,7 @@ function AddNewExpenseButtonAndModal() {
         <div className="h-8" />
         <div className="flex justify-center gap-5">
           <button
-            className="rounded-full bg-togglBtnGray px-3 py-2 text-xs font-semibold text-white hover:brightness-110 lg:px-5 lg:py-3 lg:text-base lg:font-bold"
+            className="bg-togglBtnGray rounded-full px-3 py-2 text-xs font-semibold text-white hover:brightness-110 lg:px-5 lg:py-3 lg:text-base lg:font-bold"
             type="button"
             onClick={() => {
               set_is_modal_open(false);
@@ -509,11 +533,10 @@ function AddNewExpenseButtonAndModal() {
             Cancel
           </button>
           <button
-            className={`rounded-full border bg-togglPeach px-3 py-2 text-xs font-semibold text-white lg:px-5 lg:py-3 lg:text-base lg:font-bold ${
-              is_create_expense_button_disabled
-                ? "opacity-50"
-                : "hover:cursor-pointer hover:brightness-110"
-            }`}
+            className={`rounded-full border bg-togglPeach px-3 py-2 text-xs font-semibold text-white lg:px-5 lg:py-3 lg:text-base lg:font-bold ${is_create_expense_button_disabled
+              ? "opacity-50"
+              : "hover:cursor-pointer hover:brightness-110"
+              }`}
             type="submit"
             disabled={is_create_expense_button_disabled}
           >
@@ -550,21 +573,16 @@ function CategoryColorSelection({
     >
       <RadixPopover.Trigger asChild>
         <button
-          className={`h-4 w-4 shrink-0 rounded-full md:h-6 md:w-6 ${
-            cur_color !== ""
-              ? TW_COLORS_MP["bg"][cur_color][500]
-              : TW_COLORS_MP["bg"]["pink"][500]
-          } ${
-            disabled
-              ? "hover:cursor-not-allowed"
-              : "hover:cursor-pointer hover:brightness-110"
-          }`}
+          className={cn("h-4 w-4 shrink-0 rounded-full md:h-6 md:w-6", 
+            cur_color !== "" ? TW_COLORS_MP["bg"][cur_color][500] : TW_COLORS_MP["bg"]["pink"][500],
+            disabled ? "hover:cursor-not-allowed" : "hover:cursor-pointer hover:brightness-110")}
         ></button>
       </RadixPopover.Trigger>
       <RadixPopover.Portal>
         <RadixPopover.Content
           side="left"
-          className="z-30 flex flex-wrap rounded border border-slate-300 bg-white p-3 shadow-md md:h-[200px] md:w-[150px] md:flex-col md:gap-1"
+          className={cn("z-30 flex flex-wrap rounded-lg bg-bulbasaur dark:bg-shaco p-3 shadow-md",
+            "md:h-[200px] md:w-[150px] md:flex-col md:gap-1")}
           sideOffset={5}
         >
           {BASE_COLORS.map((option) => {
@@ -572,13 +590,11 @@ function CategoryColorSelection({
               <div
                 key={option}
                 onClick={() => on_select_color(option)}
-                className={`${
-                  TW_COLORS_MP["bg"][option][500]
-                } h-4 w-4 rounded-full border-2 ${
-                  cur_color === option
+                className={`${TW_COLORS_MP["bg"][option][500]
+                  } h-4 w-4 rounded-full border-2 ${cur_color === option
                     ? "border-slate-900 brightness-110"
                     : "border-white hover:cursor-pointer hover:border-slate-900 hover:brightness-110"
-                } md:h-6 md:w-6`}
+                  } md:h-6 md:w-6`}
               />
             );
           })}
