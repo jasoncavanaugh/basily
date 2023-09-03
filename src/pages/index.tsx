@@ -28,7 +28,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 const Home: NextPage = () => {
   const session = useSession();
   const expense_data_query = use_expenses();
-  
+
   if (session.status === "loading") {
     return (
       <div className="flex h-[95vh] items-center justify-center p-1 md:p-4">
@@ -41,7 +41,7 @@ const Home: NextPage = () => {
     return (
       <div className="flex h-[95vh] items-center justify-center p-1 md:p-4">
         <button
-          className="bg-squirtle dark:bg-rengar rounded-full px-6 py-2 text-3xl font-semibold text-white shadow-sm shadow-blue-300 hover:brightness-110"
+          className="rounded-full bg-squirtle px-6 py-2 text-3xl font-semibold text-white shadow-sm shadow-blue-300 hover:brightness-110 dark:bg-rengar"
           onClick={() => void signIn()}
         >
           Sign In
@@ -51,54 +51,55 @@ const Home: NextPage = () => {
   }
 
   return (
-    <div>
-      <div className="bg-charmander dark:bg-khazix h-full p-1 md:p-4">
-      <div className="flex items-center justify-end gap-2 lg:gap-4 px-1 pt-2 md:pt-0">
-        <ThemeButton />
-        <button
-          className="bg-squirtle dark:bg-rengar rounded-full px-3 py-1 text-sm font-semibold text-white shadow-sm shadow-blue-300 hover:brightness-110 md:px-5 md:text-lg"
-          onClick={() => void signOut()}
-        >
-          Log Out
-        </button>
-      </div>
-      <div className="h-2 md:h-4" />
-
-      <ul className="flex flex-col gap-4">
-        {expense_data_query.status === "loading" && (
-          <div className="flex h-[95vh] items-center justify-center">
-            <Spinner className="h-16 w-16 border-4 border-solid border-white lg:border-8" />
-          </div>
-        )}
-        {expense_data_query.status === "error" && (
-          <div className="flex h-[95vh] items-center justify-center">
-            <h1 className="text-white">
-              Uh oh, there was a problem loading your expenses.
-            </h1>
-          </div>
-        )}
-        {expense_data_query.status === "success" &&
-          expense_data_query.data.expenses.length === 0 && (
+    <div className="bg-charmander dark:bg-khazix">
+      <div className="h-full bg-charmander dark:bg-khazix md:p-4">
+        <div className="flex items-center justify-end gap-2 px-2 pt-2 md:pt-0 lg:gap-4">
+          <ThemeButton />
+          <button
+            className="rounded-full bg-squirtle px-3 py-1 text-sm font-semibold text-white shadow-sm shadow-blue-300 hover:brightness-110 dark:bg-rengar md:px-5 md:text-lg"
+            onClick={() => void signOut()}
+          >
+            Log Out
+          </button>
+        </div>
+        <div className="h-2 md:h-4" />
+        <ul className="flex flex-col gap-4">
+          {expense_data_query.status === "loading" && (
+            <div className="flex h-[95vh] items-center justify-center">
+              <Spinner className="h-16 w-16 border-4 border-solid border-white lg:border-8" />
+            </div>
+          )}
+          {expense_data_query.status === "error" && (
             <div className="flex h-[95vh] items-center justify-center">
               <h1 className="text-white">
-                Click the '+' button to add a new expense.
+                Uh oh, there was a problem loading your expenses.
               </h1>
             </div>
           )}
-        {expense_data_query.status === "success" &&
-          expense_data_query.data.expenses.length > 0 && (
-            <ChronologicalExpenseList
-              expenses_by_day={expense_data_query.data.expenses}
-              category_id_to_color={
-                expense_data_query.data.category_id_to_color
-              }
-              category_id_to_name={expense_data_query.data.category_id_to_name}
-            />
-          )}
-      </ul>
-      <AddNewExpenseButtonAndModal />
+          {expense_data_query.status === "success" &&
+            expense_data_query.data.expenses.length === 0 && (
+              <div className="flex h-[95vh] items-center justify-center">
+                <h1 className="text-white">
+                  Click the '+' button to add a new expense.
+                </h1>
+              </div>
+            )}
+          {expense_data_query.status === "success" &&
+            expense_data_query.data.expenses.length > 0 && (
+              <ChronologicalExpenseList
+                expenses_by_day={expense_data_query.data.expenses}
+                category_id_to_color={
+                  expense_data_query.data.category_id_to_color
+                }
+                category_id_to_name={
+                  expense_data_query.data.category_id_to_name
+                }
+              />
+            )}
+        </ul>
+        <AddNewExpenseButtonAndModal />
+      </div>
     </div>
-  </div>
   );
 };
 
@@ -116,20 +117,22 @@ function ChronologicalExpenseList({
   let output = [];
   for (const dwe of expenses_by_day) {
     output.push(
-      <li key={dwe.id} className="p-4">
-        <h1 className="bg-squirtle dark:bg-rengar inline rounded-lg px-2 py-1 font-bold text-white md:p-2">
+      <li key={dwe.id} className="px-3 py-4">
+        <h1 className="inline rounded-lg bg-squirtle px-2 py-1 font-bold text-white dark:bg-rengar md:p-2">
           {dwe.date_display}
         </h1>
         <div className="h-4" />
-        <ul className="bg-pikachu dark:bg-leblanc dark:shadow-leblanc flex flex-col gap-3 rounded-lg p-4 shadow-sm dark:shadow-sm">
+        <ul className="flex flex-col gap-3 rounded-lg bg-pikachu p-4 shadow-sm dark:bg-leblanc dark:shadow-sm dark:shadow-leblanc">
           <ExpenseListForDay
             category_id_to_expenses_for_day={dwe.category_id_to_expenses}
             category_id_to_color={category_id_to_color}
             category_id_to_name={category_id_to_name}
           />
           <li className="flex justify-between">
-            <p className="text-squirtle dark:text-rengar font-semibold">Total: </p>
-            <p className="text-squirtle dark:text-rengar font-semibold">
+            <p className="font-semibold text-squirtle dark:text-rengar">
+              Total:{" "}
+            </p>
+            <p className="font-semibold text-squirtle dark:text-rengar">
               {cents_to_dollars_display(dwe.total_for_day)}
             </p>
           </li>
@@ -163,7 +166,7 @@ function ExpenseListForDay({
           >
             {category_name}
           </h2>
-          <p className="text-squirtle dark:text-rengar font-semibold">
+          <p className="font-semibold text-squirtle dark:text-rengar">
             {cents_to_dollars_display(sum_of_expenses)}
           </p>
         </div>
@@ -214,7 +217,10 @@ function ExpenseButton({
           {cents_to_dollars_display(expense.amount)}
         </li>
       }
-      className="left-1/2 top-1/2 flex w-[20rem] -translate-x-1/2 -translate-y-1/2 flex-col border-t-8 border-t-red-500 px-5 py-3 lg:top-1/2 lg:w-[30rem] lg:px-8 lg:py-6"
+      className={cn(
+        "fixed left-1/2 top-1/2 flex w-full -translate-x-1/2 -translate-y-1/2 flex-col rounded bg-pikachu dark:bg-leblanc",
+        "border-t-8 border-t-red-500 px-5 py-3 md:rounded-lg lg:top-1/2 lg:w-[30rem] lg:px-8 lg:py-6"
+      )}
     >
       <form
         onSubmit={(e) => {
@@ -222,7 +228,7 @@ function ExpenseButton({
           delete_expense.mutate({ id: expense.id });
         }}
       >
-        <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-slate-700">
+        <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-slate-700 dark:text-white">
           Delete Expense
         </RadixModal.Title>
         <div className="h-1 lg:h-4" />
@@ -279,11 +285,13 @@ function extract_date_fields(date_str: string) {
   };
 }
 function get_today() {
-  return `${new Date().getMonth() + 1
-    }/${new Date().getDate()}/${new Date().getFullYear()}`;
+  return `${
+    new Date().getMonth() + 1
+  }/${new Date().getDate()}/${new Date().getFullYear()}`;
 }
 
-const CATEGORY_SELECTION_HOVER_CLASSES = "hover:bg-squirtle_light hover:cursor-pointer hover:bg-opacity-20";
+const CATEGORY_SELECTION_HOVER_CLASSES =
+  "hover:bg-squirtle_light hover:cursor-pointer hover:bg-opacity-20";
 function AddNewExpenseButtonAndModal() {
   const [amount, set_amount] = useState("");
   const [is_modal_open, set_is_modal_open] = useState(false);
@@ -372,15 +380,21 @@ function AddNewExpenseButtonAndModal() {
         set_is_category_color_selection_disabled(false);
         set_color("pink");
       }}
-      className={cn("border-t-squirtle dark:border-t-rengar dark:bg-leblanc left-1/2 top-1/3 flex w-[30rem] -translate-x-1/2 -translate-y-1/2",
-        "bg-pikachu flex-col border-t-8 px-5 py-3", 
-        "lg:top-1/2 lg:px-8 lg:py-6")}
+      className={cn(
+        "fixed left-1/2 top-0 w-full -translate-x-1/2 rounded border-t-8 border-t-squirtle bg-pikachu dark:border-t-rengar dark:bg-leblanc",
+        "p-4 md:top-1/2 md:w-[40rem] md:-translate-y-1/2 md:rounded-lg lg:p-8"
+      )}
+      // className={cn("fixed flex border-t-squirtle dark:border-t-rengar dark:bg-leblanc left-1/2 top-1/3 flex w-[30rem] -translate-x-1/2 -translate-y-1/2",
+      //   "bg-pikachu flex-col border-t-8 px-5 py-3",
+      //   "lg:top-1/2 lg:px-8 lg:py-6")}
       trigger={
         <button
           type="button"
-          className={cn("bg-squirtle dark:bg-rengar fixed bottom-5 right-5 h-12 w-12 rounded-full p-0 shadow shadow-blue-300 hover:cursor-pointer",
+          className={cn(
+            "fixed bottom-5 right-5 h-12 w-12 rounded-full bg-squirtle p-0 shadow shadow-blue-300 hover:cursor-pointer dark:bg-rengar",
             "md:bottom-14 md:right-14 md:h-14 md:w-14",
-            "lg:shadow-md lg:shadow-blue-300 lg:transition-all lg:hover:-translate-y-0.5 lg:hover:shadow-lg lg:hover:shadow-blue-300 lg:hover:brightness-110")}
+            "lg:shadow-md lg:shadow-blue-300 lg:transition-all lg:hover:-translate-y-0.5 lg:hover:shadow-lg lg:hover:shadow-blue-300 lg:hover:brightness-110"
+          )}
           disabled={
             expense_categories_query.status === "loading" ||
             expense_categories_query.status === "error"
@@ -481,7 +495,7 @@ function AddNewExpenseButtonAndModal() {
               ></input>
               <div className="relative m-0 h-0 p-0">
                 {category_text.length > 0 && is_dropdown_open && (
-                  <ul className="dark:bg-shaco absolute z-20 flex max-h-[200px] w-full flex-col gap-2 overflow-y-scroll rounded border bg-white p-3">
+                  <ul className="absolute z-20 flex max-h-[200px] w-full flex-col gap-2 overflow-y-scroll rounded border bg-white p-3 dark:bg-shaco">
                     {expense_categories_query.data
                       ?.filter(
                         (cat) =>
@@ -492,8 +506,10 @@ function AddNewExpenseButtonAndModal() {
                         return (
                           <li
                             key={exp.id}
-                            className={cn("border-squirtle_light flex items-center gap-3 rounded border px-3 py-2 dark:border-violet-300", 
-                            CATEGORY_SELECTION_HOVER_CLASSES)}
+                            className={cn(
+                              "flex items-center gap-3 rounded border border-squirtle_light px-3 py-2 dark:border-violet-300",
+                              CATEGORY_SELECTION_HOVER_CLASSES
+                            )}
                             onClick={() => {
                               set_category_text(exp.name);
                               set_color(exp.color);
@@ -502,8 +518,9 @@ function AddNewExpenseButtonAndModal() {
                             }}
                           >
                             <div
-                              className={`${TW_COLORS_MP["bg"][exp.color][500]
-                                } h-4 w-4 rounded-full`}
+                              className={`${
+                                TW_COLORS_MP["bg"][exp.color][500]
+                              } h-4 w-4 rounded-full`}
                             />
                             <p className="">{exp.name}</p>
                           </li>
@@ -511,7 +528,10 @@ function AddNewExpenseButtonAndModal() {
                       })}
                     {!does_category_exist && category_text.length > 0 && (
                       <li
-                        className={cn("rounded p-2", CATEGORY_SELECTION_HOVER_CLASSES)}
+                        className={cn(
+                          "rounded p-2",
+                          CATEGORY_SELECTION_HOVER_CLASSES
+                        )}
                         onClick={() => set_is_dropdown_open(false)}
                       >
                         <span>+</span>
@@ -527,7 +547,7 @@ function AddNewExpenseButtonAndModal() {
         <div className="h-8" />
         <div className="flex justify-center gap-5">
           <button
-            className="rounded-full bg-slate-500 px-3 py-2 text-xs font-semibold text-white hover:brightness-110 lg:px-5 lg:py-3 lg:text-base lg:font-bold"
+            className="h-[2rem] w-[4.5rem] rounded-full bg-slate-500 text-xs font-semibold text-white hover:brightness-110 lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
             type="button"
             onClick={() => {
               set_is_modal_open(false);
@@ -536,21 +556,19 @@ function AddNewExpenseButtonAndModal() {
             Cancel
           </button>
           <button
-            className={`rounded-full border bg-squirtle dark:bg-rengar px-3 py-2 text-xs font-semibold text-white lg:px-5 lg:py-3 lg:text-base lg:font-bold ${is_create_expense_button_disabled
-              ? "opacity-50"
-              : "hover:cursor-pointer hover:brightness-110"
-              }`}
+            className={cn(
+              "flex w-[4.5rem] items-center justify-center rounded-full border bg-squirtle text-xs font-semibold text-white dark:bg-rengar lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold",
+              is_create_expense_button_disabled
+                ? "opacity-50"
+                : "hover:cursor-pointer hover:brightness-110"
+            )}
             type="submit"
             disabled={is_create_expense_button_disabled}
           >
-            Create
-            {/*
-            {create_habit.status === "loading" && (
-              <Spinner className="mx-[2.1rem] h-4 w-4 border-2 border-solid border-white lg:mx-[3.1rem] lg:my-1" />
+            {create_expense.status !== "loading" && "Create"}
+            {create_expense.status === "loading" && (
+              <Spinner className="h-4 w-4 border-2 border-solid border-white lg:h-5 lg:w-5" />
             )}
-
-            {create_habit.status !== "loading" && "Create Habit"}
-            */}
           </button>
         </div>
       </form>
@@ -576,16 +594,24 @@ function CategoryColorSelection({
     >
       <RadixPopover.Trigger asChild>
         <button
-          className={cn("h-4 w-4 shrink-0 rounded-full md:h-6 md:w-6", 
-            cur_color !== "" ? TW_COLORS_MP["bg"][cur_color][500] : TW_COLORS_MP["bg"]["pink"][500],
-            disabled ? "hover:cursor-not-allowed" : "hover:cursor-pointer hover:brightness-110")}
+          className={cn(
+            "h-4 w-4 shrink-0 rounded-full md:h-6 md:w-6",
+            cur_color !== ""
+              ? TW_COLORS_MP["bg"][cur_color][500]
+              : TW_COLORS_MP["bg"]["pink"][500],
+            disabled
+              ? "hover:cursor-not-allowed"
+              : "hover:cursor-pointer hover:brightness-110"
+          )}
         ></button>
       </RadixPopover.Trigger>
       <RadixPopover.Portal>
         <RadixPopover.Content
           side="left"
-          className={cn("bg-bulbasaur dark:bg-shaco z-30 flex flex-wrap rounded-lg p-3 shadow-md",
-            "md:h-[200px] md:w-[150px] md:flex-col md:gap-1")}
+          className={cn(
+            "z-30 flex flex-wrap rounded-lg bg-bulbasaur p-3 shadow-md dark:bg-shaco",
+            "md:h-[200px] md:w-[150px] md:flex-col md:gap-1"
+          )}
           sideOffset={5}
         >
           {BASE_COLORS.map((option) => {
@@ -593,11 +619,13 @@ function CategoryColorSelection({
               <div
                 key={option}
                 onClick={() => on_select_color(option)}
-                className={`${TW_COLORS_MP["bg"][option][500]
-                  } h-4 w-4 rounded-full border-2 ${cur_color === option
+                className={`${
+                  TW_COLORS_MP["bg"][option][500]
+                } h-4 w-4 rounded-full border-2 ${
+                  cur_color === option
                     ? "border-slate-900 brightness-110"
                     : "border-white hover:cursor-pointer hover:border-slate-900 hover:brightness-110"
-                  } md:h-6 md:w-6`}
+                } md:h-6 md:w-6`}
               />
             );
           })}

@@ -1,7 +1,12 @@
+import { cn } from "src/utils/cn";
+
 export function Spinner({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`animate-spin rounded-full border-t-transparent ${className}`}
+      className={cn(
+        "animate-spin rounded-full border-t-transparent",
+        className
+      )}
     />
   );
 }

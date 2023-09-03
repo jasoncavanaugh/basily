@@ -56,7 +56,7 @@ export const router = createTRPCRouter({
           expenses: true,
         },
         skip: input.page * _NUMBER_OF_ROWS_PER_PAGE,
-        take: - _NUMBER_OF_ROWS_PER_PAGE,
+        take: -_NUMBER_OF_ROWS_PER_PAGE,
       });
     }),
   get_expenses_over_date_range: protectedProcedure

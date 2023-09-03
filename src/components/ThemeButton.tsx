@@ -5,7 +5,7 @@ import { cn } from "src/utils/cn";
 //I do not understand how this is interoping with Taiwind... I am not setting the "dark" attribute anywhere in my HTML tree
 export function ThemeButton() {
   const { theme, setTheme } = useTheme();
-  
+
   //Honestly, this stuff is ridiculous imo. How is this the official way to do things??
   const [is_mounted, set_is_mounted] = useState(false);
   useEffect(() => {
@@ -26,7 +26,7 @@ export function ThemeButton() {
         "dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200",
         "dark:focus:border-gray-700 dark:focus:text-gray-200"
       )}
-      title={theme === "dark" ? "Toggle light mode" : ("Toggle dark" + " mode")}//TailwindSort having some issues...
+      title={theme === "dark" ? "Toggle light mode" : "Toggle dark" + " mode"} //TailwindSort having some issues...
     >
       {theme === "dark" && <DarkThemeIcon />}
       {theme === "light" && <LightThemeIcon />}
