@@ -41,7 +41,7 @@ const Home: NextPage = () => {
     return (
       <div className="flex h-[95vh] items-center justify-center p-1 md:p-4">
         <button
-          className="rounded-full bg-togglPeach px-6 py-2 text-3xl font-semibold text-white shadow-sm shadow-red-300 hover:brightness-110"
+          className="bg-squirtle dark:bg-rengar rounded-full px-6 py-2 text-3xl font-semibold text-white shadow-sm shadow-blue-300 hover:brightness-110"
           onClick={() => void signIn()}
         >
           Sign In
@@ -53,10 +53,10 @@ const Home: NextPage = () => {
   return (
     <div>
       <div className="bg-charmander dark:bg-khazix h-full p-1 md:p-4">
-      <div className="flex flex-col-reverse items-end justify-end gap-2 px-1 pt-2 md:flex-row md:pt-0">
+      <div className="flex items-center justify-end gap-2 lg:gap-4 px-1 pt-2 md:pt-0">
         <ThemeButton />
         <button
-          className="bg-togglPeach rounded-full px-3 py-1 text-sm font-semibold text-white shadow-sm shadow-red-300 hover:brightness-110 md:px-5 md:text-lg"
+          className="bg-squirtle dark:bg-rengar rounded-full px-3 py-1 text-sm font-semibold text-white shadow-sm shadow-blue-300 hover:brightness-110 md:px-5 md:text-lg"
           onClick={() => void signOut()}
         >
           Log Out
@@ -117,7 +117,7 @@ function ChronologicalExpenseList({
   for (const dwe of expenses_by_day) {
     output.push(
       <li key={dwe.id} className="p-4">
-        <h1 className="bg-togglPeach inline rounded-lg px-2 py-1 font-bold text-white md:p-2">
+        <h1 className="bg-squirtle dark:bg-rengar inline rounded-lg px-2 py-1 font-bold text-white md:p-2">
           {dwe.date_display}
         </h1>
         <div className="h-4" />
@@ -128,8 +128,8 @@ function ChronologicalExpenseList({
             category_id_to_name={category_id_to_name}
           />
           <li className="flex justify-between">
-            <p className="text-togglPeach font-semibold">Total: </p>
-            <p className="text-togglPeach font-semibold">
+            <p className="text-squirtle dark:text-rengar font-semibold">Total: </p>
+            <p className="text-squirtle dark:text-rengar font-semibold">
               {cents_to_dollars_display(dwe.total_for_day)}
             </p>
           </li>
@@ -163,7 +163,7 @@ function ExpenseListForDay({
           >
             {category_name}
           </h2>
-          <p className={`font-semibold text-togglPeach`}>
+          <p className="text-squirtle dark:text-rengar font-semibold">
             {cents_to_dollars_display(sum_of_expenses)}
           </p>
         </div>
@@ -282,6 +282,8 @@ function get_today() {
   return `${new Date().getMonth() + 1
     }/${new Date().getDate()}/${new Date().getFullYear()}`;
 }
+
+const CATEGORY_SELECTION_HOVER_CLASSES = "hover:bg-squirtle_light hover:cursor-pointer hover:bg-opacity-20";
 function AddNewExpenseButtonAndModal() {
   const [amount, set_amount] = useState("");
   const [is_modal_open, set_is_modal_open] = useState(false);
@@ -370,15 +372,15 @@ function AddNewExpenseButtonAndModal() {
         set_is_category_color_selection_disabled(false);
         set_color("pink");
       }}
-      className={cn("border-t-togglPeach dark:bg-leblanc left-1/2 top-1/3 flex w-[30rem] -translate-x-1/2 -translate-y-1/2",
-        "flex-col border-t-8 bg-pikachu px-5 py-3", 
+      className={cn("border-t-squirtle dark:border-t-rengar dark:bg-leblanc left-1/2 top-1/3 flex w-[30rem] -translate-x-1/2 -translate-y-1/2",
+        "bg-pikachu flex-col border-t-8 px-5 py-3", 
         "lg:top-1/2 lg:px-8 lg:py-6")}
       trigger={
         <button
           type="button"
-          className={cn("bg-togglPeach fixed bottom-5 right-5 h-12 w-12 rounded-full p-0 shadow shadow-red-300 hover:cursor-pointer",
+          className={cn("bg-squirtle dark:bg-rengar fixed bottom-5 right-5 h-12 w-12 rounded-full p-0 shadow shadow-blue-300 hover:cursor-pointer",
             "md:bottom-14 md:right-14 md:h-14 md:w-14",
-            "lg:shadow-md lg:shadow-red-300 lg:transition-all lg:hover:-translate-y-0.5 lg:hover:shadow-lg lg:hover:shadow-red-300 lg:hover:brightness-110")}
+            "lg:shadow-md lg:shadow-blue-300 lg:transition-all lg:hover:-translate-y-0.5 lg:hover:shadow-lg lg:hover:shadow-blue-300 lg:hover:brightness-110")}
           disabled={
             expense_categories_query.status === "loading" ||
             expense_categories_query.status === "error"
@@ -479,7 +481,7 @@ function AddNewExpenseButtonAndModal() {
               ></input>
               <div className="relative m-0 h-0 p-0">
                 {category_text.length > 0 && is_dropdown_open && (
-                  <ul className="absolute z-20 flex max-h-[200px] w-full flex-col gap-2 overflow-y-scroll rounded border bg-white p-3">
+                  <ul className="dark:bg-shaco absolute z-20 flex max-h-[200px] w-full flex-col gap-2 overflow-y-scroll rounded border bg-white p-3">
                     {expense_categories_query.data
                       ?.filter(
                         (cat) =>
@@ -490,7 +492,8 @@ function AddNewExpenseButtonAndModal() {
                         return (
                           <li
                             key={exp.id}
-                            className="flex items-center gap-3 rounded border border-purple-300 px-3 py-2 hover:cursor-pointer hover:bg-purple-100"
+                            className={cn("border-squirtle_light flex items-center gap-3 rounded border px-3 py-2 dark:border-violet-300", 
+                            CATEGORY_SELECTION_HOVER_CLASSES)}
                             onClick={() => {
                               set_category_text(exp.name);
                               set_color(exp.color);
@@ -508,7 +511,7 @@ function AddNewExpenseButtonAndModal() {
                       })}
                     {!does_category_exist && category_text.length > 0 && (
                       <li
-                        className="rounded p-2 hover:cursor-pointer hover:bg-purple-100"
+                        className={cn("rounded p-2", CATEGORY_SELECTION_HOVER_CLASSES)}
                         onClick={() => set_is_dropdown_open(false)}
                       >
                         <span>+</span>
@@ -524,7 +527,7 @@ function AddNewExpenseButtonAndModal() {
         <div className="h-8" />
         <div className="flex justify-center gap-5">
           <button
-            className="bg-togglBtnGray rounded-full px-3 py-2 text-xs font-semibold text-white hover:brightness-110 lg:px-5 lg:py-3 lg:text-base lg:font-bold"
+            className="rounded-full bg-slate-500 px-3 py-2 text-xs font-semibold text-white hover:brightness-110 lg:px-5 lg:py-3 lg:text-base lg:font-bold"
             type="button"
             onClick={() => {
               set_is_modal_open(false);
@@ -533,7 +536,7 @@ function AddNewExpenseButtonAndModal() {
             Cancel
           </button>
           <button
-            className={`rounded-full border bg-togglPeach px-3 py-2 text-xs font-semibold text-white lg:px-5 lg:py-3 lg:text-base lg:font-bold ${is_create_expense_button_disabled
+            className={`rounded-full border bg-squirtle dark:bg-rengar px-3 py-2 text-xs font-semibold text-white lg:px-5 lg:py-3 lg:text-base lg:font-bold ${is_create_expense_button_disabled
               ? "opacity-50"
               : "hover:cursor-pointer hover:brightness-110"
               }`}
@@ -581,7 +584,7 @@ function CategoryColorSelection({
       <RadixPopover.Portal>
         <RadixPopover.Content
           side="left"
-          className={cn("z-30 flex flex-wrap rounded-lg bg-bulbasaur dark:bg-shaco p-3 shadow-md",
+          className={cn("bg-bulbasaur dark:bg-shaco z-30 flex flex-wrap rounded-lg p-3 shadow-md",
             "md:h-[200px] md:w-[150px] md:flex-col md:gap-1")}
           sideOffset={5}
         >
