@@ -238,18 +238,18 @@ function ExpenseButton({
         <div className="h-8" />
         <div className="flex justify-center gap-5">
           <button
-            className="h-[2rem] w-[4.5rem] rounded-full bg-slate-500 text-xs font-semibold text-white hover:brightness-110 lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
+            className="rounded-full bg-slate-500 px-5 py-3 text-xs font-semibold text-white outline-none hover:brightness-110 lg:text-base lg:font-bold"
             type="button"
             onClick={() => set_is_modal_open(false)}
           >
             Cancel
           </button>
           <button
-            className={cn("flex w-[4.5rem] items-center justify-center rounded-full bg-red-500 text-xs font-semibold text-white lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold")}
+            className="rounded-full bg-red-500 px-5 py-3 text-xs font-semibold text-white outline-none hover:brightness-110 lg:text-base lg:font-bold"
             type="submit"
           >
             {delete_expense.status === "loading" && (
-              <Spinner className="h-4 w-4 border-2 border-solid border-white lg:h-5 lg:w-5" />
+              <Spinner className="h-4 w-4 border-2 border-solid border-white lg:mx-[1.33rem] lg:my-1" />
             )}
             {delete_expense.status !== "loading" && "Delete"}
           </button>
@@ -557,7 +557,7 @@ function AddNewExpenseButtonAndModal() {
           </button>
           <button
             className={cn(
-              "flex w-[4.5rem] items-center justify-center rounded-full bg-squirtle text-xs font-semibold text-white dark:bg-rengar lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold",
+              "flex w-[4.5rem] items-center justify-center rounded-full border bg-squirtle text-xs font-semibold text-white dark:bg-rengar lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold",
               is_create_expense_button_disabled
                 ? "opacity-50"
                 : "hover:cursor-pointer hover:brightness-110"
