@@ -14,7 +14,7 @@ export default {
         bulbasaur: "hsla(40, 50%, 98%, 1)",
         //dark -> League of Legends
         rengar: "hsl(200, 80%, 60%)", //<- Primary blue color for dark theme
-        rengar_light: "hsl(200, 80%, 90%)", //<- Primary blue color for dark theme
+        rengar_light: "hsl(200, 80%, 80%)", 
         khazix: "hsla(277, 35%, 7%, 1)",
         leblanc: "hsla(277, 20%, 17%, 1)",
         shaco: "hsla(277, 33%, 25%, 1)",
