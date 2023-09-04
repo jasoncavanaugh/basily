@@ -30,7 +30,7 @@ export const Modal: React.FunctionComponent<ModalProps> = ({
         />
         <RadixModal.Content
           className={cn(
-            "z-20 shadow-lg duration-200",
+            "z-20 shadow-lg duration-500",
             "data-[state=open]:animate-in",
             "data-[state=closed]:animate-out",
             "data-[state=closed]:fade-out-0",
