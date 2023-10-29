@@ -17,6 +17,13 @@ import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
 import { ThemeButton } from "src/components/ThemeButton";
 import { cn } from "src/utils/cn";
 import { useTheme } from "next-themes";
+import { VictoryContainer, VictoryLabel, VictoryPie } from "victory";
+import { addDays, format } from "date-fns";
+import { DateRange } from "react-day-picker";
+import { Popover, PopoverContent, PopoverTrigger } from "src/components/shadcn/Popover";
+import { Button } from "src/components/shadcn/Button";
+import { CalendarIcon } from "lucide-react";
+import { Calendar } from "src/components/shadcn/Calendar";
 
 //I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
@@ -27,12 +34,13 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 };
 const Home: NextPage = () => {
   const session = useSession();
-  const expense_data_query = use_expenses();
+
+  const [page, set_page] = useState<"expenses" | "visualize">("expenses");
 
   if (session.status === "loading") {
     return (
-      <div className="flex h-[95vh] items-center justify-center p-1 md:p-4">
-        <Spinner className="h-16 w-16 border-4 border-solid border-white lg:border-8" />
+      <div className="bg-charmander dark:bg-khazix flex h-screen items-center justify-center p-1 md:p-4">
+        <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar_light dark:border-rengar lg:border-8" />
       </div>
     );
   }
@@ -53,50 +61,29 @@ const Home: NextPage = () => {
   return (
     <div className="bg-charmander dark:bg-khazix">
       <div className="h-full bg-charmander dark:bg-khazix md:p-4">
-        <div className="flex items-center justify-end gap-2 px-2 pt-2 md:pt-0 lg:gap-4">
-          <ThemeButton />
-          <button
-            className="rounded-full bg-squirtle px-3 py-1 text-sm font-semibold text-white shadow-sm shadow-blue-300 hover:brightness-110 dark:bg-rengar md:px-5 md:text-lg"
-            onClick={() => void signOut()}
+        <div className="flex justify-between items-center px-2 pt-2 md:pt-0">
+          <button className={cn("rounded-full",
+            "text-squirtle w-[6rem] py-1 text-sm font-semibold border border-squirtle dark:border-transparent",
+            "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
+            BUTTON_HOVER_CLASSES
+          )}
+            onClick={() => set_page(page === "visualize" ? "expenses" : "visualize")}
           >
-            Log Out
+            {page === "visualize" ? "Expenses" : "Visualize"}
           </button>
+          <div className="flex items-center justify-end gap-2 lg:gap-4">
+            <ThemeButton />
+            <button
+              className="rounded-full bg-squirtle px-3 py-1 text-sm font-semibold text-white shadow-sm shadow-blue-300 hover:brightness-110 dark:bg-rengar md:px-5 md:text-lg"
+              onClick={() => void signOut()}
+            >
+              Log Out
+            </button>
+          </div>
         </div>
         <div className="h-2 md:h-4" />
-        <ul className="flex flex-col gap-4">
-          {expense_data_query.status === "loading" && (
-            <div className="flex h-[95vh] items-center justify-center">
-              <Spinner className="h-16 w-16 border-4 border-solid border-white lg:border-8" />
-            </div>
-          )}
-          {expense_data_query.status === "error" && (
-            <div className="flex h-[95vh] items-center justify-center">
-              <h1 className="text-white">
-                Uh oh, there was a problem loading your expenses.
-              </h1>
-            </div>
-          )}
-          {expense_data_query.status === "success" &&
-            expense_data_query.data.expenses.length === 0 && (
-              <div className="flex h-[95vh] items-center justify-center">
-                <h1 className="text-white">
-                  Click the '+' button to add a new expense.
-                </h1>
-              </div>
-            )}
-          {expense_data_query.status === "success" &&
-            expense_data_query.data.expenses.length > 0 && (
-              <ChronologicalExpenseList
-                expenses_by_day={expense_data_query.data.expenses}
-                category_id_to_color={
-                  expense_data_query.data.category_id_to_color
-                }
-                category_id_to_name={
-                  expense_data_query.data.category_id_to_name
-                }
-              />
-            )}
-        </ul>
+        {page === "expenses" && <Expenses />}
+        {page === "visualize" && <Visualize />}
         <AddNewExpenseButtonAndModal />
       </div>
     </div>
@@ -104,6 +91,46 @@ const Home: NextPage = () => {
 };
 
 export default Home;
+
+function Expenses() {
+  const expense_data_query = use_expenses();
+  return (
+    <ul className="flex flex-col gap-4">
+      {expense_data_query.status === "loading" && (
+        <div className="flex h-[95vh] items-center justify-center">
+          <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar_light dark:border-rengar lg:border-8" />
+        </div>
+      )}
+      {expense_data_query.status === "error" && (
+        <div className="flex h-[95vh] items-center justify-center">
+          <h1 className="text-white">
+            Uh oh, there was a problem loading your expenses.
+          </h1>
+        </div>
+      )}
+      {expense_data_query.status === "success" &&
+        expense_data_query.data.expenses.length === 0 && (
+          <div className="flex h-[95vh] items-center justify-center">
+            <h1 className="text-white">
+              Click the '+' button to add a new expense.
+            </h1>
+          </div>
+        )}
+      {expense_data_query.status === "success" &&
+        expense_data_query.data.expenses.length > 0 && (
+          <ChronologicalExpenseList
+            expenses_by_day={expense_data_query.data.expenses}
+            category_id_to_color={
+              expense_data_query.data.category_id_to_color
+            }
+            category_id_to_name={
+              expense_data_query.data.category_id_to_name
+            }
+          />
+        )}
+    </ul>
+  );
+}
 
 function ChronologicalExpenseList({
   expenses_by_day,
@@ -285,12 +312,11 @@ function extract_date_fields(date_str: string) {
   };
 }
 function get_today() {
-  return `${
-    new Date().getMonth() + 1
-  }/${new Date().getDate()}/${new Date().getFullYear()}`;
+  return `${new Date().getMonth() + 1
+    }/${new Date().getDate()}/${new Date().getFullYear()}`;
 }
 
-const CATEGORY_SELECTION_HOVER_CLASSES =
+const BUTTON_HOVER_CLASSES =
   "hover:bg-squirtle_light hover:cursor-pointer hover:bg-opacity-20";
 function AddNewExpenseButtonAndModal() {
   const [amount, set_amount] = useState("");
@@ -508,7 +534,7 @@ function AddNewExpenseButtonAndModal() {
                             key={exp.id}
                             className={cn(
                               "flex items-center gap-3 rounded border border-squirtle_light px-3 py-2 dark:border-violet-300",
-                              CATEGORY_SELECTION_HOVER_CLASSES
+                              BUTTON_HOVER_CLASSES
                             )}
                             onClick={() => {
                               set_category_text(exp.name);
@@ -518,9 +544,8 @@ function AddNewExpenseButtonAndModal() {
                             }}
                           >
                             <div
-                              className={`${
-                                TW_COLORS_MP["bg"][exp.color][500]
-                              } h-4 w-4 rounded-full`}
+                              className={`${TW_COLORS_MP["bg"][exp.color][500]
+                                } h-4 w-4 rounded-full`}
                             />
                             <p className="">{exp.name}</p>
                           </li>
@@ -530,7 +555,7 @@ function AddNewExpenseButtonAndModal() {
                       <li
                         className={cn(
                           "rounded p-2",
-                          CATEGORY_SELECTION_HOVER_CLASSES
+                          BUTTON_HOVER_CLASSES
                         )}
                         onClick={() => set_is_dropdown_open(false)}
                       >
@@ -619,13 +644,11 @@ function CategoryColorSelection({
               <div
                 key={option}
                 onClick={() => on_select_color(option)}
-                className={`${
-                  TW_COLORS_MP["bg"][option][500]
-                } h-4 w-4 rounded-full border-2 ${
-                  cur_color === option
+                className={`${TW_COLORS_MP["bg"][option][500]
+                  } h-4 w-4 rounded-full border-2 ${cur_color === option
                     ? "border-slate-900 brightness-110"
                     : "border-white hover:cursor-pointer hover:border-slate-900 hover:brightness-110"
-                } md:h-6 md:w-6`}
+                  } md:h-6 md:w-6`}
               />
             );
           })}
@@ -638,4 +661,113 @@ function CategoryColorSelection({
       </RadixPopover.Portal>
     </RadixPopover.Root>
   );
+}
+
+function useWindowDimensions() {
+  const [windowDimensions, setWindowDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
+
+  useEffect(() => {
+    function handleResize() {
+      setWindowDimensions({ width: window.innerWidth, height: window.innerHeight });
+    }
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return windowDimensions;
+}
+
+const data = [
+  { quarter: 1, earnings: 13000 },
+  { quarter: 2, earnings: 16500 },
+  { quarter: 3, earnings: 14250 },
+  { quarter: 4, earnings: 19000 }
+];
+function Visualize() {
+  //const expense_data_query = use_expenses();
+  const { width, height } = useWindowDimensions();
+  const { theme } = useTheme();
+  return (
+    <div className="flex flex-col gap-4">
+      <DatePickerWithRange />
+      <div className="flex h-[95vh] items-center justify-center">
+        <VictoryPie
+          padAngle={5}
+          innerRadius={70}
+          style={{ labels: { fontSize: 15, fill: theme === "dark" ? "white" : "black" } }}
+          radius={100}
+          colorScale={["tomato", "orange", "gold", "cyan", "navy" ]}
+          // animate={{
+          //   animationWhitelist: ["style", "data", "size"], // Try removing "size"
+          //   onExit: {
+          //     duration: 500,
+          //     before: () => ({ opacity: 0.3, _y: 0 })
+          //   },
+          //   onEnter: {
+          //     duration: 500,
+          //     before: () => ({ opacity: 0.3, _y: 0 }),
+          //     after: (datum) => ({ opacity: 1, _y: datum._y })
+          //   }
+          // }}
+          containerComponent={<VictoryContainer className="" responsive={true} />}
+          labelComponent={<VictoryLabel className="border px-4 bg-red-700"  />}
+          data={[
+            { x: "Cats", y: 75, label: "jason" },
+            { x: "Dogs", y: 5, label: "maureen" },
+            { x: "Birds", y: 20, label: "jeremy" }
+          ]}
+        />
+      </div>
+    </div>
+  );
+}
+
+function DatePickerWithRange() {
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: new Date(2022, 0, 20),
+    to: addDays(new Date(2022, 0, 20), 20),
+  })
+ 
+  const className =  "";
+  return (
+    <div className={cn("grid gap-2", className)}>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            id="date"
+            variant={"outline"}
+            className={cn(
+              "w-[300px] justify-start text-left font-normal",
+              !date && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {date?.from ? (
+              date.to ? (
+                <>
+                  {format(date.from, "LLL dd, y")} -{" "}
+                  {format(date.to, "LLL dd, y")}
+                </>
+              ) : (
+                format(date.from, "LLL dd, y")
+              )
+            ) : (
+              <span>Pick a date</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            initialFocus
+            mode="range"
+            defaultMonth={date?.from}
+            selected={date}
+            onSelect={setDate}
+            numberOfMonths={2}
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  )
 }
