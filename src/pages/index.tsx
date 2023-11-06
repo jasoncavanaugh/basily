@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { api } from "src/utils/api";
 import Modal from "src/components/Modal";
 import { BASE_COLORS, BaseColor } from "src/utils/colors";
-import { ExpenseCategoryWithBaseColor } from "src/server/api/routers/router";
+import { ExpenseCategoryWithBaseColor, Ugh } from "src/server/api/routers/router";
 import { Spinner } from "src/components/Spinner";
 import { ExpenseDataByDay, use_expenses } from "src/utils/useExpenses";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
@@ -28,6 +28,7 @@ import {
 import { Button } from "src/components/shadcn/Button";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "src/components/shadcn/Calendar";
+import { get_category_ids_to_names } from "src/utils/getCategoryIdsToNames";
 
 //I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
@@ -699,11 +700,47 @@ const data = [
 ];
 function Visualize() {
   //const expense_data_query = use_expenses();
-  const { width, height } = useWindowDimensions();
   const { theme } = useTheme();
+  const week_ago_date = subDays(new Date(), 7);
+  const today_date = new Date();
+  const [date, set_date] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 7),
+    to: new Date()
+  });//Default to the past week
+  
+  const expense_data_query = api.router.get_expenses_over_date_range.useQuery({ 
+    from_date: {
+      day: date && date.from ? date.from.getDate() : week_ago_date.getDate(),
+      month_idx: date && date.from ? date.from?.getMonth() : week_ago_date.getMonth(),
+      year: date && date.from ? date.from?.getFullYear() : week_ago_date.getFullYear(),
+    }, 
+    to_date: {
+      day: date && date.to ? date.to.getDate() : today_date.getDate(),
+      month_idx: date && date.to ? date.to.getMonth() : today_date.getMonth(),
+      year: date && date.to ? date.to.getFullYear() : today_date.getFullYear()
+    }
+  });
+
+
+  console.log("expense_data_query", expense_data_query.data);
+
   return (
     <div className="flex flex-col gap-4">
-      <DatePickerWithRange />
+      {expense_data_query.status === "loading" && (
+        <div className="flex h-[95vh] items-center justify-center">
+          <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar dark:border-rengar_light lg:border-8" />
+        </div>
+      )}
+      {expense_data_query.status === "error" && (
+        <div className="flex h-[95vh] items-center justify-center">
+          <h1 className="text-white">
+            Uh oh, there was a problem loading your expenses.
+          </h1>
+        </div>
+      )}
+      {expense_data_query.status === "success" && (
+      <>
+      <DatePickerWithRange date={date} set_date={set_date} />
       <div className="flex h-[95vh] items-center justify-center">
         <VictoryPie
           padAngle={5}
@@ -732,22 +769,80 @@ function Visualize() {
             <VictoryContainer className="" responsive={true} />
           }
           labelComponent={<VictoryLabel className="border bg-red-700 px-4" />}
-          data={[
-            { x: "Cats", y: 75, label: "jason" },
-            { x: "Dogs", y: 5, label: "maureen" },
-            { x: "Birds", y: 20, label: "jeremy" },
-          ]}
+          // data={[
+          //   { y: 75, label: "jason" },
+          //   { y: 5, label: "maureen" },
+          //   { y: 20, label: "jeremy" },
+          // ]}
+          data={get_pie_chart_data(get_data_intermediate(expense_data_query.data))}
         />
       </div>
+      </>)
+      }
     </div>
   );
 }
 
-function DatePickerWithRange({ className }: { className?: string }) {
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: subDays(new Date(), 7),
-    to: new Date()
-  });//Default to the past week
+//For now...
+type IntResp = {
+  global_total: number;
+  props: {
+    name: string;
+    color: BaseColor;
+    total: number;
+  }[];
+}
+function get_data_intermediate(days_and_ec: Ugh): IntResp {
+  const out: Record<string, { name: string; color: BaseColor; total: number }> = {};
+  const category_id_to_color: Record<string, BaseColor> = {};
+  for (const ec of days_and_ec.expense_categories) {
+    category_id_to_color[ec.id] = ec.color;
+  }
+  const category_id_to_name: Record<string, string> = {};
+  for (const ec of days_and_ec.expense_categories) {
+    category_id_to_name[ec.id] = ec.name;
+  }
+
+  let global_total = 0;
+  for (const d of days_and_ec.days) {
+    for (const e of d.expenses) {
+      if (!out[e.category_id]) {
+        out[e.category_id] = {
+          name: category_id_to_name[e.category_id]!,
+          color: category_id_to_color[e.category_id]!,
+          total: 0,
+        }
+      }
+      out[e.category_id]!.total += e.amount
+      global_total += e.amount;
+    }
+  }
+  // Object.values(out);
+  console.log("out2", out);
+  return { global_total, props: Object.values(out) };
+}
+
+function get_pie_chart_data(input: IntResp) {
+ const out = input.props.map((d) => {
+    return {
+      y: d.total / input.global_total,
+      label: d.name
+    };
+  });
+  console.log("out", out);
+  return out;
+}
+
+function get_colors(input: IntResp) {
+}
+
+
+function DatePickerWithRange({ className, date, set_date }: 
+  { className?: string; date: DateRange | undefined; set_date: (new_date: DateRange | undefined) => void; }) {
+  // const [date, setDate] = useState<DateRange | undefined>({
+  //   from: subDays(new Date(), 7),
+  //   to: new Date()
+  // });//Default to the past week
 
   return (
     <div className={cn("grid gap-2")}>
@@ -778,7 +873,7 @@ function DatePickerWithRange({ className }: { className?: string }) {
             mode="range"
             defaultMonth={date?.from}
             selected={date}
-            onSelect={setDate}
+            onSelect={set_date}
             numberOfMonths={2}
             showOutsideDays={false}
           />
