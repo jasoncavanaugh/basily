@@ -8,7 +8,7 @@ export default {
       colors: {
         //light -> Pokemon
         squirtle:  "hsl(200, 80%, 45%)", //<- Primary blue color for light theme
-        squirtle_light:  "hsl(200, 80%, 65%)", //<- Primary blue color for light theme
+        squirtle_light:  "hsl(200, 80%, 65%)",
         charmander: "hsla(0, 4%, 90%, 1)",
         pikachu: "hsla(0, 6%, 96%, 1)",
         bulbasaur: "hsla(40, 50%, 98%, 1)",

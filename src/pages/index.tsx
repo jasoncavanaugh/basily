@@ -9,7 +9,7 @@ import { api } from "src/utils/api";
 import Modal from "src/components/Modal";
 import { BASE_COLORS, BaseColor } from "src/utils/colors";
 import { ExpenseCategoryWithBaseColor } from "src/server/api/routers/router";
-import Spinner from "src/components/Spinner";
+import { Spinner } from "src/components/Spinner";
 import { ExpenseDataByDay, use_expenses } from "src/utils/useExpenses";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
 import { getServerAuthSession } from "src/server/auth";
@@ -18,9 +18,13 @@ import { ThemeButton } from "src/components/ThemeButton";
 import { cn } from "src/utils/cn";
 import { useTheme } from "next-themes";
 import { VictoryContainer, VictoryLabel, VictoryPie } from "victory";
-import { addDays, format } from "date-fns";
+import { format, subDays } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { Popover, PopoverContent, PopoverTrigger } from "src/components/shadcn/Popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "src/components/shadcn/Popover";
 import { Button } from "src/components/shadcn/Button";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "src/components/shadcn/Calendar";
@@ -39,8 +43,8 @@ const Home: NextPage = () => {
 
   if (session.status === "loading") {
     return (
-      <div className="bg-charmander dark:bg-khazix flex h-screen items-center justify-center p-1 md:p-4">
-        <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar_light dark:border-rengar lg:border-8" />
+      <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
+        <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar dark:border-rengar_light lg:border-8" />
       </div>
     );
   }
@@ -61,13 +65,17 @@ const Home: NextPage = () => {
   return (
     <div className="bg-charmander dark:bg-khazix">
       <div className="h-full bg-charmander dark:bg-khazix md:p-4">
-        <div className="flex justify-between items-center px-2 pt-2 md:pt-0">
-          <button className={cn("rounded-full",
-            "text-squirtle w-[6rem] py-1 text-sm font-semibold border border-squirtle dark:border-transparent",
-            "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
-            BUTTON_HOVER_CLASSES
-          )}
-            onClick={() => set_page(page === "visualize" ? "expenses" : "visualize")}
+        <div className="flex items-center justify-between px-2 pt-2 md:pt-0">
+          <button
+            className={cn(
+              "rounded-full",
+              "w-[6rem] border border-squirtle py-1 text-sm font-semibold text-squirtle dark:border-transparent",
+              "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
+              BUTTON_HOVER_CLASSES
+            )}
+            onClick={() =>
+              set_page(page === "visualize" ? "expenses" : "visualize")
+            }
           >
             {page === "visualize" ? "Expenses" : "Visualize"}
           </button>
@@ -98,7 +106,7 @@ function Expenses() {
     <ul className="flex flex-col gap-4">
       {expense_data_query.status === "loading" && (
         <div className="flex h-[95vh] items-center justify-center">
-          <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar_light dark:border-rengar lg:border-8" />
+          <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar dark:border-rengar_light lg:border-8" />
         </div>
       )}
       {expense_data_query.status === "error" && (
@@ -120,12 +128,8 @@ function Expenses() {
         expense_data_query.data.expenses.length > 0 && (
           <ChronologicalExpenseList
             expenses_by_day={expense_data_query.data.expenses}
-            category_id_to_color={
-              expense_data_query.data.category_id_to_color
-            }
-            category_id_to_name={
-              expense_data_query.data.category_id_to_name
-            }
+            category_id_to_color={expense_data_query.data.category_id_to_color}
+            category_id_to_name={expense_data_query.data.category_id_to_name}
           />
         )}
     </ul>
@@ -272,7 +276,9 @@ function ExpenseButton({
             Cancel
           </button>
           <button
-            className={cn("flex w-[4.5rem] items-center justify-center rounded-full bg-red-500 text-xs font-semibold text-white lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold")}
+            className={cn(
+              "flex w-[4.5rem] items-center justify-center rounded-full bg-red-500 text-xs font-semibold text-white lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
+            )}
             type="submit"
           >
             {delete_expense.status === "loading" && (
@@ -312,8 +318,9 @@ function extract_date_fields(date_str: string) {
   };
 }
 function get_today() {
-  return `${new Date().getMonth() + 1
-    }/${new Date().getDate()}/${new Date().getFullYear()}`;
+  return `${
+    new Date().getMonth() + 1
+  }/${new Date().getDate()}/${new Date().getFullYear()}`;
 }
 
 const BUTTON_HOVER_CLASSES =
@@ -544,8 +551,9 @@ function AddNewExpenseButtonAndModal() {
                             }}
                           >
                             <div
-                              className={`${TW_COLORS_MP["bg"][exp.color][500]
-                                } h-4 w-4 rounded-full`}
+                              className={`${
+                                TW_COLORS_MP["bg"][exp.color][500]
+                              } h-4 w-4 rounded-full`}
                             />
                             <p className="">{exp.name}</p>
                           </li>
@@ -553,10 +561,7 @@ function AddNewExpenseButtonAndModal() {
                       })}
                     {!does_category_exist && category_text.length > 0 && (
                       <li
-                        className={cn(
-                          "rounded p-2",
-                          BUTTON_HOVER_CLASSES
-                        )}
+                        className={cn("rounded p-2", BUTTON_HOVER_CLASSES)}
                         onClick={() => set_is_dropdown_open(false)}
                       >
                         <span>+</span>
@@ -644,11 +649,13 @@ function CategoryColorSelection({
               <div
                 key={option}
                 onClick={() => on_select_color(option)}
-                className={`${TW_COLORS_MP["bg"][option][500]
-                  } h-4 w-4 rounded-full border-2 ${cur_color === option
+                className={`${
+                  TW_COLORS_MP["bg"][option][500]
+                } h-4 w-4 rounded-full border-2 ${
+                  cur_color === option
                     ? "border-slate-900 brightness-110"
                     : "border-white hover:cursor-pointer hover:border-slate-900 hover:brightness-110"
-                  } md:h-6 md:w-6`}
+                } md:h-6 md:w-6`}
               />
             );
           })}
@@ -664,15 +671,21 @@ function CategoryColorSelection({
 }
 
 function useWindowDimensions() {
-  const [windowDimensions, setWindowDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
+  const [windowDimensions, setWindowDimensions] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
 
   useEffect(() => {
     function handleResize() {
-      setWindowDimensions({ width: window.innerWidth, height: window.innerHeight });
+      setWindowDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
     }
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return windowDimensions;
@@ -682,7 +695,7 @@ const data = [
   { quarter: 1, earnings: 13000 },
   { quarter: 2, earnings: 16500 },
   { quarter: 3, earnings: 14250 },
-  { quarter: 4, earnings: 19000 }
+  { quarter: 4, earnings: 19000 },
 ];
 function Visualize() {
   //const expense_data_query = use_expenses();
@@ -695,9 +708,14 @@ function Visualize() {
         <VictoryPie
           padAngle={5}
           innerRadius={70}
-          style={{ labels: { fontSize: 15, fill: theme === "dark" ? "white" : "black" } }}
+          style={{
+            labels: {
+              fontSize: 15,
+              fill: theme === "dark" ? "white" : "black",
+            },
+          }}
           radius={100}
-          colorScale={["tomato", "orange", "gold", "cyan", "navy" ]}
+          colorScale={["tomato", "orange", "gold", "cyan", "navy"]}
           // animate={{
           //   animationWhitelist: ["style", "data", "size"], // Try removing "size"
           //   onExit: {
@@ -710,12 +728,14 @@ function Visualize() {
           //     after: (datum) => ({ opacity: 1, _y: datum._y })
           //   }
           // }}
-          containerComponent={<VictoryContainer className="" responsive={true} />}
-          labelComponent={<VictoryLabel className="border px-4 bg-red-700"  />}
+          containerComponent={
+            <VictoryContainer className="" responsive={true} />
+          }
+          labelComponent={<VictoryLabel className="border bg-red-700 px-4" />}
           data={[
             { x: "Cats", y: 75, label: "jason" },
             { x: "Dogs", y: 5, label: "maureen" },
-            { x: "Birds", y: 20, label: "jeremy" }
+            { x: "Birds", y: 20, label: "jeremy" },
           ]}
         />
       </div>
@@ -723,41 +743,36 @@ function Visualize() {
   );
 }
 
-function DatePickerWithRange() {
+function DatePickerWithRange({ className }: { className?: string }) {
   const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(2022, 0, 20),
-    to: addDays(new Date(2022, 0, 20), 20),
-  })
- 
-  const className =  "";
+    from: subDays(new Date(), 7),
+    to: new Date()
+  });//Default to the past week
+
   return (
-    <div className={cn("grid gap-2", className)}>
+    <div className={cn("grid gap-2")}>
       <Popover>
         <PopoverTrigger asChild>
           <Button
             id="date"
-            variant={"outline"}
+            variant="outline"
             className={cn(
-              "w-[300px] justify-start text-left font-normal",
+              "w-[300px] justify-start text-left font-normal border border-slate-400",
               !date && "text-muted-foreground"
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {date?.from ? (
-              date.to ? (
-                <>
-                  {format(date.from, "LLL dd, y")} -{" "}
-                  {format(date.to, "LLL dd, y")}
-                </>
-              ) : (
-                format(date.from, "LLL dd, y")
-              )
-            ) : (
-              <span>Pick a date</span>
+            {date?.from && date.to && (
+              <>
+                {format(date.from, "LLL dd, y")} -{" "}
+                {format(date.to, "LLL dd, y")}
+              </>
             )}
+            {date?.from && !date.to && format(date.from, "LLL dd, y")}
+            {!date?.from && !date?.to && <span>Pick a date</span>}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent className="w-auto p-0 bg-white dark:bg-leblanc border-none" align="start">
           <Calendar
             initialFocus
             mode="range"
@@ -765,9 +780,10 @@ function DatePickerWithRange() {
             selected={date}
             onSelect={setDate}
             numberOfMonths={2}
+            showOutsideDays={false}
           />
         </PopoverContent>
       </Popover>
     </div>
-  )
+  );
 }

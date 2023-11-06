@@ -54,3 +54,11 @@
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+/* .first\:\[\&\:has\(\[aria-selected\]\)\]\:rounded-l-md:has([aria-selected]):first-child { */
+/*   border-top-left-radius: calc(var(--radius) - 2px); */
+/*   border-bottom-left-radius: calc(var(--radius) - 2px); */
+/* } */
+/* .last\:\[\&\:has\(\[aria-selected\]\)\]\:rounded-r-md:has([aria-selected]):last-child { */
+/*   border-top-right-radius: calc(var(--radius) - 2px); */
+/*   border-bottom-right-radius: calc(var(--radius) - 2px); */
+/* } */
