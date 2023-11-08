@@ -17,7 +17,7 @@ import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
 import { ThemeButton } from "src/components/ThemeButton";
 import { cn } from "src/utils/cn";
 import { useTheme } from "next-themes";
-import { VictoryContainer, VictoryLabel, VictoryPie } from "victory";
+import { VictoryContainer, VictoryLabel, VictoryPie, VictoryTooltip } from "victory";
 import { format, subDays } from "date-fns";
 import { DateRange } from "react-day-picker";
 import {
@@ -29,6 +29,7 @@ import { Button } from "src/components/shadcn/Button";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "src/components/shadcn/Calendar";
 import { get_category_ids_to_names } from "src/utils/getCategoryIdsToNames";
+import { TW_COLORS_TO_HEX_MP } from "src/utils/tailwindColorsToHexMp";
 
 //I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
@@ -319,9 +320,8 @@ function extract_date_fields(date_str: string) {
   };
 }
 function get_today() {
-  return `${
-    new Date().getMonth() + 1
-  }/${new Date().getDate()}/${new Date().getFullYear()}`;
+  return `${new Date().getMonth() + 1
+    }/${new Date().getDate()}/${new Date().getFullYear()}`;
 }
 
 const BUTTON_HOVER_CLASSES =
@@ -552,9 +552,8 @@ function AddNewExpenseButtonAndModal() {
                             }}
                           >
                             <div
-                              className={`${
-                                TW_COLORS_MP["bg"][exp.color][500]
-                              } h-4 w-4 rounded-full`}
+                              className={`${TW_COLORS_MP["bg"][exp.color][500]
+                                } h-4 w-4 rounded-full`}
                             />
                             <p className="">{exp.name}</p>
                           </li>
@@ -650,13 +649,11 @@ function CategoryColorSelection({
               <div
                 key={option}
                 onClick={() => on_select_color(option)}
-                className={`${
-                  TW_COLORS_MP["bg"][option][500]
-                } h-4 w-4 rounded-full border-2 ${
-                  cur_color === option
+                className={`${TW_COLORS_MP["bg"][option][500]
+                  } h-4 w-4 rounded-full border-2 ${cur_color === option
                     ? "border-slate-900 brightness-110"
                     : "border-white hover:cursor-pointer hover:border-slate-900 hover:brightness-110"
-                } md:h-6 md:w-6`}
+                  } md:h-6 md:w-6`}
               />
             );
           })}
@@ -707,13 +704,13 @@ function Visualize() {
     from: subDays(new Date(), 7),
     to: new Date()
   });//Default to the past week
-  
-  const expense_data_query = api.router.get_expenses_over_date_range.useQuery({ 
+
+  const expense_data_query = api.router.get_expenses_over_date_range.useQuery({
     from_date: {
       day: date && date.from ? date.from.getDate() : week_ago_date.getDate(),
       month_idx: date && date.from ? date.from?.getMonth() : week_ago_date.getMonth(),
       year: date && date.from ? date.from?.getFullYear() : week_ago_date.getFullYear(),
-    }, 
+    },
     to_date: {
       day: date && date.to ? date.to.getDate() : today_date.getDate(),
       month_idx: date && date.to ? date.to.getMonth() : today_date.getMonth(),
@@ -739,48 +736,88 @@ function Visualize() {
         </div>
       )}
       {expense_data_query.status === "success" && (
-      <>
-      <DatePickerWithRange date={date} set_date={set_date} />
-      <div className="flex h-[95vh] items-center justify-center">
-        <VictoryPie
-          padAngle={5}
-          innerRadius={70}
-          style={{
-            labels: {
-              fontSize: 15,
-              fill: theme === "dark" ? "white" : "black",
-            },
-          }}
-          radius={100}
-          colorScale={["tomato", "orange", "gold", "cyan", "navy"]}
-          // animate={{
-          //   animationWhitelist: ["style", "data", "size"], // Try removing "size"
-          //   onExit: {
-          //     duration: 500,
-          //     before: () => ({ opacity: 0.3, _y: 0 })
-          //   },
-          //   onEnter: {
-          //     duration: 500,
-          //     before: () => ({ opacity: 0.3, _y: 0 }),
-          //     after: (datum) => ({ opacity: 1, _y: datum._y })
-          //   }
-          // }}
-          containerComponent={
-            <VictoryContainer className="" responsive={true} />
-          }
-          labelComponent={<VictoryLabel className="border bg-red-700 px-4" />}
-          // data={[
-          //   { y: 75, label: "jason" },
-          //   { y: 5, label: "maureen" },
-          //   { y: 20, label: "jeremy" },
-          // ]}
-          data={get_pie_chart_data(get_data_intermediate(expense_data_query.data))}
-        />
-      </div>
-      </>)
+        <>
+          <DatePickerWithRange date={date} set_date={set_date} />
+          <div className="flex flex-col h-[85vh] bg-pikachu dark:bg-leblanc items-center justify-center md:flex-row">
+            <div className="w-1/2">
+            <VictoryPie
+              labels={[]}
+              padAngle={5}
+              innerRadius={70}
+              labelComponent={<VictoryTooltip
+                // flyoutWidth={65}
+                // flyoutHeight={35}
+                cornerRadius={5}
+                // center={{
+                //   x: 0,
+                //   y: 0
+                // }}
+                flyoutPadding={{ top: 5, bottom: 5, left: 10, right: 10 }}
+                pointerLength={0}
+                flyoutStyle={{
+                  strokeWidth: 0,
+                  fill: ({ datum }) => {
+                    const color = datum.color.join("");
+                    return TW_COLORS_TO_HEX_MP[color as BaseColor]["200"]
+                  },
+                  boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+                }}
+                // @ts-ignore 
+                style={{
+                  fill: ({ datum }: { datum: any }) => {
+                    const color = datum.color.join("");
+                    return TW_COLORS_TO_HEX_MP[color as BaseColor]["700"] as string;
+                  },
+                  fontSize: 10,
+                  fontWeight: 600,
+                  textAnchor: "middle"
+                }}
+              />}
+              // style={{
+              //   labels: {
+              //     fontSize: 8,
+              //     fill: theme === "dark" ? "white" : "black",
+              //   },
+              // }}
+              radius={100}
+              colorScale={get_colors(get_data_intermediate(expense_data_query.data))}
+              animate={{
+                animationWhitelist: ["style", "data", "size"], // Try removing "size"
+                onExit: {
+                  duration: 500,
+                  before: () => ({ opacity: 0.3, _y: 0 })
+                },
+                onEnter: {
+                  duration: 500,
+                  before: () => ({ opacity: 0.3, _y: 0 }),
+                  after: (datum) => ({ opacity: 1, _y: datum._y })
+                }
+              }}
+              // labelComponent={<VictoryLabel className="border bg-red-700 px-4" />}
+              // data={[
+              //   { y: 75, label: "jason" },
+              //   { y: 5, label: "maureen" },
+              //   { y: 20, label: "jeremy" },
+              // ]}
+              data={get_pie_chart_data(get_data_intermediate(expense_data_query.data))}
+            />
+            </div>
+            <div className="border flex flex-col gap-3 w-[50%]">
+              <div className="flex gap-2 items-center font-bold p-4 rounded">
+                <div className="w-4 h-4 rounded-full bg-pink-500" />
+                <p>Groceries</p>
+              </div>
+            </div>
+          </div>
+        </>)
       }
     </div>
   );
+}
+
+
+function get_colors(input: IntResp) {
+  return input.props.map((d) => TW_COLORS_TO_HEX_MP[d.color]["500"]);
 }
 
 //For now...
@@ -818,26 +855,23 @@ function get_data_intermediate(days_and_ec: Ugh): IntResp {
     }
   }
   // Object.values(out);
-  console.log("out2", out);
   return { global_total, props: Object.values(out) };
 }
 
 function get_pie_chart_data(input: IntResp) {
- const out = input.props.map((d) => {
+  const out = input.props.map((d) => {
+    const c = d.color;
     return {
       y: d.total / input.global_total,
-      label: d.name
+      label: `${d.name} - ${cents_to_dollars_display(d.total)} (${(Math.floor(d.total / input.global_total * 100)).toLocaleString()}%)`,
+      color: d.color.split(""), //Because Victory is the weirdest fucking library
     };
   });
-  console.log("out", out);
   return out;
 }
 
-function get_colors(input: IntResp) {
-}
 
-
-function DatePickerWithRange({ className, date, set_date }: 
+function DatePickerWithRange({ className, date, set_date }:
   { className?: string; date: DateRange | undefined; set_date: (new_date: DateRange | undefined) => void; }) {
   // const [date, setDate] = useState<DateRange | undefined>({
   //   from: subDays(new Date(), 7),

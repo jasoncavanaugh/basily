@@ -81,7 +81,7 @@ export const router = createTRPCRouter({
       const days = await ctx.prisma.day.findMany({
         where: {
           AND: [
-            { month: { lte: to_date.month_idx + 1, gte: from_date.month_idx + 1 } },
+            { month: { lte: to_date.month_idx, gte: from_date.month_idx } },
             { year: { lte: to_date.year, gte: from_date.year } },
             { day: { lte: to_date.day, gte: from_date.day } },
             { user_id: ctx.session.user.id },
@@ -89,24 +89,10 @@ export const router = createTRPCRouter({
         },
         include: { expenses: true }
       });
+    
       //Get categories
       const expense_categories = (await ctx.prisma.expenseCategory.findMany({ where: { user_id: ctx.session.user.id, }})) as ExpenseCategoryWithBaseColor[];
       return { days, expense_categories };
-    
-      // return ctx.prisma.expense.findMany({
-      //   where: {
-      //     AND: [
-      //       {
-      //         createdAt: {
-      //           lte: to,
-      //           gte: from,
-      //         },
-      //       },
-      //       { user_id: ctx.session.user.id },
-      //     ],
-      //   },
-      //   orderBy: [{ createdAt: "desc" }],
-      // });
     }),
   get_categories: protectedProcedure.query(async ({ ctx }) => {
     return ctx.prisma.expenseCategory.findMany({
