@@ -110,7 +110,7 @@ export function use_expenses() {
   //     category_id_to_name.set(cat.id, cat.name);
   //   }
   // }
-  const category_id_to_color = get_category_ids_to_colors(expense_categories)
+  const category_id_to_color = get_category_ids_to_colors(expense_categories);
   // const category_id_to_color = new Map<string, BaseColor>();
   // for (const cat of expense_categories) {
   //   if (!category_id_to_color.has(cat.id)) {

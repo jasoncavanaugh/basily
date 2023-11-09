@@ -15,10 +15,9 @@ export type ExpenseCategoryWithExpenses = ExpenseCategoryWithBaseColor & {
   expenses: Expense[];
 };
 export type Ugh = {
-  days: (Day & { expenses: Expense[]; })[],
-  expense_categories: ExpenseCategoryWithBaseColor[]
-}
-
+  days: (Day & { expenses: Expense[] })[];
+  expense_categories: ExpenseCategoryWithBaseColor[];
+};
 
 const DateZodSchema = z.object({
   day: z.number(),
@@ -85,13 +84,15 @@ export const router = createTRPCRouter({
             { year: { lte: to_date.year, gte: from_date.year } },
             { day: { lte: to_date.day, gte: from_date.day } },
             { user_id: ctx.session.user.id },
-          ]
+          ],
         },
-        include: { expenses: true }
+        include: { expenses: true },
       });
-    
+
       //Get categories
-      const expense_categories = (await ctx.prisma.expenseCategory.findMany({ where: { user_id: ctx.session.user.id, }})) as ExpenseCategoryWithBaseColor[];
+      const expense_categories = (await ctx.prisma.expenseCategory.findMany({
+        where: { user_id: ctx.session.user.id },
+      })) as ExpenseCategoryWithBaseColor[];
       return { days, expense_categories };
     }),
   get_categories: protectedProcedure.query(async ({ ctx }) => {

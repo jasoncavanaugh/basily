@@ -27,7 +27,8 @@ for (const base of BASE_COLORS) {
 
 console.log(mp);
 
-
-const content = `export const TW_COLORS_TO_HEX_MP = ${JSON.stringify(mp)} as const`;
+const content = `export const TW_COLORS_TO_HEX_MP = ${JSON.stringify(
+  mp
+)} as const`;
 //console.log(`export const TW_COLORS_MP = ${JSON.stringify(mp)} as const`);
 fs.writeFile("./tailwindColorsToHexMp.ts", content, (err) => {});
