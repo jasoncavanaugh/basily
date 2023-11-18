@@ -1,6 +1,6 @@
 import { format, subDays } from "date-fns";
 import { useTheme } from "next-themes";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { Spinner } from "src/components/Spinner";
 import { Ugh } from "src/server/api/routers/router";
@@ -18,17 +18,24 @@ import {
 import { Button } from "src/components/shadcn/Button";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "src/components/shadcn/Calendar";
+import { SIGN_IN_ROUTE } from "src/utils/constants";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/router";
+import Layout from "src/components/Layout";
+import { getServerAuthSession } from "src/server/auth";
+import { GetServerSideProps } from "next";
 
-export default function VisualizeWrapper() {
-  return (
-    <div className="flex flex-col gap-4">
-      <Visualize />
-    </div>
-  );
-}
-
-function Visualize() {
+//I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const session = await getServerAuthSession(ctx);
+  return {
+    props: { session },
+  };
+};
+export default function Visualize() {
   //const expense_data_query = use_expenses();
+  const session = useSession();
+  const router = useRouter();
   const { theme } = useTheme();
   const week_ago_date = subDays(new Date(), 7);
   const today_date = new Date();
@@ -36,7 +43,6 @@ function Visualize() {
     from: subDays(new Date(), 7),
     to: new Date(),
   }); //Default to the past week
-
   const expense_data_query = api.router.get_expenses_over_date_range.useQuery({
     from_date: {
       day: date && date.from ? date.from.getDate() : week_ago_date.getDate(),
@@ -54,6 +60,20 @@ function Visualize() {
     },
   });
 
+
+  useEffect(() => {
+    if (session.status === "unauthenticated") {
+      router.push(SIGN_IN_ROUTE);
+    }
+  }, [session.status]);
+  if (session.status === "loading" || session.status === "unauthenticated") {
+    return (
+      <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
+        <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar dark:border-rengar_light lg:border-8" />
+      </div>
+    );
+  }
+
   if (expense_data_query.status === "loading") {
     return (
       <div className="flex h-[95vh] items-center justify-center">
@@ -63,17 +83,19 @@ function Visualize() {
   }
   if (expense_data_query.status === "error") {
     return (
+      <Layout>
       <div className="flex h-[95vh] items-center justify-center">
         <h1 className="text-white">
           Uh oh, there was a problem loading your expenses.
         </h1>
       </div>
+      </Layout>
     );
   }
 
   console.log("expense_data_query", expense_data_query.data);
   return (
-    <>
+    <Layout>
       <DatePickerWithRange date={date} set_date={set_date} />
       <div className="flex h-[85vh] flex-col items-center justify-center bg-pikachu dark:bg-leblanc md:flex-row">
         <div className="w-1/2">
@@ -154,7 +176,7 @@ function Visualize() {
           </div>
         </div>
       </div>
-    </>
+    </Layout>
   );
 }
 

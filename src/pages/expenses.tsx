@@ -2,7 +2,7 @@ import { Expense } from "@prisma/client";
 import * as RadixModal from "@radix-ui/react-dialog";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Modal from "src/components/Modal";
 import { Spinner } from "src/components/Spinner";
 import { api } from "src/utils/api";
@@ -11,26 +11,39 @@ import { cn } from "src/utils/cn";
 import { BaseColor } from "src/utils/colors";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
 import { ExpenseDataByDay, use_expenses } from "src/utils/useExpenses";
-import { SignIn } from "./sign-in";
-import { NextPage } from "next";
+import Layout from "src/components/Layout";
+import { SIGN_IN_ROUTE } from "src/utils/constants";
+import { getServerAuthSession } from "src/server/auth";
+import { GetServerSideProps } from "next";
 
+//I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const session = await getServerAuthSession(ctx);
+  return {
+    props: { session },
+  };
+};
 export default function Expenses() {
   const session = useSession();
   const expense_data_query = use_expenses();
   const router = useRouter();
 
-  if (session.status === "loading") {
+  useEffect(() => {
+    if (session.status === "unauthenticated") {
+      router.push(SIGN_IN_ROUTE);
+    }
+  }, [session.status]);
+
+  if (session.status === "loading" || session.status === "unauthenticated") {
     return (
       <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
         <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar dark:border-rengar_light lg:border-8" />
       </div>
     );
   }
-  if (session.status === "unauthenticated") {
-    return <SignIn />;
-  }
+
   return (
-    <ul className="flex flex-col gap-4">
+    <Layout>
       {expense_data_query.status === "loading" && (
         <div className="flex h-[95vh] items-center justify-center">
           <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar dark:border-rengar_light lg:border-8" />
@@ -59,7 +72,7 @@ export default function Expenses() {
             category_id_to_name={expense_data_query.data.category_id_to_name}
           />
         )}
-    </ul>
+    </Layout>
   );
 }
 
@@ -132,6 +145,7 @@ function ExpenseListForDay({
           {expense_list.map((expense, i) => {
             return (
               <ExpenseButton
+                key={i}
                 expense={expense}
                 category_color={category_color}
               />

@@ -4,7 +4,6 @@ import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import { api } from "src/utils/api";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import Layout from "src/components/Layout";
 
 import "src/styles/globals.css";
 
@@ -15,9 +14,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
   return (
     <ThemeProvider attribute="class">
       <SessionProvider session={session}>
-        <Layout>
-          <Component {...pageProps} />
-        </Layout>
+        <Component {...pageProps} />
         {process.env.NODE_ENV !== "production" && (
           <ReactQueryDevtools initialIsOpen={false} />
         )}

@@ -30,10 +30,8 @@ export default function Layout({ children }: { children: ReactNode }) {
                   ? router.push(VISUALIZE_ROUTE)
                   : router.push(EXPENSES_ROUTE);
               }
-              // set_page(page == "visualize" ? "expenses" : "visualize")
             }
           >
-            {/* {page === "visualize" ? "Expenses" : "Visualize"} */}
             {cur_route === VISUALIZE_ROUTE ? "Expenses" : "Visualize"}
           </button>
           <div className="flex items-center justify-end gap-2 lg:gap-4">
@@ -50,8 +48,12 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
         </div>
         <div className="h-2 md:h-4" />
-        {cur_route === EXPENSES_ROUTE ? ( <ul className="flex flex-col gap-4"> {children} </ul>) :  ( <div className="flex flex-col gap-4"> {children} </div>)}
-    </div>
+        {cur_route === EXPENSES_ROUTE ? (
+          <ul className="flex flex-col gap-4">{children}</ul>
+        ) : (
+          <div className="flex flex-col gap-4">{children}</div>
+        )}
+      </div>
     </div>
   );
 }

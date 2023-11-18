@@ -39,8 +39,9 @@ import { get_category_ids_to_names } from "src/utils/getCategoryIdsToNames";
 import { TW_COLORS_TO_HEX_MP } from "src/utils/tailwindColorsToHexMp";
 import Expenses from "./expenses";
 import Visualize from "./visualize";
-import { SignIn } from "./sign-in";
+import SignIn from "./sign-in";
 import { useRouter } from "next/router";
+import { EXPENSES_ROUTE, SIGN_IN_ROUTE } from "src/utils/constants";
 // import { useRouter } from 'next/router'
 
 //I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
@@ -53,14 +54,17 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
 const Home: NextPage = () => {
   // function Home(): NextPage {
-  // const session = useSession();
+  const session = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    router.push("/expenses");
-  }, []);
+    if (session.status === "authenticated") {
+      router.push(EXPENSES_ROUTE);
+    } else if (session.status === "unauthenticated") {
+      router.push(SIGN_IN_ROUTE);
+    }
+  }, [session.status]);
 
-  // if (session.status === "loading") {
   return (
     <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
       <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar dark:border-rengar_light lg:border-8" />

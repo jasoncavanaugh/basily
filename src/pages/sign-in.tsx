@@ -1,6 +1,35 @@
-import { signIn } from "next-auth/react";
+import { GetServerSideProps } from "next";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/router";
+import { useEffect } from "react";
+import { Spinner } from "src/components/Spinner";
+import { getServerAuthSession } from "src/server/auth";
+import { EXPENSES_ROUTE } from "src/utils/constants";
 
-export function SignIn() {
+//I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const session = await getServerAuthSession(ctx);
+  return {
+    props: { session },
+  };
+};
+export default function SignIn() {
+  const session = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (session.status === "authenticated") {
+      router.push(EXPENSES_ROUTE);
+    }
+  }, [session.status]);
+
+  if (session.status === "loading" || session.status === "authenticated") {
+    return (
+      <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
+        <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar dark:border-rengar_light lg:border-8" />
+      </div>
+    );
+  }
   return (
     <div className="flex h-[95vh] items-center justify-center p-1 md:p-4">
       <button
