@@ -2,7 +2,6 @@ import { GetServerSideProps, type NextPage } from "next";
 import * as RadixModal from "@radix-ui/react-dialog";
 import { Expense } from "@prisma/client";
 import { signIn, signOut, useSession } from "next-auth/react";
-
 import * as RadixPopover from "@radix-ui/react-popover";
 import { useEffect, useState } from "react";
 import { api } from "src/utils/api";
@@ -38,8 +37,11 @@ import { CalendarIcon } from "lucide-react";
 import { Calendar } from "src/components/shadcn/Calendar";
 import { get_category_ids_to_names } from "src/utils/getCategoryIdsToNames";
 import { TW_COLORS_TO_HEX_MP } from "src/utils/tailwindColorsToHexMp";
-import { Expenses } from "./Expenses";
-import { Visualize } from "./Visualize";
+import Expenses from "./expenses";
+import Visualize from "./visualize";
+import { SignIn } from "./sign-in";
+import { useRouter } from "next/router";
+// import { useRouter } from 'next/router'
 
 //I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
@@ -48,73 +50,81 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     props: { session },
   };
 };
+
 const Home: NextPage = () => {
-  const session = useSession();
+  // function Home(): NextPage {
+  // const session = useSession();
+  const router = useRouter();
 
-  const [page, set_page] = useState<"expenses" | "visualize">("expenses");
+  useEffect(() => {
+    router.push("/expenses");
+  }, []);
 
-  if (session.status === "loading") {
-    return (
-      <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
-        <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar dark:border-rengar_light lg:border-8" />
-      </div>
-    );
-  }
-
-  if (session.status === "unauthenticated") {
-    return (
-      <div className="flex h-[95vh] items-center justify-center p-1 md:p-4">
-        <button
-          className="rounded-full bg-squirtle px-6 py-2 text-3xl font-semibold text-white shadow-sm shadow-blue-300 hover:brightness-110 dark:bg-rengar"
-          onClick={() => void signIn()}
-        >
-          Sign In
-        </button>
-      </div>
-    );
-  }
-
+  // if (session.status === "loading") {
   return (
-    <div className="bg-charmander dark:bg-khazix">
-      <div className="h-full bg-charmander dark:bg-khazix md:p-4">
-        <div className="flex items-center justify-between px-2 pt-2 md:pt-0">
-          <button
-            className={cn(
-              "rounded-full",
-              "w-[6rem] border border-squirtle py-1 text-sm font-semibold text-squirtle dark:border-transparent",
-              "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
-              BUTTON_HOVER_CLASSES
-            )}
-            onClick={() =>
-              set_page(page === "visualize" ? "expenses" : "visualize")
-            }
-          >
-            {page === "visualize" ? "Expenses" : "Visualize"}
-          </button>
-          <div className="flex items-center justify-end gap-2 lg:gap-4">
-            <ThemeButton />
-            <button
-              className="rounded-full bg-squirtle px-3 py-1 text-sm font-semibold text-white shadow-sm shadow-blue-300 hover:brightness-110 dark:bg-rengar md:px-5 md:text-lg"
-              onClick={() => void signOut()}
-            >
-              Log Out
-            </button>
-          </div>
-        </div>
-        <div className="h-2 md:h-4" />
-        {page === "expenses" && <Expenses />}
-        {page === "visualize" && <Visualize />}
-        <AddNewExpenseButtonAndModal />
-      </div>
+    <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
+      <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar dark:border-rengar_light lg:border-8" />
     </div>
   );
+  // }
+
+  // if (session.status === "unauthenticated") {
+  //   router.push("/sign-in");
+  //return <SignIn />;
+  // router.push("/sign-in");
+  // return (
+  //   <div className="flex h-[95vh] items-center justify-center p-1 md:p-4">
+  //     <button
+  //       className="rounded-full bg-squirtle px-6 py-2 text-3xl font-semibold text-white shadow-sm shadow-blue-300 hover:brightness-110 dark:bg-rengar"
+  //       onClick={() => void signIn()}
+  //     >
+  //       Sign In
+  //     </button>
+  //   </div>
+  // );
+  // }
+  // router.push("/expenses");
+  //return <Expenses />
+  //
+  // router.push("/expenses")
+
+  // return (
+  //   <div className="bg-charmander dark:bg-khazix">
+  //     <div className="h-full bg-charmander dark:bg-khazix md:p-4">
+  //       <div className="flex items-center justify-between px-2 pt-2 md:pt-0">
+  //         <button
+  //           className={cn(
+  //             "rounded-full",
+  //             "w-[6rem] border border-squirtle py-1 text-sm font-semibold text-squirtle dark:border-transparent",
+  //             "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
+  //             BUTTON_HOVER_CLASSES
+  //           )}
+  //           onClick={() =>
+  //             set_page(page === "visualize" ? "expenses" : "visualize")
+  //           }
+  //         >
+  //           {page === "visualize" ? "Expenses" : "Visualize"}
+  //         </button>
+  //         <div className="flex items-center justify-end gap-2 lg:gap-4">
+  //           <ThemeButton />
+  //           <button
+  //             className="rounded-full bg-squirtle px-3 py-1 text-sm font-semibold text-white shadow-sm shadow-blue-300 hover:brightness-110 dark:bg-rengar md:px-5 md:text-lg"
+  //             onClick={() => void signOut()}
+  //           >
+  //             Log Out
+  //           </button>
+  //         </div>
+  //       </div>
+  //       <div className="h-2 md:h-4" />
+  //       {page === "expenses" && <Expenses />}
+  //       {page === "visualize" && <Visualize />}
+  //       <AddNewExpenseButtonAndModal />
+  //     </div>
+  //   </div>
+  // );
 };
 
 export default Home;
-
-
-
-
 
 const AMOUNT_REGEX = new RegExp(/^\d*(\.\d\d)?$/);
 function is_valid_amount(amount: string) {
@@ -147,8 +157,6 @@ function get_today() {
   }/${new Date().getDate()}/${new Date().getFullYear()}`;
 }
 
-const BUTTON_HOVER_CLASSES =
-  "hover:bg-squirtle_light hover:cursor-pointer hover:bg-opacity-20";
 function AddNewExpenseButtonAndModal() {
   const [amount, set_amount] = useState("");
   const [is_modal_open, set_is_modal_open] = useState(false);
@@ -521,5 +529,3 @@ const data = [
   { quarter: 3, earnings: 14250 },
   { quarter: 4, earnings: 19000 },
 ];
-
-

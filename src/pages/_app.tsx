@@ -2,11 +2,11 @@ import { type AppType } from "next/app";
 import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
-
 import { api } from "src/utils/api";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import Layout from "src/components/Layout";
 
 import "src/styles/globals.css";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 const MyApp: AppType<{ session: Session | null }> = ({
   Component,
@@ -15,7 +15,9 @@ const MyApp: AppType<{ session: Session | null }> = ({
   return (
     <ThemeProvider attribute="class">
       <SessionProvider session={session}>
-        <Component {...pageProps} />
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
         {process.env.NODE_ENV !== "production" && (
           <ReactQueryDevtools initialIsOpen={false} />
         )}

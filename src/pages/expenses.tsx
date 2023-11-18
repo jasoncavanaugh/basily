@@ -1,5 +1,7 @@
 import { Expense } from "@prisma/client";
 import * as RadixModal from "@radix-ui/react-dialog";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import Modal from "src/components/Modal";
 import { Spinner } from "src/components/Spinner";
@@ -9,9 +11,24 @@ import { cn } from "src/utils/cn";
 import { BaseColor } from "src/utils/colors";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
 import { ExpenseDataByDay, use_expenses } from "src/utils/useExpenses";
+import { SignIn } from "./sign-in";
+import { NextPage } from "next";
 
-export function Expenses() {
+export default function Expenses() {
+  const session = useSession();
   const expense_data_query = use_expenses();
+  const router = useRouter();
+
+  if (session.status === "loading") {
+    return (
+      <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
+        <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar dark:border-rengar_light lg:border-8" />
+      </div>
+    );
+  }
+  if (session.status === "unauthenticated") {
+    return <SignIn />;
+  }
   return (
     <ul className="flex flex-col gap-4">
       {expense_data_query.status === "loading" && (

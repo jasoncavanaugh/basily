@@ -19,7 +19,15 @@ import { Button } from "src/components/shadcn/Button";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "src/components/shadcn/Calendar";
 
-export function Visualize() {
+export default function VisualizeWrapper() {
+  return (
+    <div className="flex flex-col gap-4">
+      <Visualize />
+    </div>
+  );
+}
+
+function Visualize() {
   //const expense_data_query = use_expenses();
   const { theme } = useTheme();
   const week_ago_date = subDays(new Date(), 7);
@@ -46,107 +54,107 @@ export function Visualize() {
     },
   });
 
-  console.log("expense_data_query", expense_data_query.data);
+  if (expense_data_query.status === "loading") {
+    return (
+      <div className="flex h-[95vh] items-center justify-center">
+        <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar dark:border-rengar_light lg:border-8" />
+      </div>
+    );
+  }
+  if (expense_data_query.status === "error") {
+    return (
+      <div className="flex h-[95vh] items-center justify-center">
+        <h1 className="text-white">
+          Uh oh, there was a problem loading your expenses.
+        </h1>
+      </div>
+    );
+  }
 
+  console.log("expense_data_query", expense_data_query.data);
   return (
-    <div className="flex flex-col gap-4">
-      {expense_data_query.status === "loading" && (
-        <div className="flex h-[95vh] items-center justify-center">
-          <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar dark:border-rengar_light lg:border-8" />
-        </div>
-      )}
-      {expense_data_query.status === "error" && (
-        <div className="flex h-[95vh] items-center justify-center">
-          <h1 className="text-white">
-            Uh oh, there was a problem loading your expenses.
-          </h1>
-        </div>
-      )}
-      {expense_data_query.status === "success" && (
-        <>
-          <DatePickerWithRange date={date} set_date={set_date} />
-          <div className="flex h-[85vh] flex-col items-center justify-center bg-pikachu dark:bg-leblanc md:flex-row">
-            <div className="w-1/2">
-              <VictoryPie
-                labels={[]}
-                padAngle={5}
-                innerRadius={70}
-                labelComponent={
-                  <VictoryTooltip
-                    // flyoutWidth={65}
-                    // flyoutHeight={35}
-                    cornerRadius={5}
-                    // center={{
-                    //   x: 0,
-                    //   y: 0
-                    // }}
-                    flyoutPadding={{ top: 5, bottom: 5, left: 10, right: 10 }}
-                    pointerLength={0}
-                    flyoutStyle={{
-                      strokeWidth: 0,
-                      fill: ({ datum }) => {
-                        const color = datum.color.join("");
-                        return TW_COLORS_TO_HEX_MP[color as BaseColor]["200"];
-                      },
-                      boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
-                    }}
-                    // @ts-ignore
-                    style={{
-                      fill: ({ datum }: { datum: any }) => {
-                        const color = datum.color.join("");
-                        return TW_COLORS_TO_HEX_MP[color as BaseColor][
-                          "700"
-                        ] as string;
-                      },
-                      fontSize: 10,
-                      fontWeight: 600,
-                      textAnchor: "middle",
-                    }}
-                  />
-                }
-                // style={{
-                //   labels: {
-                //     fontSize: 8,
-                //     fill: theme === "dark" ? "white" : "black",
-                //   },
+    <>
+      <DatePickerWithRange date={date} set_date={set_date} />
+      <div className="flex h-[85vh] flex-col items-center justify-center bg-pikachu dark:bg-leblanc md:flex-row">
+        <div className="w-1/2">
+          <VictoryPie
+            labels={[]}
+            padAngle={5}
+            innerRadius={70}
+            labelComponent={
+              <VictoryTooltip
+                // flyoutWidth={65}
+                // flyoutHeight={35}
+                cornerRadius={5}
+                // center={{
+                //   x: 0,
+                //   y: 0
                 // }}
-                radius={100}
-                colorScale={get_colors(
-                  get_data_intermediate(expense_data_query.data)
-                )}
-                animate={{
-                  animationWhitelist: ["style", "data", "size"], // Try removing "size"
-                  onExit: {
-                    duration: 500,
-                    before: () => ({ opacity: 0.3, _y: 0 }),
+                flyoutPadding={{ top: 5, bottom: 5, left: 10, right: 10 }}
+                pointerLength={0}
+                flyoutStyle={{
+                  strokeWidth: 0,
+                  fill: ({ datum }) => {
+                    const color = datum.color.join("");
+                    return TW_COLORS_TO_HEX_MP[color as BaseColor]["200"];
                   },
-                  onEnter: {
-                    duration: 500,
-                    before: () => ({ opacity: 0.3, _y: 0 }),
-                    after: (datum) => ({ opacity: 1, _y: datum._y }),
-                  },
+                  boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
                 }}
-                // labelComponent={<VictoryLabel className="border bg-red-700 px-4" />}
-                // data={[
-                //   { y: 75, label: "jason" },
-                //   { y: 5, label: "maureen" },
-                //   { y: 20, label: "jeremy" },
-                // ]}
-                data={get_pie_chart_data(
-                  get_data_intermediate(expense_data_query.data)
-                )}
+                // @ts-ignore
+                style={{
+                  fill: ({ datum }: { datum: any }) => {
+                    const color = datum.color.join("");
+                    return TW_COLORS_TO_HEX_MP[color as BaseColor][
+                      "700"
+                    ] as string;
+                  },
+                  fontSize: 10,
+                  fontWeight: 600,
+                  textAnchor: "middle",
+                }}
               />
-            </div>
-            <div className="flex w-[50%] flex-col gap-3 border">
-              <div className="flex items-center gap-2 rounded p-4 font-bold">
-                <div className="h-4 w-4 rounded-full bg-pink-500" />
-                <p>Groceries</p>
-              </div>
-            </div>
+            }
+            // style={{
+            //   labels: {
+            //     fontSize: 8,
+            //     fill: theme === "dark" ? "white" : "black",
+            //   },
+            // }}
+            radius={100}
+            colorScale={get_colors(
+              get_data_intermediate(expense_data_query.data)
+            )}
+            animate={{
+              animationWhitelist: ["style", "data", "size"], // Try removing "size"
+              onExit: {
+                duration: 500,
+                before: () => ({ opacity: 0.3, _y: 0 }),
+              },
+              onEnter: {
+                duration: 500,
+                before: () => ({ opacity: 0.3, _y: 0 }),
+                after: (datum) => ({ opacity: 1, _y: datum._y }),
+              },
+            }}
+            // labelComponent={<VictoryLabel className="border bg-red-700 px-4" />}
+            // data={[
+            //   { y: 75, label: "jason" },
+            //   { y: 5, label: "maureen" },
+            //   { y: 20, label: "jeremy" },
+            // ]}
+            data={get_pie_chart_data(
+              get_data_intermediate(expense_data_query.data)
+            )}
+          />
+        </div>
+        <div className="flex w-[50%] flex-col gap-3 border">
+          <div className="flex items-center gap-2 rounded p-4 font-bold">
+            <div className="h-4 w-4 rounded-full bg-pink-500" />
+            <p>Groceries</p>
           </div>
-        </>
-      )}
-    </div>
+        </div>
+      </div>
+    </>
   );
 }
 
