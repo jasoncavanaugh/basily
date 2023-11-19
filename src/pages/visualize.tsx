@@ -169,7 +169,7 @@ export default function Visualize() {
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="flex grow flex-col gap-2 rounded bg-pikachu p-4 dark:bg-leblanc">
+        <div className="flex grow flex-col gap-2 rounded bg-pikachu p-4 dark:bg-leblanc overflow-scroll">
           {pie_chart_data.map((datum) => {
             return (
               <div className="flex items-center gap-3 rounded-lg bg-bulbasaur dark:bg-khazix shadow-sm shadow-slate-300 dark:shadow-slate-900">
