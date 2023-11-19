@@ -11,6 +11,7 @@
   background-color: #c4c4c4;
   border-radius: 10px;
 }
+
 .modal-overlay {
   opacity: 0.4;
   position: fixed;

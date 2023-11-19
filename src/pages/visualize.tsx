@@ -24,7 +24,16 @@ import { useRouter } from "next/router";
 import Layout from "src/components/Layout";
 import { getServerAuthSession } from "src/server/auth";
 import { GetServerSideProps } from "next";
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
 
+const data = [
+  { name: "Group A", value: 400 },
+  { name: "Group B", value: 300 },
+  { name: "Group C", value: 300 },
+  { name: "Group D", value: 200 },
+];
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 //I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getServerAuthSession(ctx);
@@ -33,10 +42,8 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   };
 };
 export default function Visualize() {
-  //const expense_data_query = use_expenses();
   const session = useSession();
   const router = useRouter();
-  const { theme } = useTheme();
   const week_ago_date = subDays(new Date(), 7);
   const today_date = new Date();
   const [date, set_date] = useState<DateRange | undefined>({
@@ -59,7 +66,6 @@ export default function Visualize() {
       year: date && date.to ? date.to.getFullYear() : today_date.getFullYear(),
     },
   });
-
 
   useEffect(() => {
     if (session.status === "unauthenticated") {
@@ -84,101 +90,170 @@ export default function Visualize() {
   if (expense_data_query.status === "error") {
     return (
       <Layout>
-      <div className="flex h-[95vh] items-center justify-center">
-        <h1 className="text-white">
-          Uh oh, there was a problem loading your expenses.
-        </h1>
-      </div>
+        <div className="flex h-[95vh] items-center justify-center">
+          <h1 className="text-white">
+            Uh oh, there was a problem loading your expenses.
+          </h1>
+        </div>
       </Layout>
     );
   }
 
   console.log("expense_data_query", expense_data_query.data);
+  const pie_chart_data = get_pie_chart_data(
+    get_data_intermediate(expense_data_query.data)
+  );
   return (
     <Layout>
-      <DatePickerWithRange date={date} set_date={set_date} />
-      <div className="flex h-[85vh] flex-col items-center justify-center bg-pikachu dark:bg-leblanc md:flex-row">
-        <div className="w-1/2">
-          <VictoryPie
-            labels={[]}
-            padAngle={5}
-            innerRadius={70}
-            labelComponent={
-              <VictoryTooltip
-                // flyoutWidth={65}
-                // flyoutHeight={35}
-                cornerRadius={5}
-                // center={{
-                //   x: 0,
-                //   y: 0
-                // }}
-                flyoutPadding={{ top: 5, bottom: 5, left: 10, right: 10 }}
-                pointerLength={0}
-                flyoutStyle={{
-                  strokeWidth: 0,
-                  fill: ({ datum }) => {
-                    const color = datum.color.join("");
-                    return TW_COLORS_TO_HEX_MP[color as BaseColor]["200"];
-                  },
-                  boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+      <div className="flex h-[10%] items-center">
+        <DatePickerWithRange date={date} set_date={set_date} />
+      </div>
+      <div className="flex h-[90%] flex-col md:flex-row ">
+        <div className="h-[50%] w-[100%] bg-bulbasaur dark:bg-khazix md:h-[100%] md:w-[50%]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart width={400} height={400}>
+              <Pie
+                data={pie_chart_data}
+                innerRadius={160}
+                outerRadius={220}
+                fill="#8884d8"
+                paddingAngle={5}
+                dataKey="value"
+              >
+                {pie_chart_data.map((datum, i) => (
+                  <Cell
+                    key={`${datum.name}-${i}`}
+                    fill={TW_COLORS_TO_HEX_MP[datum.color]["500"]}
+                    stroke="none"
+                    // style={{ border: "1px solid red" }}
+                  />
+                ))}
+              </Pie>
+              <Tooltip
+                wrapperClassName="bg-red-500 p-0"
+                // itemStyle={{ backgroundColor: "red" }}
+                contentStyle={{
+                  fontStyle: "italic",
+                  backgroundColor: "blue",
                 }}
-                // @ts-ignore
-                style={{
-                  fill: ({ datum }: { datum: any }) => {
-                    const color = datum.color.join("");
-                    return TW_COLORS_TO_HEX_MP[color as BaseColor][
-                      "700"
-                    ] as string;
-                  },
-                  fontSize: 10,
-                  fontWeight: 600,
-                  textAnchor: "middle",
+                content={(v) => {
+                  const stuff = v.payload
+                    ? v.payload[0]
+                      ? v.payload[0]
+                      : null
+                    : null;
+                  console.log("wtf", stuff);
+                  if (!stuff) {
+                    return null;
+                  }
+                  const col = stuff.payload.color as BaseColor;
+                  console.log("col", col);
+                  return (
+                    <div
+                      className={cn(
+                        "rounded-lg px-3 py-2 font-semibold",
+                        TW_COLORS_MP["text"][col]["500"],
+                        TW_COLORS_MP["bg"][col]["200"]
+                      )}
+                    >
+                      {stuff.name}
+                    </div>
+                  );
                 }}
+                // content={(props) => {
+                //     console.log("JASON", props.payload);
+                //     props.payload
+                //     return <CustomTooltip />
+                //   }}
               />
-            }
-            // style={{
-            //   labels: {
-            //     fontSize: 8,
-            //     fill: theme === "dark" ? "white" : "black",
-            //   },
-            // }}
-            radius={100}
-            colorScale={get_colors(
-              get_data_intermediate(expense_data_query.data)
-            )}
-            animate={{
-              animationWhitelist: ["style", "data", "size"], // Try removing "size"
-              onExit: {
-                duration: 500,
-                before: () => ({ opacity: 0.3, _y: 0 }),
-              },
-              onEnter: {
-                duration: 500,
-                before: () => ({ opacity: 0.3, _y: 0 }),
-                after: (datum) => ({ opacity: 1, _y: datum._y }),
-              },
-            }}
-            // labelComponent={<VictoryLabel className="border bg-red-700 px-4" />}
-            // data={[
-            //   { y: 75, label: "jason" },
-            //   { y: 5, label: "maureen" },
-            //   { y: 20, label: "jeremy" },
-            // ]}
-            data={get_pie_chart_data(
-              get_data_intermediate(expense_data_query.data)
-            )}
-          />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
-        <div className="flex w-[50%] flex-col gap-3 border">
-          <div className="flex items-center gap-2 rounded p-4 font-bold">
-            <div className="h-4 w-4 rounded-full bg-pink-500" />
-            <p>Groceries</p>
-          </div>
+        <div className="flex grow flex-col gap-2 rounded bg-pikachu p-4 dark:bg-leblanc">
+          {pie_chart_data.map((datum) => {
+            return (
+              <div className="flex items-center gap-3 rounded-lg bg-bulbasaur dark:bg-khazix shadow-sm shadow-slate-300 dark:shadow-slate-900">
+                <div className={cn("flex items-center justify-between rounded p-4 font-bold")}>
+                  <div className={cn("flex items-center gap-4 p-4")}>
+                    <div
+                      className={cn(
+                        "h-4 w-4 rounded-full",
+                        TW_COLORS_MP["bg"][datum.color]["500"]
+                      )}
+                    />
+                    <p
+                      className={cn(
+                        TW_COLORS_MP["text"][datum.color]["500"]
+                      )}
+                    >
+                      {datum.name}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </Layout>
   );
 }
+
+/*
+{
+    "name": "Groceries - $132.56 (34%)",
+    "value": 0.3406311028882722,
+    "payload": {
+        "payload": {
+            "value": 0.3406311028882722,
+            "name": "Groceries - $132.56 (34%)",
+            "color": "red"
+        },
+        "fill": "#ef4444",
+        "stroke": "none",
+        "cx": "50%",
+        "cy": "50%",
+        "value": 0.3406311028882722,
+        "name": "Groceries - $132.56 (34%)",
+        "color": "red"
+    },
+    "dataKey": "value"
+}
+*/
+type Jason = {
+  name: string;
+  value: number;
+  payload: {
+    payload: {
+      value: number;
+      name: string;
+      color: string;
+    };
+    fill: string;
+    stroke: string;
+    cx: string;
+    cy: string;
+    value: string;
+    name: string;
+    color: string;
+  };
+  dataKey: string;
+};
+
+const CustomTooltip = (props: Jason) => {
+  // console.log("HERE", active, payload, label);
+  // if (active && payload && payload.length) {
+  return (
+    <div className="rounded bg-slate-300 p-4 text-white">
+      <p className="label">{`${props.name}`}</p>
+      <p className="intro">Intro</p>
+      <p className="desc">Anything you want can be displayed here.</p>
+    </div>
+  );
+  // }
+
+  // return null;
+};
 
 function get_colors(input: IntResp) {
   return input.props.map((d) => TW_COLORS_TO_HEX_MP[d.color]["500"]);
@@ -227,11 +302,11 @@ function get_pie_chart_data(input: IntResp) {
   const out = input.props.map((d) => {
     const c = d.color;
     return {
-      y: d.total / input.global_total,
-      label: `${d.name} - ${cents_to_dollars_display(d.total)} (${Math.floor(
-        (d.total / input.global_total) * 100
+      value: d.total / input.global_total,
+      name: `${d.name} - ${cents_to_dollars_display(d.total)} (${(
+        Math.floor((d.total / input.global_total) * 10000) / 100
       ).toLocaleString()}%)`,
-      color: d.color.split(""), //Because Victory is the weirdest fucking library
+      color: d.color, //Because Victory is the weirdest fucking library
     };
   });
   return out;
@@ -252,7 +327,7 @@ function DatePickerWithRange({
   // });//Default to the past week
 
   return (
-    <div className={cn("grid gap-2")}>
+    <div className="grid gap-2">
       <Popover>
         <PopoverTrigger asChild>
           <Button
