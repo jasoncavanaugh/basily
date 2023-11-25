@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  @apply bg-charmander dark:bg-khazix 
+}
+
 ::-webkit-scrollbar {
   height: 10px;
   width: 10px;
@@ -11,6 +15,16 @@
   background-color: #c4c4c4;
   border-radius: 10px;
 }
+.thin-scrollbar::-webkit-scrollbar {
+  height: 10px;
+  width: 6px;
+  padding-top: 6px;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #c4c4c4;
+  border-radius: 6px;
+}
+
 .modal-overlay {
   opacity: 0.4;
   position: fixed;
@@ -49,8 +63,20 @@
   outline: none;
 }
 
+::-webkit-scrollbar-corner {
+  background: rgba(0,0,0,0);
+}
+
 .color-selection-wrapper {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+/* .first\:\[\&\:has\(\[aria-selected\]\)\]\:rounded-l-md:has([aria-selected]):first-child { */
+/*   border-top-left-radius: calc(var(--radius) - 2px); */
+/*   border-bottom-left-radius: calc(var(--radius) - 2px); */
+/* } */
+/* .last\:\[\&\:has\(\[aria-selected\]\)\]\:rounded-r-md:has([aria-selected]):last-child { */
+/*   border-top-right-radius: calc(var(--radius) - 2px); */
+/*   border-bottom-right-radius: calc(var(--radius) - 2px); */
+/* } */

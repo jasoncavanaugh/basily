@@ -1,7 +1,7 @@
 import { BASE_COLORS, BaseColor } from "src/utils/colors";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { Expense, ExpenseCategory } from "@prisma/client";
+import { Expense, ExpenseCategory, Day } from "@prisma/client";
 
 /*
  * TYPES
@@ -14,6 +14,11 @@ export type ExpenseCategoryWithBaseColor = Omit<ExpenseCategory, "color"> & {
 export type ExpenseCategoryWithExpenses = ExpenseCategoryWithBaseColor & {
   expenses: Expense[];
 };
+export type Ugh = {
+  days: (Day & { expenses: Expense[] })[];
+  expense_categories: ExpenseCategoryWithBaseColor[];
+};
+
 const DateZodSchema = z.object({
   day: z.number(),
   month_idx: z.number(),
@@ -68,22 +73,27 @@ export const router = createTRPCRouter({
     )
     .query(async ({ input, ctx }) => {
       const { from_date, to_date } = input;
+      console.log("from_date", from_date, "to_date", to_date);
       const from = new Date(from_date.year, from_date.month_idx, from_date.day);
       const to = new Date(to_date.year, to_date.month_idx, to_date.day);
-      return ctx.prisma.expense.findMany({
+      //Get days
+      const days = await ctx.prisma.day.findMany({
         where: {
           AND: [
-            {
-              createdAt: {
-                lte: to,
-                gte: from,
-              },
-            },
+            { month: { lte: to_date.month_idx, gte: from_date.month_idx } },
+            { year: { lte: to_date.year, gte: from_date.year } },
+            { day: { lte: to_date.day, gte: from_date.day } },
             { user_id: ctx.session.user.id },
           ],
         },
-        orderBy: [{ createdAt: "desc" }],
+        include: { expenses: true },
       });
+
+      //Get categories
+      const expense_categories = (await ctx.prisma.expenseCategory.findMany({
+        where: { user_id: ctx.session.user.id },
+      })) as ExpenseCategoryWithBaseColor[];
+      return { days, expense_categories };
     }),
   get_categories: protectedProcedure.query(async ({ ctx }) => {
     return ctx.prisma.expenseCategory.findMany({
