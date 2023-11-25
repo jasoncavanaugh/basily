@@ -26,8 +26,8 @@ export default function Layout({ children }: { children: ReactNode }) {
           onClick={
             () => {
               cur_route === EXPENSES_ROUTE
-                ? router.push(VISUALIZE_ROUTE)
-                : router.push(EXPENSES_ROUTE);
+                ? router.prefetch(VISUALIZE_ROUTE)
+                : router.prefetch(EXPENSES_ROUTE);
             }
           }
         >
