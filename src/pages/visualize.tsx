@@ -171,8 +171,8 @@ export default function Visualize() {
         </div>
         <ul
           className={cn(
-            "thin-scrollbar ml-2 mr-5 mt-4 flex w-full grow flex-col dark:bg-khazix",
-            "gap-2 overflow-scroll rounded pl-5 pr-2 md:w-[50%] md:p-4 md:m-0"
+            "thin-scrollbar ml-2 mr-5 mt-4 flex w-[100%] h-[50%] flex-col dark:bg-khazix",
+            "gap-2 overflow-scroll rounded pl-5 pr-2 md:w-[50%] md:h-[100%] md:px-4 md:py-0 md:m-0"
           )}
         >
           {pie_chart_data.map((datum) => {
