@@ -8,6 +8,7 @@ import {
   EXPENSES_ROUTE,
   VISUALIZE_ROUTE,
 } from "src/utils/constants";
+import Link from "next/link";
 
 export default function Layout({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="bg-charmander dark:bg-khazix h-[100vh] md:p-4">
       <div className="h-[5%] flex items-center justify-between px-2 pt-2 md:pt-0">
+        <Link href={cur_route === EXPENSES_ROUTE ? VISUALIZE_ROUTE : EXPENSES_ROUTE}>
         <button
           className={cn(
             "rounded-full",
@@ -23,16 +25,10 @@ export default function Layout({ children }: { children: ReactNode }) {
             "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
             BUTTON_HOVER_CLASSES
           )}
-          onClick={
-            () => {
-              cur_route === EXPENSES_ROUTE
-                ? router.prefetch(VISUALIZE_ROUTE)
-                : router.prefetch(EXPENSES_ROUTE);
-            }
-          }
         >
           {cur_route === VISUALIZE_ROUTE ? "Expenses" : "Visualize"}
         </button>
+        </Link>
         <div className="flex items-center justify-end gap-2 lg:gap-4">
           <ThemeButton />
           <button
