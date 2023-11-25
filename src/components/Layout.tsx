@@ -15,19 +15,21 @@ export default function Layout({ children }: { children: ReactNode }) {
   const cur_route = router.route;
 
   return (
-    <div className="bg-charmander dark:bg-khazix h-[100vh] md:p-4">
-      <div className="h-[5%] flex items-center justify-between px-2 pt-2 md:pt-0">
-        <Link href={cur_route === EXPENSES_ROUTE ? VISUALIZE_ROUTE : EXPENSES_ROUTE}>
-        <button
-          className={cn(
-            "rounded-full",
-            "w-[6rem] border border-squirtle py-1 text-sm font-semibold text-squirtle dark:border-transparent",
-            "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
-            BUTTON_HOVER_CLASSES
-          )}
+    <div className="md:p-4">
+      <div className="flex h-[5%] items-center justify-between px-2 pt-2 md:pt-0">
+        <Link
+          href={cur_route === EXPENSES_ROUTE ? VISUALIZE_ROUTE : EXPENSES_ROUTE}
         >
-          {cur_route === VISUALIZE_ROUTE ? "Expenses" : "Visualize"}
-        </button>
+          <button
+            className={cn(
+              "rounded-full",
+              "w-[6rem] border border-squirtle py-1 text-sm font-semibold text-squirtle dark:border-transparent",
+              "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
+              BUTTON_HOVER_CLASSES
+            )}
+          >
+            {cur_route === VISUALIZE_ROUTE ? "Expenses" : "Visualize"}
+          </button>
         </Link>
         <div className="flex items-center justify-end gap-2 lg:gap-4">
           <ThemeButton />
@@ -45,7 +47,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       {cur_route === EXPENSES_ROUTE ? (
         <ul className="flex flex-col gap-4">{children}</ul>
       ) : (
-        <div className="h-[95%] flex flex-col gap-1">{children}</div>
+        <div className="flex h-[95%] flex-col gap-1">{children}</div>
       )}
     </div>
   );

@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { Spinner } from "src/components/Spinner";
 import { getServerAuthSession } from "src/server/auth";
 import { EXPENSES_ROUTE } from "src/utils/constants";
+import { SPINNER_CLASSNAMES } from ".";
 
 //I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
@@ -26,7 +27,7 @@ export default function SignIn() {
   if (session.status === "loading" || session.status === "authenticated") {
     return (
       <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
-        <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar dark:border-rengar_light lg:border-8" />
+        <Spinner className={SPINNER_CLASSNAMES} />
       </div>
     );
   }

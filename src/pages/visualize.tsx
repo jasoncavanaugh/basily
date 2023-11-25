@@ -26,6 +26,9 @@ import { getServerAuthSession } from "src/server/auth";
 import { GetServerSideProps } from "next";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
+import { SPINNER_CLASSNAMES } from ".";
+import { useWindowDimensions } from "src/utils/useWindowDimensions";
+import { breakpoints } from "src/utils/tailwindBreakpoints";
 
 const data = [
   { name: "Group A", value: 400 },
@@ -50,6 +53,9 @@ export default function Visualize() {
     from: subDays(new Date(), 7),
     to: new Date(),
   }); //Default to the past week
+
+  const windowDimensions = useWindowDimensions();
+  //windowDimensions.width
   const expense_data_query = api.router.get_expenses_over_date_range.useQuery({
     from_date: {
       day: date && date.from ? date.from.getDate() : week_ago_date.getDate(),
@@ -75,7 +81,7 @@ export default function Visualize() {
   if (session.status === "loading" || session.status === "unauthenticated") {
     return (
       <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
-        <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar dark:border-rengar_light lg:border-8" />
+        <Spinner className={SPINNER_CLASSNAMES} />
       </div>
     );
   }
@@ -83,7 +89,7 @@ export default function Visualize() {
   if (expense_data_query.status === "loading") {
     return (
       <div className="flex h-[95vh] items-center justify-center">
-        <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar dark:border-rengar_light lg:border-8" />
+        <Spinner className={SPINNER_CLASSNAMES} />
       </div>
     );
   }
@@ -99,24 +105,28 @@ export default function Visualize() {
     );
   }
 
+  console.log("windowDimensions", windowDimensions);
   console.log("expense_data_query", expense_data_query.data);
   const pie_chart_data = get_pie_chart_data(
     get_data_intermediate(expense_data_query.data)
   );
   return (
     <Layout>
-      <div className="flex h-[10%] items-center">
+      <div className="flex h-[10vh] items-center pl-4">
         <DatePickerWithRange date={date} set_date={set_date} />
       </div>
-      <div className="flex h-[90%] flex-col md:flex-row ">
-        <div className="h-[50%] w-[100%] bg-bulbasaur dark:bg-khazix md:h-[100%] md:w-[50%]">
+      <div className="flex h-[83vh] md:h-[80vh] flex-col items-center md:flex-row md:items-start">
+        <div className="h-[50%] w-[92%] rounded-md bg-bulbasaur px-4 dark:bg-khazix md:h-[100%] md:w-[50%]">
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart width={400} height={400}>
+            <PieChart width={100} height={100}>
               <Pie
                 data={pie_chart_data}
-                innerRadius={160}
-                outerRadius={220}
-                fill="#8884d8"
+                innerRadius={
+                  windowDimensions.width && windowDimensions.width <= breakpoints["md"] ? 80 : 160
+                }
+                outerRadius={
+                  windowDimensions.width && windowDimensions.width <= breakpoints["md"] ? 120 : 220
+                }
                 paddingAngle={5}
                 dataKey="value"
               >
@@ -131,17 +141,12 @@ export default function Visualize() {
               </Pie>
               <Tooltip
                 wrapperClassName="bg-red-500 p-0"
-                // itemStyle={{ backgroundColor: "red" }}
                 contentStyle={{
                   fontStyle: "italic",
                   backgroundColor: "blue",
                 }}
                 content={(v) => {
-                  const stuff = v.payload
-                    ? v.payload[0]
-                      ? v.payload[0]
-                      : null
-                    : null;
+                  const stuff = v.payload ? v.payload[0] : null;
                   console.log("wtf", stuff);
                   if (!stuff) {
                     return null;
@@ -160,40 +165,39 @@ export default function Visualize() {
                     </div>
                   );
                 }}
-                // content={(props) => {
-                //     console.log("JASON", props.payload);
-                //     props.payload
-                //     return <CustomTooltip />
-                //   }}
               />
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="flex grow flex-col gap-2 rounded bg-pikachu p-4 dark:bg-leblanc overflow-scroll">
+        <ul
+          className={cn(
+            "thin-scrollbar ml-2 mr-5 mt-4 flex w-full grow flex-col dark:bg-khazix",
+            "gap-2 overflow-scroll rounded pl-5 pr-2 md:w-[50%] md:p-4 md:m-0"
+          )}
+        >
           {pie_chart_data.map((datum) => {
             return (
-              <div className="flex items-center gap-3 rounded-lg bg-bulbasaur dark:bg-khazix shadow-sm shadow-slate-300 dark:shadow-slate-900">
-                <div className={cn("flex items-center justify-between rounded p-4 font-bold")}>
-                  <div className={cn("flex items-center gap-4 p-4")}>
-                    <div
-                      className={cn(
-                        "h-4 w-4 rounded-full",
-                        TW_COLORS_MP["bg"][datum.color]["500"]
-                      )}
-                    />
-                    <p
-                      className={cn(
-                        TW_COLORS_MP["text"][datum.color]["500"]
-                      )}
-                    >
-                      {datum.name}
-                    </p>
-                  </div>
+              <li
+                className={cn(
+                  "flex items-center gap-3 bg-bulbasaur dark:bg-leblanc",
+                  "rounded-lg font-bold shadow-sm shadow-slate-300 dark:shadow-leblanc"
+                )}
+              >
+                <div className={cn("flex items-center gap-4 p-4")}>
+                  <div
+                    className={cn(
+                      "h-4 w-4 rounded-full",
+                      TW_COLORS_MP["bg"][datum.color]["500"]
+                    )}
+                  />
+                  <p className={cn(TW_COLORS_MP["text"][datum.color]["500"])}>
+                    {datum.name}
+                  </p>
                 </div>
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </div>
     </Layout>
   );

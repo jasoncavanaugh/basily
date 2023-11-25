@@ -17,6 +17,7 @@ import { BUTTON_HOVER_CLASSES, SIGN_IN_ROUTE } from "src/utils/constants";
 import { getServerAuthSession } from "src/server/auth";
 import { GetServerSideProps } from "next";
 import { ExpenseCategoryWithBaseColor } from "src/server/api/routers/router";
+import { SPINNER_CLASSNAMES } from ".";
 
 //I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
@@ -39,7 +40,7 @@ export default function Expenses() {
   if (session.status === "loading" || session.status === "unauthenticated") {
     return (
       <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
-        <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar dark:border-rengar_light lg:border-8" />
+        <Spinner className={SPINNER_CLASSNAMES} />
       </div>
     );
   }
@@ -48,7 +49,7 @@ export default function Expenses() {
     <Layout>
       {expense_data_query.status === "loading" && (
         <div className="flex h-[95vh] items-center justify-center">
-          <Spinner className="h-16 w-16 border-4 border-solid border-pikachu dark:border-rengar dark:border-rengar_light lg:border-8" />
+          <Spinner className={SPINNER_CLASSNAMES} />
         </div>
       )}
       {expense_data_query.status === "error" && (
@@ -136,7 +137,12 @@ function ExpenseListForDay({
       <li key={category_id}>
         <div className="flex justify-between">
           <h2
-            className={`flex items-center rounded-lg ${TW_COLORS_MP["bg"][category_color][200]} px-2 text-sm font-bold md:py-1 md:text-base ${TW_COLORS_MP["text"][category_color][700]}`}
+            className={cn(
+              "flex items-center rounded-lg",
+              TW_COLORS_MP["bg"][category_color][200],
+              "px-2 text-sm font-bold md:py-1 md:text-base",
+              TW_COLORS_MP["text"][category_color][700]
+            )}
           >
             {category_name}
           </h2>
