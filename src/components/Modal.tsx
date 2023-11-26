@@ -1,7 +1,7 @@
 import * as RadixModal from "@radix-ui/react-dialog";
 import { cn } from "src/utils/cn";
 interface ModalProps {
-  trigger: JSX.Element;
+  trigger: React.ReactNode,
   open?: boolean;
   on_open_change?: () => void;
   className?: string;

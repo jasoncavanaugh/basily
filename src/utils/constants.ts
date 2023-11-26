@@ -4,4 +4,4 @@ export const VISUALIZE_ROUTE = "/visualize" as const;
 export const SIGN_IN_ROUTE = "/sign-in" as const;
 
 export const BUTTON_HOVER_CLASSES =
-  "hover:bg-squirtle_light hover:cursor-pointer hover:bg-opacity-20";
+  "hover:bg-squirtle_light hover:cursor-pointer hover:bg-opacity-20" as const;

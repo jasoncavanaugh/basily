@@ -9,7 +9,7 @@ import { get_category_ids_to_names } from "./getCategoryIdsToNames";
 export type ExpenseDataByDay = {
   id: string;
   total_for_day: number;
-  date_display: string;
+  date_display: `${number}-${number}-${number}`;
   category_id_to_expenses: Map<string, Expense[]>;
 };
 function getExpenseCategories() {
@@ -157,6 +157,8 @@ export function use_expenses() {
     });
   }
 
+  type a = `:${string}`
+  const b: a = "jason"
   return {
     status: "success",
     error: undefined,
