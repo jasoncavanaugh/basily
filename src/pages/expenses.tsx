@@ -38,7 +38,6 @@ export default function Expenses() {
   const router = useRouter();
 
   const today = new Date();
-  console.log(today.getMonth(), today.getDate(), today.getFullYear());
 
   useEffect(() => {
     if (session.status === "unauthenticated") {
@@ -248,7 +247,7 @@ function ExpenseButton({
       open={is_modal_open}
     >
       <RadixModal.Trigger asChild>
-        <li key={expense.id} onClick={() => set_is_modal_open(true)}>
+        <li key={expense.id}>
           <button
             className={cn(
               TW_COLORS_MP["bg"][category_color][500],
@@ -335,11 +334,6 @@ function extract_date_fields(date_str: string) {
     year: parseInt(split[2]!),
   };
 }
-function get_today() {
-  return `${
-    new Date().getMonth() + 1
-  }/${new Date().getDate()}/${new Date().getFullYear()}`;
-}
 
 function AddNewExpenseButtonAndModal({
   triggerClassnames,
@@ -364,7 +358,7 @@ function AddNewExpenseButtonAndModal({
     expense_category_name ?? ""
   );
   const [is_category_dropdown_open, set_is_category_dropdown_open] =
-    useState(true);
+    useState(false);
   const [color, set_color] = useState<BaseColor>(
     expense_category_color ?? "pink"
   );
@@ -411,7 +405,6 @@ function AddNewExpenseButtonAndModal({
       });
     } else {
       const id = expense_categories.find((c) => c.name === category_text)?.id;
-      // console.log("id", id, "amount", amount);
       if (!id) throw new Error("id undefined");
       create_expense_mtn.mutate({
         category_id: id,
@@ -437,9 +430,24 @@ function AddNewExpenseButtonAndModal({
       .length !== 0;
 
   return (
-    <RadixModal.Root onOpenChange={() => {
-      set_is_modal_open(!is_modal_open);
-    }} open={is_modal_open}>
+    <RadixModal.Root
+      onOpenChange={() => {
+        //This is so dumb, I can't believe this is how the Radix modal works
+        if (is_modal_open) {
+          //About to close
+          set_amount("");
+          set_category_text("");
+          set_color("pink");
+        } else {
+          //About to open
+          set_amount("");
+          set_category_text(expense_category_name ?? "");
+          set_color(expense_category_color ?? "pink");
+        }
+        set_is_modal_open(!is_modal_open);
+      }}
+      open={is_modal_open}
+    >
       <RadixModal.Trigger asChild>
         <button
           type="button"

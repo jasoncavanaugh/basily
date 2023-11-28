@@ -100,7 +100,6 @@ export function use_expenses() {
       invalidate_queries: () => {},
     } as const;
   }
-  console.log(expense_categories_query.status);
 
   const expense_categories = expense_categories_query.data;
 
