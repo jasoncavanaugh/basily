@@ -4,7 +4,6 @@ import * as RadixModal from "@radix-ui/react-dialog";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { ReactHTMLElement, ReactNode, useEffect, useState } from "react";
-import Modal from "src/components/Modal";
 import { Spinner } from "src/components/Spinner";
 import { api } from "src/utils/api";
 import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
