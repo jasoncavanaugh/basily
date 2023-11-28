@@ -156,8 +156,6 @@ export function use_expenses() {
     });
   }
 
-  type a = `:${string}`
-  const b: a = "jason"
   return {
     status: "success",
     error: undefined,
