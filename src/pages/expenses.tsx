@@ -33,6 +33,7 @@ export default function Expenses() {
   const router = useRouter();
 
   const today = new Date();
+  console.log(today.getMonth(), today.getDate(), today.getFullYear())
 
   useEffect(() => {
     if (session.status === "unauthenticated") {
@@ -79,29 +80,26 @@ export default function Expenses() {
           />
         )}
       <AddNewExpenseButtonAndModal
+        triggerClassnames={cn(
+            "fixed bottom-5 right-5 flex h-12 w-12 items-center justify-center rounded-full bg-squirtle p-0 shadow shadow-blue-300 hover:cursor-pointer dark:bg-rengar",
+            "md:bottom-14 md:right-14 md:h-14 md:w-14",
+            "lg:shadow-md lg:shadow-blue-300 lg:transition-all lg:hover:-translate-y-0.5 lg:hover:shadow-lg lg:hover:shadow-blue-300 lg:hover:brightness-110"
+          )}
         month={today.getMonth() + 1}
         day={today.getDate()}
         year={today.getFullYear()}
       >
         {/* https://tailwindcomponents.com/component/tailwind-css-fab-buttons */}
-        <div
-          className={cn(
-            "fixed bottom-5 right-5 flex h-12 w-12 items-center justify-center rounded-full bg-squirtle p-0 shadow shadow-blue-300 hover:cursor-pointer dark:bg-rengar",
-            "md:bottom-14 md:right-14 md:h-14 md:w-14",
-            "lg:shadow-md lg:shadow-blue-300 lg:transition-all lg:hover:-translate-y-0.5 lg:hover:shadow-lg lg:hover:shadow-blue-300 lg:hover:brightness-110"
-          )}
+        <svg
+          viewBox="0 0 20 20"
+          enableBackground="new 0 0 20 20"
+          className={cn("inline-block h-6 w-6")}
         >
-          <svg
-            viewBox="0 0 20 20"
-            enableBackground="new 0 0 20 20"
-            className={cn("inline-block h-6 w-6")}
-          >
-            <path
-              fill="#FFFFFF"
-              d="M16,10c0,0.553-0.048,1-0.601,1H11v4.399C11,15.951,10.553,16,10,16c-0.553,0-1-0.049-1-0.601V11H4.601 C4.049,11,4,10.553,4,10c0-0.553,0.049-1,0.601-1H9V4.601C9,4.048,9.447,4,10,4c0.553,0,1,0.048,1,0.601V9h4.399 C15.952,9,16,9.447,16,10z"
-            />
-          </svg>
-        </div>
+          <path
+            fill="#FFFFFF"
+            d="M16,10c0,0.553-0.048,1-0.601,1H11v4.399C11,15.951,10.553,16,10,16c-0.553,0-1-0.049-1-0.601V11H4.601 C4.049,11,4,10.553,4,10c0-0.553,0.049-1,0.601-1H9V4.601C9,4.048,9.447,4,10,4c0.553,0,1,0.048,1,0.601V9h4.399 C15.952,9,16,9.447,16,10z"
+          />
+        </svg>
       </AddNewExpenseButtonAndModal>
     </Layout>
   );
@@ -177,29 +175,25 @@ function ExpenseListForDay({
     output.push(
       <li key={category_id}>
         <div className="flex justify-between">
-          {/* <AddNewExpenseButtonAndModal
+          <AddNewExpenseButtonAndModal
+            triggerClassnames="hover:cursor-pointer hover:opacity-80 dark:hover:opacity-100 dark:hover:brightness-110"
             month={month}
             day={day}
             year={year}
             expense_category_name={category_name}
             expense_category_color={category_color}
-          > */}
-            <div
-              className="hover:cursor-pointer hover:opacity-80 dark:hover:opacity-100 dark:hover:brightness-110"
-              // title="Add expense for this category"
+          >
+            <h2
+              className={cn(
+                "flex items-center rounded-lg",
+                "px-2 py-1 text-sm font-bold md:text-base ",
+                TW_COLORS_MP["bg"][category_color][200],
+                TW_COLORS_MP["text"][category_color][700]
+              )}
             >
-              <h2
-                className={cn(
-                  "flex items-center rounded-lg",
-                  "px-2 py-1 text-sm font-bold md:text-base ",
-                  TW_COLORS_MP["bg"][category_color][200],
-                  TW_COLORS_MP["text"][category_color][700]
-                )}
-              >
-                {category_name} +
-              </h2>
-            </div>
-          {/* </AddNewExpenseButtonAndModal> */}
+              {category_name} +
+            </h2>
+           </AddNewExpenseButtonAndModal>
           <p className="font-semibold text-squirtle dark:text-rengar">
             {cents_to_dollars_display(sum_of_expenses)}
           </p>
@@ -331,6 +325,7 @@ function get_today() {
 }
 
 function AddNewExpenseButtonAndModal({
+  triggerClassnames,
   month,
   day,
   year,
@@ -338,6 +333,7 @@ function AddNewExpenseButtonAndModal({
   expense_category_color,
   children,
 }: {
+  triggerClassnames: string;
   month: number;
   day: number;
   year: number;
@@ -423,8 +419,9 @@ function AddNewExpenseButtonAndModal({
     <Modal
       open={is_modal_open}
       on_open_change={() => {
-        // set_amount("");
+        set_amount("");
         set_is_category_dropdown_open(false);
+        set_category_text("");
         // set_color("pink");
       }}
       className={cn(
@@ -439,6 +436,7 @@ function AddNewExpenseButtonAndModal({
             expense_categories_qry.status === "error"
           }
           onClick={() => set_is_modal_open(true)}
+          className={triggerClassnames}
         >
           {children}
         </button>
@@ -617,18 +615,20 @@ function AddNewExpenseButtonAndModal({
         </div>
         <div className="h-8" />
         <div className="flex justify-center gap-5">
-          <button
-            className={cn(
-              "h-[2rem] w-[4.5rem] rounded-full bg-slate-500 text-xs font-semibold text-white",
-              "hover:brightness-110 lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
-            )}
-            type="button"
-            onClick={() => {
-              set_is_modal_open(false);
-            }}
-          >
-            Cancel
-          </button>
+          <RadixModal.Close asChild>
+            <button
+              className={cn(
+                "h-[2rem] w-[4.5rem] rounded-full bg-slate-500 text-xs font-semibold text-white",
+                "hover:brightness-110 lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
+              )}
+              type="button"
+              onClick={() => {
+                set_is_modal_open(false);
+              }}
+            >
+              Cancel
+            </button>
+          </RadixModal.Close>
           <button
             className={cn(
               "flex w-[4.5rem] items-center justify-center rounded-full bg-squirtle text-xs font-semibold text-white dark:bg-rengar lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold",
