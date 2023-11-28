@@ -432,17 +432,9 @@ function AddNewExpenseButtonAndModal({
     <RadixModal.Root
       onOpenChange={() => {
         //This is so dumb, I can't believe this is how the Radix modal works
-        if (is_modal_open) {
-          //About to close
-          set_amount("");
-          set_category_text("");
-          set_color("pink");
-        } else {
-          //About to open
-          set_amount("");
-          set_category_text(expense_category_name ?? "");
-          set_color(expense_category_color ?? "pink");
-        }
+        set_amount("");
+        set_category_text(expense_category_name ?? "");
+        set_color(expense_category_color ?? "pink");
         set_is_modal_open(!is_modal_open);
       }}
       open={is_modal_open}
