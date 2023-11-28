@@ -1,9 +1,9 @@
 import * as RadixModal from "@radix-ui/react-dialog";
 import { cn } from "src/utils/cn";
 interface ModalProps {
-  trigger: JSX.Element;
-  open?: boolean;
-  on_open_change?: () => void;
+  trigger: React.ReactNode;
+  open?: { is_open: boolean, on_open_change: () => void };
+  onEscapeKeyDown?: (event: KeyboardEvent) => void;
   className?: string;
   children?: React.ReactNode;
 }
@@ -11,12 +11,20 @@ interface ModalProps {
 export const Modal: React.FunctionComponent<ModalProps> = ({
   trigger,
   open,
-  on_open_change,
+  onEscapeKeyDown
   className = "",
   children,
 }) => {
+  let radix_props = {}
+  if (open) {
+    radix_props = { onOpenChange: on_open_change, open: is_open };
+  }
+  if (onEscapeKeyDown) {
+  }
+
+  const openProps = open ? { onOpenChange: on_open_change, open: is_open } : {};
   return (
-    <RadixModal.Root onOpenChange={on_open_change} open={open}>
+    <RadixModal.Root {...openProps}>
       <RadixModal.Trigger asChild>{trigger}</RadixModal.Trigger>
       <RadixModal.Portal>
         <RadixModal.Overlay

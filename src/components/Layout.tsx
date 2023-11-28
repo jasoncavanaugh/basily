@@ -1,5 +1,5 @@
 import { cn } from "src/utils/cn";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 import { ThemeButton } from "./ThemeButton";
 import { ReactNode } from "react";
