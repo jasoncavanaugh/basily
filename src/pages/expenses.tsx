@@ -13,7 +13,12 @@ import { BASE_COLORS, BaseColor } from "src/utils/colors";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
 import { ExpenseDataByDay, use_expenses } from "src/utils/useExpenses";
 import Layout from "src/components/Layout";
-import { BUTTON_HOVER_CLASSES, SIGN_IN_ROUTE } from "src/utils/constants";
+import {
+  BUTTON_HOVER_CLASSES,
+  RADIX_MODAL_CONTENT_CLASSES,
+  RADIX_MODAL_OVERLAY_CLASSES,
+  SIGN_IN_ROUTE,
+} from "src/utils/constants";
 import { getServerAuthSession } from "src/server/auth";
 import { GetServerSideProps } from "next";
 import { ExpenseCategoryWithBaseColor } from "src/server/api/routers/router";
@@ -33,7 +38,7 @@ export default function Expenses() {
   const router = useRouter();
 
   const today = new Date();
-  console.log(today.getMonth(), today.getDate(), today.getFullYear())
+  console.log(today.getMonth(), today.getDate(), today.getFullYear());
 
   useEffect(() => {
     if (session.status === "unauthenticated") {
@@ -81,10 +86,10 @@ export default function Expenses() {
         )}
       <AddNewExpenseButtonAndModal
         triggerClassnames={cn(
-            "fixed bottom-5 right-5 flex h-12 w-12 items-center justify-center rounded-full bg-squirtle p-0 shadow shadow-blue-300 hover:cursor-pointer dark:bg-rengar",
-            "md:bottom-14 md:right-14 md:h-14 md:w-14",
-            "lg:shadow-md lg:shadow-blue-300 lg:transition-all lg:hover:-translate-y-0.5 lg:hover:shadow-lg lg:hover:shadow-blue-300 lg:hover:brightness-110"
-          )}
+          "fixed bottom-5 right-5 flex h-12 w-12 items-center justify-center rounded-full bg-squirtle p-0 shadow shadow-blue-300 hover:cursor-pointer dark:bg-rengar",
+          "md:bottom-14 md:right-14 md:h-14 md:w-14",
+          "lg:shadow-md lg:shadow-blue-300 lg:transition-all lg:hover:-translate-y-0.5 lg:hover:shadow-lg lg:hover:shadow-blue-300 lg:hover:brightness-110"
+        )}
         month={today.getMonth() + 1}
         day={today.getDate()}
         year={today.getFullYear()}
@@ -159,12 +164,13 @@ function ExpenseListForDay({
   category_id_to_color,
   category_id_to_name,
 }: {
-  day_with_expenses: ExpenseDataByDay,
+  day_with_expenses: ExpenseDataByDay;
   category_id_to_color: Map<string, BaseColor>;
   category_id_to_name: Map<string, string>;
 }) {
   let output = [];
-  const category_id_to_expenses_for_day = day_with_expenses.category_id_to_expenses;
+  const category_id_to_expenses_for_day =
+    day_with_expenses.category_id_to_expenses;
 
   const { month, day, year } = extract_mdy(day_with_expenses.date_display);
   for (const category_id of category_id_to_expenses_for_day.keys()) {
@@ -193,7 +199,7 @@ function ExpenseListForDay({
             >
               {category_name} +
             </h2>
-           </AddNewExpenseButtonAndModal>
+          </AddNewExpenseButtonAndModal>
           <p className="font-semibold text-squirtle dark:text-rengar">
             {cents_to_dollars_display(sum_of_expenses)}
           </p>
@@ -233,10 +239,15 @@ function ExpenseButton({
       alert("error");
     },
   });
+
   return (
-    <Modal
+    <RadixModal.Root
+      onOpenChange={() => {
+        set_is_modal_open(!is_modal_open);
+      }}
       open={is_modal_open}
-      trigger={
+    >
+      <RadixModal.Trigger asChild>
         <li key={expense.id} onClick={() => set_is_modal_open(true)}>
           <button
             className={cn(
@@ -248,48 +259,54 @@ function ExpenseButton({
             {cents_to_dollars_display(expense.amount)}
           </button>
         </li>
-      }
-      className={cn(
-        "fixed left-1/2 top-1/2 flex w-full -translate-x-1/2 -translate-y-1/2 flex-col rounded bg-pikachu dark:bg-leblanc",
-        "border-t-8 border-t-red-500 px-5 py-3 md:w-[30rem] md:rounded-lg lg:top-1/2 lg:px-8 lg:py-6"
-      )}
-    >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          delete_expense_mutn.mutate({ id: expense.id });
-        }}
-      >
-        <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-slate-700 dark:text-white">
-          Delete Expense
-        </RadixModal.Title>
-        <div className="h-1 lg:h-4" />
-        <div className="flex w-full flex-col gap-4">
-          Are you sure you wish to delete this expense?
-        </div>
-        <div className="h-8" />
-        <div className="flex justify-center gap-5">
-          <button
-            className="h-[2rem] w-[4.5rem] rounded-full bg-slate-500 text-xs font-semibold text-white hover:brightness-110 lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
-            type="button"
-            onClick={() => set_is_modal_open(false)}
+      </RadixModal.Trigger>
+      <RadixModal.Portal>
+        <RadixModal.Overlay className={cn(RADIX_MODAL_OVERLAY_CLASSES)} />
+        <RadixModal.Content
+          className={cn(
+            RADIX_MODAL_CONTENT_CLASSES,
+            "fixed left-1/2 top-1/2 flex w-full -translate-x-1/2 -translate-y-1/2 flex-col rounded border-t-8 border-t-red-500 bg-pikachu dark:bg-leblanc",
+            "px-5 py-3 md:top-1/2 md:w-[30rem] md:rounded-lg lg:px-8 lg:py-6"
+          )}
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              delete_expense_mutn.mutate({ id: expense.id });
+            }}
           >
-            Cancel
-          </button>
-          <button
-            className={cn(
-              "flex w-[4.5rem] items-center justify-center rounded-full bg-red-500 text-xs font-semibold text-white lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
-            )}
-            type="submit"
-          >
-            {delete_expense_mutn.status === "loading" && (
-              <Spinner className="h-4 w-4 border-2 border-solid border-white lg:h-5 lg:w-5" />
-            )}
-            {delete_expense_mutn.status !== "loading" && "Delete"}
-          </button>
-        </div>
-      </form>
-    </Modal>
+            <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-slate-700 dark:text-white">
+              Delete Expense
+            </RadixModal.Title>
+            <div className="h-1 lg:h-4" />
+            <div className="flex w-full flex-col gap-4">
+              Are you sure you wish to delete this expense?
+            </div>
+            <div className="h-8" />
+            <div className="flex justify-center gap-5">
+              <button
+                className="h-[2rem] w-[4.5rem] rounded-full bg-slate-500 text-xs font-semibold text-white hover:brightness-110 lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
+                type="button"
+                onClick={() => set_is_modal_open(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className={cn(
+                  "flex w-[4.5rem] items-center justify-center rounded-full bg-red-500 text-xs font-semibold text-white lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
+                )}
+                type="submit"
+              >
+                {delete_expense_mutn.status === "loading" && (
+                  <Spinner className="h-4 w-4 border-2 border-solid border-white lg:h-5 lg:w-5" />
+                )}
+                {delete_expense_mutn.status !== "loading" && "Delete"}
+              </button>
+            </div>
+          </form>
+        </RadixModal.Content>
+      </RadixModal.Portal>
+    </RadixModal.Root>
   );
 }
 
@@ -343,13 +360,17 @@ function AddNewExpenseButtonAndModal({
 }) {
   const [amount, set_amount] = useState("");
   const [is_modal_open, set_is_modal_open] = useState(false);
-  const [category_text, set_category_text] = useState(expense_category_name ?? "");
-  const [is_category_dropdown_open, set_is_category_dropdown_open] = useState(true);
-  const [color, set_color] = useState<BaseColor>(expense_category_color ?? "pink");
+  const [category_text, set_category_text] = useState(
+    expense_category_name ?? ""
+  );
+  const [is_category_dropdown_open, set_is_category_dropdown_open] =
+    useState(true);
+  const [color, set_color] = useState<BaseColor>(
+    expense_category_color ?? "pink"
+  );
   const [date, set_date] = useState(`${month}/${day}/${year}`);
   const [is_color_selection_open, set_is_color_selection_open] =
     useState(false);
-
 
   const expense_data_qry = use_expenses();
   const expense_categories_qry = api.router.get_categories.useQuery();
@@ -416,19 +437,10 @@ function AddNewExpenseButtonAndModal({
       .length !== 0;
 
   return (
-    <Modal
-      open={is_modal_open}
-      on_open_change={() => {
-        set_amount("");
-        set_is_category_dropdown_open(false);
-        set_category_text("");
-        // set_color("pink");
-      }}
-      className={cn(
-        "fixed left-1/2 top-0 w-full -translate-x-1/2 rounded border-t-8 border-t-squirtle bg-pikachu dark:border-t-rengar dark:bg-leblanc",
-        "p-4 md:top-1/2 md:w-[40rem] md:-translate-y-1/2 md:rounded-lg lg:p-8"
-      )}
-      trigger={
+    <RadixModal.Root onOpenChange={() => {
+      set_is_modal_open(!is_modal_open);
+    }} open={is_modal_open}>
+      <RadixModal.Trigger asChild>
         <button
           type="button"
           disabled={
@@ -440,277 +452,224 @@ function AddNewExpenseButtonAndModal({
         >
           {children}
         </button>
-      }
-    >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handle_create_expense(expense_categories_qry.data!);
-        }}
-      >
-        <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-slate-700 dark:text-white">
-          Add Expense
-        </RadixModal.Title>
-        <div className="h-1 lg:h-4" />
-        <div className="w-full">
-          <label
-            htmlFor="amount"
-            className="block text-slate-700 dark:text-white"
-          >
-            Amount
-          </label>
-          <div className="h-2" />
-          <input
-            name="amount"
-            inputMode="text"
-            placeholder="0.01"
-            onChange={(e) => {
-              set_amount(e.target.value.trim());
-            }}
-            value={amount}
-            className="w-full rounded border border-slate-400 px-2 py-1 focus:outline-slate-400"
-            autoComplete="off"
-            type="text"
-          ></input>
-          <div className="m-0 h-7">
-            {amount.length > 0 && !is_valid_amount(amount) && (
-              <p className="text-sm text-red-500">Invalid amount</p>
-            )}
-          </div>
-          <label htmlFor="date" className="block dark:text-white">
-            Date
-          </label>
-          <div className="h-1" />
-          <input
-            name="date"
-            inputMode="text"
-            value={date}
-            onChange={(e) => set_date(e.target.value)}
-            className="w-full rounded border border-slate-400 px-2 py-1 focus:outline-slate-400"
-            autoComplete="off"
-            type="text"
-          ></input>
-          <div className="m-0 h-7">
-            {!is_valid_date(date) && (
-              <p className="text-sm text-red-600">Invalid date</p>
-            )}
-          </div>
-          <div className="h-1" />
-          <label htmlFor="category" className="dark:text-white">
-            Category
-          </label>
-          <div className="flex h-16 items-center gap-3">
-            {/* <CategoryColorSelection
-              disabled={is_category_color_selection_disabled}
-              on_select_color={(color) => set_color(color)}
-              cur_color={color}
-            /> */}
-            <button
-              type="button"
-              onClick={() => {
-                if (does_category_exist) return;
-                set_is_color_selection_open(!is_color_selection_open);
-              }}
-              className={cn(
-                "h-4 w-4 shrink-0 rounded-full md:h-6 md:w-6",
-                TW_COLORS_MP["bg"][color][500],
-                does_category_exist
-                  ? "hover:cursor-not-allowed"
-                  : "hover:cursor-pointer hover:brightness-110"
-              )}
-            ></button>
-            {is_color_selection_open && (
-              <div
-                className={cn(
-                  "flex grow flex-wrap items-center rounded-lg md:justify-between"
-                  // "md:h-[200px] md:w-[150px] md:flex-col md:gap-1"
-                )}
-              >
-                {BASE_COLORS.map((option) => {
-                  return (
-                    <button
-                      type="button"
-                      key={option}
-                      onClick={() => {
-                        set_color(option);
-                        set_is_color_selection_open(false);
-                      }}
-                      className={cn(
-                        TW_COLORS_MP["bg"][option][500],
-                        "h-5 w-5 rounded-full border-2",
-                        "border-pikachu focus:border-black focus:outline-none dark:border-leblanc dark:focus:border-white", 
-                        option === color ? "brightness-110 border-slate-900 dark:border-white hover:cursor-default" : "hover:cursor-pointer  hover:brightness-110 hover:border-slate-900 dark:hover:border-white",
-                        "md:h-7 md:w-7",
-                      )}
-                    />
-                  );
-                })}
-              </div>
-            )}
-            {!is_color_selection_open && (
-              <div className="w-full">
-                <input
-                  name="category"
-                  value={category_text}
-                  onChange={(e) => {
-                    set_category_text(e.target.value);
-                    set_is_category_dropdown_open(true);
-                    // set_is_category_color_selection_disabled(false);
-                  }}
-                  className="w-full grow rounded border border-slate-400 px-2 py-1 focus:outline-slate-400"
-                  autoComplete="off"
-                  type="text"
-                ></input>
-                <div className="relative m-0 h-0 p-0">
-                  {category_text.length > 0 && is_category_dropdown_open && (
-                    <ul className="absolute z-20 flex max-h-[200px] w-full flex-col gap-2 overflow-y-scroll rounded border bg-white p-3 dark:bg-shaco">
-                      {expense_categories_qry.data
-                        ?.filter(
-                          (cat) =>
-                            cat.name.includes(category_text) ||
-                            category_text.includes(cat.name)
-                        )
-                        .map((exp) => {
-                          return (
-                            <li
-                              key={exp.id}
-                              className={cn(
-                                "flex items-center gap-3 rounded border border-squirtle_light px-3 py-2 dark:border-violet-300",
-                                BUTTON_HOVER_CLASSES
-                              )}
-                              onClick={() => {
-                                set_category_text(exp.name);
-                                set_color(exp.color);
-                                set_is_category_dropdown_open(false);
-                                // set_is_category_color_selection_disabled(true);
-                              }}
-                            >
-                              <div
-                                className={`${
-                                  TW_COLORS_MP["bg"][exp.color][500]
-                                } h-4 w-4 rounded-full`}
-                              />
-                              <p className="">{exp.name}</p>
-                            </li>
-                          );
-                        })}
-                        {category_text.length > 0 && !does_category_exist && (
-                        <li
-                          className={cn(
-                            "rounded p-2 text-slate-700 dark:text-white",
-                            BUTTON_HOVER_CLASSES
-                          )}
-                          onClick={() => {set_is_category_dropdown_open(false); set_category_text(category_text.trim()); }}
-                        >
-                          <span>+</span>
-                          {` Create '${category_text.trim()}'`}
-                        </li>
-                      )}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="h-8" />
-        <div className="flex justify-center gap-5">
-          <RadixModal.Close asChild>
-            <button
-              className={cn(
-                "h-[2rem] w-[4.5rem] rounded-full bg-slate-500 text-xs font-semibold text-white",
-                "hover:brightness-110 lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
-              )}
-              type="button"
-              onClick={() => {
-                set_is_modal_open(false);
-              }}
-            >
-              Cancel
-            </button>
-          </RadixModal.Close>
-          <button
-            className={cn(
-              "flex w-[4.5rem] items-center justify-center rounded-full bg-squirtle text-xs font-semibold text-white dark:bg-rengar lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold",
-              is_create_expense_button_disabled
-                ? "opacity-50"
-                : "hover:cursor-pointer hover:brightness-110"
-            )}
-            type="submit"
-            disabled={is_create_expense_button_disabled}
-          >
-            {create_expense_mtn.status !== "loading" && "Create"}
-            {create_expense_mtn.status === "loading" && (
-              <Spinner className="h-4 w-4 border-2 border-solid border-white lg:h-5 lg:w-5" />
-            )}
-          </button>
-        </div>
-      </form>
-    </Modal>
-  );
-}
-function CategoryColorSelection({
-  on_select_color,
-  cur_color,
-  disabled,
-}: {
-  on_select_color: (color: BaseColor) => void;
-  cur_color: BaseColor | "";
-  disabled: boolean;
-}) {
-  const [is_open, set_is_open] = useState(false);
-  return (
-    <RadixPopover.Root
-      open={is_open}
-      onOpenChange={(open) => {
-        disabled ? set_is_open(false) : set_is_open(open);
-      }}
-    >
-      <RadixPopover.Trigger asChild>
-        <button
+      </RadixModal.Trigger>
+      <RadixModal.Portal>
+        <RadixModal.Overlay className={RADIX_MODAL_OVERLAY_CLASSES} />
+        <RadixModal.Content
           className={cn(
-            "h-4 w-4 shrink-0 rounded-full md:h-6 md:w-6",
-            cur_color !== ""
-              ? TW_COLORS_MP["bg"][cur_color][500]
-              : TW_COLORS_MP["bg"]["pink"][500],
-            disabled
-              ? "hover:cursor-not-allowed"
-              : "hover:cursor-pointer hover:brightness-110"
+            RADIX_MODAL_CONTENT_CLASSES,
+            "fixed left-1/2 top-0 w-full -translate-x-1/2 rounded border-t-8 border-t-squirtle bg-pikachu dark:border-t-rengar dark:bg-leblanc",
+            "p-4 md:top-1/2 md:w-[40rem] md:-translate-y-1/2 md:rounded-lg lg:p-8"
           )}
-        ></button>
-      </RadixPopover.Trigger>
-      <RadixPopover.Portal>
-        <RadixPopover.Content
-          side="right"
-          className={cn(
-            "z-30 flex flex-wrap rounded-lg bg-bulbasaur p-3 shadow-md dark:bg-shaco",
-            "md:h-[200px] md:w-[150px] md:flex-col md:gap-1"
-          )}
-          sideOffset={5}
         >
-          {BASE_COLORS.map((option) => {
-            return (
-              <div
-                key={option}
-                onClick={() => on_select_color(option)}
-                className={cn(
-                  TW_COLORS_MP["bg"][option][500],
-                  "h-4 w-4 rounded-full border-2",
-                  cur_color === option
-                    ? "border-slate-900 brightness-110"
-                    : "border-white hover:cursor-pointer hover:border-slate-900 hover:brightness-110",
-                  "md:h-6 md:w-6"
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handle_create_expense(expense_categories_qry.data!);
+            }}
+          >
+            <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-slate-700 dark:text-white">
+              Add Expense
+            </RadixModal.Title>
+            <div className="h-1 lg:h-4" />
+            <div className="w-full">
+              <label
+                htmlFor="amount"
+                className="block text-slate-700 dark:text-white"
+              >
+                Amount
+              </label>
+              <div className="h-2" />
+              <input
+                name="amount"
+                inputMode="text"
+                placeholder="0.01"
+                onChange={(e) => {
+                  set_amount(e.target.value.trim());
+                }}
+                value={amount}
+                className="w-full rounded border border-slate-400 px-2 py-1 focus:outline-slate-400"
+                autoComplete="off"
+                type="text"
+              ></input>
+              <div className="m-0 h-7">
+                {amount.length > 0 && !is_valid_amount(amount) && (
+                  <p className="text-sm text-red-500">Invalid amount</p>
                 )}
-              />
-            );
-          })}
-          <RadixPopover.Close
-            className="PopoverClose"
-            aria-label="Close"
-          ></RadixPopover.Close>
-          <RadixPopover.Arrow className="fill-slate-300" />
-        </RadixPopover.Content>
-      </RadixPopover.Portal>
-    </RadixPopover.Root>
+              </div>
+              <label htmlFor="date" className="block dark:text-white">
+                Date
+              </label>
+              <div className="h-1" />
+              <input
+                name="date"
+                inputMode="text"
+                value={date}
+                onChange={(e) => set_date(e.target.value)}
+                className="w-full rounded border border-slate-400 px-2 py-1 focus:outline-slate-400"
+                autoComplete="off"
+                type="text"
+              ></input>
+              <div className="m-0 h-7">
+                {!is_valid_date(date) && (
+                  <p className="text-sm text-red-600">Invalid date</p>
+                )}
+              </div>
+              <div className="h-1" />
+              <label htmlFor="category" className="dark:text-white">
+                Category
+              </label>
+              <div className="flex h-16 items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (does_category_exist) return;
+                    set_is_color_selection_open(!is_color_selection_open);
+                  }}
+                  className={cn(
+                    "h-4 w-4 shrink-0 rounded-full md:h-6 md:w-6",
+                    TW_COLORS_MP["bg"][color][500],
+                    does_category_exist
+                      ? "hover:cursor-not-allowed"
+                      : "hover:cursor-pointer hover:brightness-110"
+                  )}
+                ></button>
+                {is_color_selection_open && (
+                  <div
+                    className={cn(
+                      "flex grow flex-wrap items-center rounded-lg md:justify-between"
+                      // "md:h-[200px] md:w-[150px] md:flex-col md:gap-1"
+                    )}
+                  >
+                    {BASE_COLORS.map((option) => {
+                      return (
+                        <button
+                          type="button"
+                          key={option}
+                          onClick={() => {
+                            set_color(option);
+                            set_is_color_selection_open(false);
+                          }}
+                          className={cn(
+                            TW_COLORS_MP["bg"][option][500],
+                            "h-5 w-5 rounded-full border-2",
+                            "border-pikachu focus:border-black focus:outline-none dark:border-leblanc dark:focus:border-white",
+                            option === color
+                              ? "border-slate-900 brightness-110 hover:cursor-default dark:border-white"
+                              : "hover:cursor-pointer  hover:border-slate-900 hover:brightness-110 dark:hover:border-white",
+                            "md:h-7 md:w-7"
+                          )}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+                {!is_color_selection_open && (
+                  <div className="w-full">
+                    <input
+                      name="category"
+                      value={category_text}
+                      onChange={(e) => {
+                        set_category_text(e.target.value);
+                        set_is_category_dropdown_open(true);
+                        // set_is_category_color_selection_disabled(false);
+                      }}
+                      className="w-full grow rounded border border-slate-400 px-2 py-1 focus:outline-slate-400"
+                      autoComplete="off"
+                      type="text"
+                    ></input>
+                    <div className="relative m-0 h-0 p-0">
+                      {category_text.length > 0 &&
+                        is_category_dropdown_open && (
+                          <ul className="absolute z-20 flex max-h-[200px] w-full flex-col gap-2 overflow-y-scroll rounded border bg-white p-3 dark:bg-shaco">
+                            {expense_categories_qry.data
+                              ?.filter(
+                                (cat) =>
+                                  cat.name.includes(category_text) ||
+                                  category_text.includes(cat.name)
+                              )
+                              .map((exp) => {
+                                return (
+                                  <li
+                                    key={exp.id}
+                                    className={cn(
+                                      "flex items-center gap-3 rounded border border-squirtle_light px-3 py-2 dark:border-violet-300",
+                                      BUTTON_HOVER_CLASSES
+                                    )}
+                                    onClick={() => {
+                                      set_category_text(exp.name);
+                                      set_color(exp.color);
+                                      set_is_category_dropdown_open(false);
+                                      // set_is_category_color_selection_disabled(true);
+                                    }}
+                                  >
+                                    <div
+                                      className={`${
+                                        TW_COLORS_MP["bg"][exp.color][500]
+                                      } h-4 w-4 rounded-full`}
+                                    />
+                                    <p className="">{exp.name}</p>
+                                  </li>
+                                );
+                              })}
+                            {category_text.length > 0 &&
+                              !does_category_exist && (
+                                <li
+                                  className={cn(
+                                    "rounded p-2 text-slate-700 dark:text-white",
+                                    BUTTON_HOVER_CLASSES
+                                  )}
+                                  onClick={() => {
+                                    set_is_category_dropdown_open(false);
+                                    set_category_text(category_text.trim());
+                                  }}
+                                >
+                                  <span>+</span>
+                                  {` Create '${category_text.trim()}'`}
+                                </li>
+                              )}
+                          </ul>
+                        )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="h-8" />
+            <div className="flex justify-center gap-5">
+              <RadixModal.Close asChild>
+                <button
+                  className={cn(
+                    "h-[2rem] w-[4.5rem] rounded-full bg-slate-500 text-xs font-semibold text-white",
+                    "hover:brightness-110 lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
+                  )}
+                  type="button"
+                  // onClick={() => {
+                  //   set_is_modal_open(false);
+                  // }}
+                >
+                  Cancel
+                </button>
+              </RadixModal.Close>
+              <button
+                className={cn(
+                  "flex w-[4.5rem] items-center justify-center rounded-full bg-squirtle text-xs font-semibold text-white dark:bg-rengar lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold",
+                  is_create_expense_button_disabled
+                    ? "opacity-50"
+                    : "hover:cursor-pointer hover:brightness-110"
+                )}
+                type="submit"
+                disabled={is_create_expense_button_disabled}
+              >
+                {create_expense_mtn.status !== "loading" && "Create"}
+                {create_expense_mtn.status === "loading" && (
+                  <Spinner className="h-4 w-4 border-2 border-solid border-white lg:h-5 lg:w-5" />
+                )}
+              </button>
+            </div>
+          </form>
+        </RadixModal.Content>
+      </RadixModal.Portal>
+    </RadixModal.Root>
   );
 }
