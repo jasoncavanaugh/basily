@@ -1,0 +1,2 @@
+- Move to pnpm
+- Figure out why ESC doesn't close modals
