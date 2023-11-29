@@ -157,7 +157,7 @@ export default function Visualize() {
                     <div
                       className={cn(
                         "rounded-lg px-3 py-2 font-semibold",
-                        TW_COLORS_MP["text"][col]["500"],
+                        TW_COLORS_MP["text"][col]["700"],
                         TW_COLORS_MP["bg"][col]["200"]
                       )}
                     >
