@@ -433,6 +433,7 @@ function AddNewExpenseButtonAndModal({
       onOpenChange={() => {
         //This is so dumb, I can't believe this is how the Radix modal works
         set_amount("");
+        set_date(`${month}/${day}/${year}`);
         set_category_text(expense_category_name ?? "");
         set_color(expense_category_color ?? "pink");
         set_is_modal_open(!is_modal_open);
