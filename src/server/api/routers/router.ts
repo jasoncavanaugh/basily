@@ -14,7 +14,7 @@ export type ExpenseCategoryWithBaseColor = Omit<ExpenseCategory, "color"> & {
 export type ExpenseCategoryWithExpenses = ExpenseCategoryWithBaseColor & {
   expenses: Expense[];
 };
-export type Ugh = {
+export type GetExpensesOverDateRangeRet = {
   days: (Day & { expenses: Expense[] })[];
   expense_categories: ExpenseCategoryWithBaseColor[];
 };
@@ -73,21 +73,40 @@ export const router = createTRPCRouter({
     )
     .query(async ({ input, ctx }) => {
       const { from_date, to_date } = input;
-      console.log("from_date", from_date, "to_date", to_date);
-      const from = new Date(from_date.year, from_date.month_idx, from_date.day);
-      const to = new Date(to_date.year, to_date.month_idx, to_date.day);
       //Get days
-      const days = await ctx.prisma.day.findMany({
-        where: {
-          AND: [
-            { month: { lte: to_date.month_idx, gte: from_date.month_idx } },
-            { year: { lte: to_date.year, gte: from_date.year } },
-            { day: { lte: to_date.day, gte: from_date.day } },
-            { user_id: ctx.session.user.id },
-          ],
-        },
-        include: { expenses: true },
-      });
+      //if
+      /*
+       *
+       *
+       * if (from_year == to_year) -> compare months and days
+       * if (from_year < to_year) -> {
+       *   Run three queries
+       *   == from _year && month > && day >
+       *   == to_year && month < && day <
+       *   from_year < year < to_year
+       * }
+       */
+      let days = null;
+      if (from_date.year === to_date.year) {
+        days = await ctx.prisma.day.findMany({
+          where: {
+            AND: [
+              { month: { lte: to_date.month_idx, gte: from_date.month_idx } },
+              { year: from_date.year },
+              { day: { lte: to_date.day, gte: from_date.day } },
+              { user_id: ctx.session.user.id },
+            ],
+          },
+          include: { expenses: true },
+        });
+      } else {
+        days = await ctx.prisma.day.findMany({
+          where: {
+             year: { lte: to_date.year, gte: from_date.year },
+          },
+          include: { expenses: true },
+        });
+      }
 
       //Get categories
       const expense_categories = (await ctx.prisma.expenseCategory.findMany({

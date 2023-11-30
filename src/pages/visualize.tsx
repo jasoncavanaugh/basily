@@ -1,9 +1,9 @@
-import { format, subDays } from "date-fns";
+import { format, subDays, subYears } from "date-fns";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { Spinner } from "src/components/Spinner";
-import { Ugh } from "src/server/api/routers/router";
+import { GetExpensesOverDateRangeRet } from "src/server/api/routers/router";
 import { api } from "src/utils/api";
 import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
 import { cn } from "src/utils/cn";
@@ -46,31 +46,30 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 export default function Visualize() {
   const session = useSession();
   const router = useRouter();
-  const week_ago_date = subDays(new Date(), 7);
+  // const week_ago_date = subDays(new Date(), 7);
+  const year_ago = subYears(new Date(), 1);
   const today_date = new Date();
   const [date, set_date] = useState<DateRange | undefined>({
     from: subDays(new Date(), 7),
     to: new Date(),
   }); //Default to the past week
 
+  console.log(year_ago, today_date);
   const windowDimensions = useWindowDimensions();
   //windowDimensions.width
   const expense_data_query = api.router.get_expenses_over_date_range.useQuery({
     from_date: {
-      day: date && date.from ? date.from.getDate() : week_ago_date.getDate(),
-      month_idx:
-        date && date.from ? date.from?.getMonth() : week_ago_date.getMonth(),
-      year:
-        date && date.from
-          ? date.from?.getFullYear()
-          : week_ago_date.getFullYear(),
+      day: year_ago.getDate(),
+      month_idx: year_ago.getMonth(),
+      year: year_ago.getFullYear(),
     },
     to_date: {
-      day: date && date.to ? date.to.getDate() : today_date.getDate(),
-      month_idx: date && date.to ? date.to.getMonth() : today_date.getMonth(),
-      year: date && date.to ? date.to.getFullYear() : today_date.getFullYear(),
+      day: today_date.getDate(),
+      month_idx: today_date.getMonth(),
+      year: today_date.getFullYear(),
     },
   });
+  console.log("expense_data_query", expense_data_query.data);
 
   useEffect(() => {
     if (session.status === "unauthenticated") {
@@ -106,8 +105,10 @@ export default function Visualize() {
 
   console.log("windowDimensions", windowDimensions);
   console.log("expense_data_query", expense_data_query.data);
+  const filtered = filterData(expense_data_query.data, date)
+  console.log("filtered", filtered);
   const pie_chart_data = get_pie_chart_data(
-    get_data_intermediate(expense_data_query.data)
+    get_data_intermediate(filtered)
   );
   return (
     <Layout>
@@ -271,7 +272,40 @@ type IntResp = {
     total: number;
   }[];
 };
-function get_data_intermediate(days_and_ec: Ugh): IntResp {
+
+function filterData(days_and_ec: GetExpensesOverDateRangeRet, dateRange: DateRange | undefined): GetExpensesOverDateRangeRet {
+  if (!dateRange || !dateRange.from) {
+    return { days: [], expense_categories: days_and_ec.expense_categories };
+  }
+  const from = dateRange.from;
+  const to = dateRange.to ?? from;
+
+  const from_day = from.getDate();
+  const from_month_idx = from.getMonth();
+  const from_year = from.getFullYear();
+
+  const to_day = to.getDate();
+  const to_month_idx = to.getMonth();
+  const to_year = to.getFullYear();
+  // const day = date.getDate();
+  // const month_idx = date.getMonth();
+  // const year = date.getFullYear();
+  let filtered_days = [];
+  if (to_year === from_year) {
+    filtered_days = days_and_ec.days.filter((d) => {
+    const is_after_from = d.year >= from_year && d.month >= from_month_idx && d.day >= from_day
+    const is_before_to = d.year <= to_year && d.month <= to_month_idx && d.day <= to_day;
+    return is_after_from && is_before_to;
+  });
+  } else {
+    const bottom = days_and_ec.days.filter((d) => d.year === from_year && (d.month > from_month_idx || (d.month === from_month_idx && d.day >= from_day)));
+    const middle = days_and_ec.days.filter((d) => d.year > from_year && d.year < to_year);
+    const top = days_and_ec.days.filter((d) => d.year === to_year && (d.month < to_month_idx || (d.month === to_month_idx && d.day <= to_day)));
+    filtered_days = [...bottom, ...middle, ...top];
+  }
+  return { days: filtered_days, expense_categories: days_and_ec.expense_categories };
+}
+function get_data_intermediate(days_and_ec: GetExpensesOverDateRangeRet): IntResp {
   const out: Record<string, { name: string; color: BaseColor; total: number }> =
     {};
   const category_id_to_color: Record<string, BaseColor> = {};
