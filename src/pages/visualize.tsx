@@ -9,7 +9,6 @@ import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
 import { cn } from "src/utils/cn";
 import { BaseColor } from "src/utils/colors";
 import { TW_COLORS_TO_HEX_MP } from "src/utils/tailwindColorsToHexMp";
-import { VictoryPie, VictoryTooltip } from "victory";
 import {
   Popover,
   PopoverContent,
@@ -310,7 +309,7 @@ function get_pie_chart_data(input: IntResp) {
       name: `${d.name} - ${cents_to_dollars_display(d.total)} (${(
         Math.floor((d.total / input.global_total) * 10000) / 100
       ).toLocaleString()}%)`,
-      color: d.color, //Because Victory is the weirdest fucking library
+      color: d.color, 
     };
   });
   return out;
