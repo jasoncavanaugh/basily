@@ -1,1 +1,4 @@
 - Move to pnpm
+- Figure out why routing is so slow when changing to visualization page
+- Cache request made on visualization page
+- Figure out why the light mode dark mode svg doesn't show up consistently
