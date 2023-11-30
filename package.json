@@ -5,7 +5,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate && prisma db push",
     "lint": "next lint",
     "start": "next start",
     "tailwind-colors-generate": "npx ts-node ./src/utils/tailwind-colors-generate.ts && npx prettier --write ./src/utils/tailwindColorsMp.ts"
