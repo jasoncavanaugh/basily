@@ -116,7 +116,7 @@ export default function Visualize() {
         <DatePickerWithRange date={date} set_date={set_date} />
       </div>
       <div className="flex h-[83vh] md:h-[80vh] flex-col items-center md:flex-row md:items-start">
-        <div className="min-h-[50%] w-[92%] rounded-md bg-bulbasaur px-4 dark:bg-khazix md:h-[100%] md:w-[50%]">
+        <div className="min-h-[50%] w-[92%] rounded-md px-4 dark:bg-khazix md:h-[100%] md:w-[50%]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart width={100} height={100}>
               <Pie
@@ -135,6 +135,7 @@ export default function Visualize() {
                     key={`${datum.name}-${i}`}
                     fill={TW_COLORS_TO_HEX_MP[datum.color]["500"]}
                     stroke="none"
+                    className="focus:outline-none focus:brightness-125 hover:brightness-125"
                     // style={{ border: "1px solid red" }}
                   />
                 ))}
