@@ -287,9 +287,7 @@ function filterData(days_and_ec: GetExpensesOverDateRangeRet, dateRange: DateRan
   const to_day = to.getDate();
   const to_month_idx = to.getMonth();
   const to_year = to.getFullYear();
-  // const day = date.getDate();
-  // const month_idx = date.getMonth();
-  // const year = date.getFullYear();
+  
   let filtered_days = [];
   filtered_days = days_and_ec.days.filter((d) => {
     if (d.year < from_year || d.year > to_year) {
@@ -300,32 +298,21 @@ function filterData(days_and_ec: GetExpensesOverDateRangeRet, dateRange: DateRan
     }
     let is_after_from = true;
     if (d.year === from_year) {
-      const is_after_month = d.month > from_month;
-      const same_month_but_after_day = d.month === from_month && d.day >= from_day;
+      const is_after_month = d.month > from_month_idx;
+      const same_month_but_after_day = d.month === from_month_idx && d.day >= from_day;
       is_after_from = is_after_month || same_month_but_after_day;
     } 
     let is_before_to = true;
     if (d.year === to_year) {
-      const is_before_month = d.month < to_month;
-      const is_same_month_but_before_day = d.month === to_month && d.day <= to_day;
+      const is_before_month = d.month < to_month_idx;
+      const is_same_month_but_before_day = d.month === to_month_idx && d.day <= to_day;
       is_before_to = is_before_month || is_same_month_but_before_day;
     }
     return is_after_from && is_before_to;
   });
   return { days: filtered_days, expense_categories: days_and_ec.expense_categories };
-  // if (to_year === from_year) {
-  //   filtered_days = days_and_ec.days.filter((d) => {
-  //   const is_after_from = d.year >= from_year && d.month >= from_month_idx && d.day >= from_day
-  //   const is_before_to = d.year <= to_year && d.month <= to_month_idx && d.day <= to_day;
-  //   return is_after_from && is_before_to;
-  // });
-  // } else {
-  //   const bottom = days_and_ec.days.filter((d) => d.year === from_year && (d.month > from_month_idx || (d.month === from_month_idx && d.day >= from_day)));
-  //   const middle = days_and_ec.days.filter((d) => d.year > from_year && d.year < to_year);
-  //   const top = days_and_ec.days.filter((d) => d.year === to_year && (d.month < to_month_idx || (d.month === to_month_idx && d.day <= to_day)));
-  //   filtered_days = [...bottom, ...middle, ...top];
-  // }
 }
+
 function get_data_intermediate(days_and_ec: GetExpensesOverDateRangeRet): IntResp {
   const out: Record<string, { name: string; color: BaseColor; total: number }> =
     {};
