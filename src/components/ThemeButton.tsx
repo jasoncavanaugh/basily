@@ -21,10 +21,10 @@ export function ThemeButton() {
         setTheme(theme === "dark" ? "light" : "dark");
       }}
       className={cn(
-        "flex items-center justify-center rounded-full border-2 border-transparent p-2 text-lg text-white !outline-none",
-        "hover:bg-pikachu focus:border-gray-300",
+        "flex items-center justify-center rounded-full border-2 border-transparent p-2 text-lg text-white outline-none",
+        "hover:bg-pikachu focus-visible:border-gray-300",
         "dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200",
-        "dark:focus:border-gray-700 dark:focus:text-gray-200"
+        "dark:focus-visible:border-gray-700 dark:focus-visible:text-gray-200"
       )}
       title={theme === "dark" ? "Toggle light mode" : "Toggle dark" + " mode"} //TailwindSort having some issues...
     >
