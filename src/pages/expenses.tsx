@@ -317,7 +317,7 @@ function is_valid_amount(amount: string) {
 const DATE_REGEX = new RegExp(
   /^(0?[1-9]|1[012])[/](0?[1-9]|[12][0-9]|3[01])[/](19|20)\d\d$/
 );
-function is_valid_date(date_str: string) {
+export function is_valid_date(date_str: string) {
   return DATE_REGEX.test(date_str);
 }
 function extract_date_fields(date_str: string) {

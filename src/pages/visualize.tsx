@@ -135,7 +135,7 @@ export default function Visualize() {
                     key={`${datum.name}-${i}`}
                     fill={TW_COLORS_TO_HEX_MP[datum.color]["500"]}
                     stroke="none"
-                    className="focus:outline-none focus:brightness-125 hover:brightness-125"
+                    className="focus:border-0 focus:outline-none focus:border focus:border-red-500 focus:outline-red-500 hover:brightness-125"
                     // style={{ border: "1px solid red" }}
                   />
                 ))}
@@ -376,7 +376,7 @@ function DatePickerWithRange({
     <div className="grid gap-2">
       <Popover>
         <PopoverTrigger asChild>
-          <Button
+          {/* <Button
             id="date"
             variant="outline"
             className={cn(
@@ -393,7 +393,12 @@ function DatePickerWithRange({
             )}
             {date?.from && !date.to && format(date.from, "LLL dd, y")}
             {!date?.from && !date?.to && <span>Pick a date</span>}
-          </Button>
+          </Button> */}
+          <button className="flex gap-2  h-8 items-center">
+            <CalendarIcon className="h-6 w-6" />
+            <input className="rounded h-full"></input>
+            <input className="rounded h-full"></input>
+          </button>
         </PopoverTrigger>
         <PopoverContent
           className="w-auto border-none bg-white p-0 dark:bg-leblanc"
