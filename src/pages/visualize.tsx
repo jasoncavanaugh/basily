@@ -121,6 +121,7 @@ export default function Visualize() {
             <PieChart width={100} height={100}>
               <Pie
                 data={pie_chart_data}
+                blendStroke
                 innerRadius={
                   windowDimensions.width && windowDimensions.width <= breakpoints["md"] ? 80 : 160
                 }
