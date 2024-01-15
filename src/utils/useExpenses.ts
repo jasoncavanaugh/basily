@@ -1,8 +1,6 @@
 import { Day, Expense } from "@prisma/client";
 
-import { ExpenseCategoryWithBaseColor } from "src/server/api/routers/router";
 import { api } from "./api";
-import { BaseColor } from "./colors";
 import { get_category_ids_to_colors } from "./getCategoryIdsToColors";
 import { get_category_ids_to_names } from "./getCategoryIdsToNames";
 
@@ -12,63 +10,7 @@ export type ExpenseDataByDay = {
   date_display: `${number}-${number}-${number}`;
   category_id_to_expenses: Map<string, Expense[]>;
 };
-function getExpenseCategories() {
-  const data: ExpenseCategoryWithBaseColor[] = [
-    {
-      id: "1",
-      name: "Groceries",
-      color: "blue",
-      user_id: "1",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: "2",
-      name: "Eating Out",
-      color: "red",
-      user_id: "1",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: "3",
-      name: "Night Life",
-      color: "purple",
-      user_id: "1",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ];
-  return { status: "success", error: undefined, data: data };
-}
 
-function getExpensesByDays() {
-  const data: (Day & {
-    expenses: Expense[];
-  })[] = [
-    {
-      id: "1",
-      user_id: "1",
-      createdAt: new Date(),
-      month: 1,
-      day: 2,
-      year: 2023,
-      expenses: [
-        {
-          id: "1",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          amount: 2000,
-          user_id: "1",
-          category_id: "1",
-          day_id: "1",
-        },
-      ],
-    },
-  ];
-
-  return { status: "success", error: undefined, data: data };
-}
 export function use_expenses() {
   const expense_categories_query = api.router.get_categories.useQuery();
   // const expense_categories_query = getExpenseCategories();
@@ -104,19 +46,7 @@ export function use_expenses() {
   const expense_categories = expense_categories_query.data;
 
   const category_id_to_name = get_category_ids_to_names(expense_categories);
-  // const category_id_to_name = new Map<string, string>();
-  // for (const cat of expense_categories) {
-  //   if (!category_id_to_name.has(cat.id)) {
-  //     category_id_to_name.set(cat.id, cat.name);
-  //   }
-  // }
   const category_id_to_color = get_category_ids_to_colors(expense_categories);
-  // const category_id_to_color = new Map<string, BaseColor>();
-  // for (const cat of expense_categories) {
-  //   if (!category_id_to_color.has(cat.id)) {
-  //     category_id_to_color.set(cat.id, cat.color);
-  //   }
-  // }
 
   /*
    * [{ date: string, id_to_expenses: { id: expenses }], id_to_name: { id: name }, id_to_color: { id: color } }
