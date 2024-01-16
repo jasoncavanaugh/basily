@@ -81,6 +81,7 @@ model User {
   image              String?
   accounts           Account[]
   sessions           Session[]
+  //Stuff I added
   expense_categories ExpenseCategory[]
   expenses           Expense[]
   days               Day[]
