@@ -14,8 +14,10 @@ export type ExpenseCategoryWithBaseColor = Omit<ExpenseCategory, "color"> & {
 export type ExpenseCategoryWithExpenses = ExpenseCategoryWithBaseColor & {
   expenses: Expense[];
 };
+
+export type DayWithExpenses = Day & { expenses: Expense[] }
 export type GetExpensesOverDateRangeRet = {
-  days: (Day & { expenses: Expense[] })[];
+  days: DayWithExpenses[];
   expense_categories: ExpenseCategoryWithBaseColor[];
 };
 
@@ -74,7 +76,7 @@ export const router = createTRPCRouter({
     .query(async ({ input, ctx }) => {
       const { from_date, to_date } = input;
 
-      let days = null;
+      let days: DayWithExpenses[] | null = null;
       if (from_date.year === to_date.year) {
         //if (from_year == to_year) -> compare months and days
         days = await ctx.prisma.day.findMany({
