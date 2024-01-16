@@ -172,7 +172,7 @@ export default function Visualize() {
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="pr-2 w-[100%] md:w-[50%] md:h-[100%] md:p-0">
+        <div className="pr-2 w-[100%] md:w-[50%] md:h-[100%] md:p-0 flex flex-col gap-1">
           <div className="ml-2 font-bold text-xl text-squirtle dark:text-rengar px-4 h-[5%]">
             Total: {cents_to_dollars_display(global_total)}
           </div>
