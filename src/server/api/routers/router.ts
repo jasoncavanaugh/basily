@@ -14,8 +14,10 @@ export type ExpenseCategoryWithBaseColor = Omit<ExpenseCategory, "color"> & {
 export type ExpenseCategoryWithExpenses = ExpenseCategoryWithBaseColor & {
   expenses: Expense[];
 };
+
+export type DayWithExpenses = Day & { expenses: Expense[] }
 export type GetExpensesOverDateRangeRet = {
-  days: (Day & { expenses: Expense[] })[];
+  days: DayWithExpenses[];
   expense_categories: ExpenseCategoryWithBaseColor[];
 };
 
@@ -73,21 +75,10 @@ export const router = createTRPCRouter({
     )
     .query(async ({ input, ctx }) => {
       const { from_date, to_date } = input;
-      //Get days
-      //if
-      /*
-       *
-       *
-       * if (from_year == to_year) -> compare months and days
-       * if (from_year < to_year) -> {
-       *   Run three queries
-       *   == from _year && month > && day >
-       *   == to_year && month < && day <
-       *   from_year < year < to_year
-       * }
-       */
-      let days = null;
+
+      let days: DayWithExpenses[] | null = null;
       if (from_date.year === to_date.year) {
+        //if (from_year == to_year) -> compare months and days
         days = await ctx.prisma.day.findMany({
           where: {
             AND: [
@@ -100,9 +91,14 @@ export const router = createTRPCRouter({
           include: { expenses: true },
         });
       } else {
+        /* if (from_year < to_year) -> {
+         *    Just return from_year <= year <= to_year 
+         *    Do the rest of the filtering on the frontend
+         * }
+         */
         days = await ctx.prisma.day.findMany({
           where: {
-             year: { lte: to_date.year, gte: from_date.year },
+            year: { lte: to_date.year, gte: from_date.year },
           },
           include: { expenses: true },
         });

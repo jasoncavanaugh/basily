@@ -1,5 +1,4 @@
 import { format, subDays, subYears } from "date-fns";
-import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { Spinner } from "src/components/Spinner";
@@ -15,7 +14,6 @@ import {
   PopoverTrigger,
 } from "src/components/shadcn/Popover";
 import { Button } from "src/components/shadcn/Button";
-import { CalendarIcon } from "lucide-react";
 import { Calendar } from "src/components/shadcn/Calendar";
 import { SIGN_IN_ROUTE } from "src/utils/constants";
 import { useSession } from "next-auth/react";
@@ -28,14 +26,10 @@ import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
 import { SPINNER_CLASSNAMES } from ".";
 import { useWindowDimensions } from "src/utils/useWindowDimensions";
 import { breakpoints } from "src/utils/tailwindBreakpoints";
+import { DatePickerWithRange } from "src/components/DatePickerWithRange";
+import { use_jason } from "src/utils/useExpenses";
+import { date_to_dmy } from "./expenses";
 
-const data = [
-  { name: "Group A", value: 400 },
-  { name: "Group B", value: 300 },
-  { name: "Group C", value: 300 },
-  { name: "Group D", value: 200 },
-];
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 //I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getServerAuthSession(ctx);
@@ -57,18 +51,24 @@ export default function Visualize() {
   console.log(year_ago, today_date);
   const windowDimensions = useWindowDimensions();
   //windowDimensions.width
-  const expense_data_query = api.router.get_expenses_over_date_range.useQuery({
-    from_date: {
-      day: year_ago.getDate(),
-      month_idx: year_ago.getMonth(),
-      year: year_ago.getFullYear(),
-    },
-    to_date: {
-      day: today_date.getDate(),
-      month_idx: today_date.getMonth(),
-      year: today_date.getFullYear(),
-    },
+  // const expense_data_query = api.router.get_expenses_over_date_range.useQuery({
+  //   from_date: {
+  //     day: year_ago.getDate(),
+  //     month_idx: year_ago.getMonth(),
+  //     year: year_ago.getFullYear(),
+  //   },
+  //   to_date: {
+  //     day: today_date.getDate(),
+  //     month_idx: today_date.getMonth(),
+  //     year: today_date.getFullYear(),
+  //   },
+  // });
+  //
+  const expense_data_query = use_jason({
+    from_date: date_to_dmy(date?.from ?? undefined),
+    to_date: date_to_dmy(date?.to ?? undefined),
   });
+
   console.log("expense_data_query", expense_data_query.data);
 
   useEffect(() => {
@@ -110,6 +110,7 @@ export default function Visualize() {
   const pie_chart_data = get_pie_chart_data(
     get_data_intermediate(filtered)
   );
+  const { global_total } = get_data_intermediate(filtered);
   return (
     <Layout>
       <div className="flex h-[10vh] items-center pl-4">
@@ -127,7 +128,7 @@ export default function Visualize() {
                 outerRadius={
                   windowDimensions.width && windowDimensions.width <= breakpoints["md"] ? 120 : 220
                 }
-                paddingAngle={5}
+                paddingAngle={2}
                 dataKey="value"
               >
                 {pie_chart_data.map((datum, i) => (
@@ -170,98 +171,43 @@ export default function Visualize() {
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <ul
-          className={cn(
-            "thin-scrollbar ml-2 mr-5 mt-4 flex w-[100%]  flex-col dark:bg-khazix",
-            "gap-2 rounded pl-5 pr-2 md:w-[50%] md:overflow-scroll md:h-[100%] md:px-4 md:py-0 md:m-0"
-          )}
-        >
-          {pie_chart_data.map((datum) => {
-            return (
-              <li
-                className={cn(
-                  "flex items-center gap-3 bg-bulbasaur dark:bg-leblanc",
-                  "rounded-lg font-bold shadow-sm shadow-slate-300 dark:shadow-leblanc"
-                )}
-              >
-                <div className={cn("flex items-center gap-4 p-4")}>
-                  <div
-                    className={cn(
-                      "h-4 w-4 rounded-full",
-                      TW_COLORS_MP["bg"][datum.color]["500"]
-                    )}
-                  />
-                  <p className={cn(TW_COLORS_MP["text"][datum.color]["500"])}>
-                    {datum.name}
-                  </p>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+        <div className="pr-2 w-[100%] md:w-[50%] md:h-[100%] md:p-0 flex flex-col gap-1">
+          <div className="ml-2 font-bold text-xl text-squirtle dark:text-rengar px-4 h-[5%]">
+            Total: {cents_to_dollars_display(global_total)}
+          </div>
+          <ul
+            className={cn(
+              "thin-scrollbar mr-4 flex w-[100%] flex-col dark:bg-khazix h-[95%]",
+              "gap-2 rounded pl-5 pr-2 min-h-0 grow md:overflow-scroll md:px-4 md:py-0 md:m-0"
+            )}
+          >
+            {pie_chart_data.map((datum) => {
+              return (
+                <li
+                  className={cn(
+                    "flex items-center gap-3 bg-bulbasaur dark:bg-leblanc",
+                    "rounded-lg font-bold shadow-sm shadow-slate-300 dark:shadow-leblanc"
+                  )}
+                >
+                  <div className={cn("flex items-center gap-4 p-4")}>
+                    <div
+                      className={cn(
+                        "h-4 w-4 rounded-full",
+                        TW_COLORS_MP["bg"][datum.color]["500"]
+                      )}
+                    />
+                    <p className={cn(TW_COLORS_MP["text"][datum.color]["500"])}>
+                      {datum.name}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </div>
     </Layout>
   );
-}
-
-/*
-{
-    "name": "Groceries - $132.56 (34%)",
-    "value": 0.3406311028882722,
-    "payload": {
-        "payload": {
-            "value": 0.3406311028882722,
-            "name": "Groceries - $132.56 (34%)",
-            "color": "red"
-        },
-        "fill": "#ef4444",
-        "stroke": "none",
-        "cx": "50%",
-        "cy": "50%",
-        "value": 0.3406311028882722,
-        "name": "Groceries - $132.56 (34%)",
-        "color": "red"
-    },
-    "dataKey": "value"
-}
-*/
-type Jason = {
-  name: string;
-  value: number;
-  payload: {
-    payload: {
-      value: number;
-      name: string;
-      color: string;
-    };
-    fill: string;
-    stroke: string;
-    cx: string;
-    cy: string;
-    value: string;
-    name: string;
-    color: string;
-  };
-  dataKey: string;
-};
-
-const CustomTooltip = (props: Jason) => {
-  // console.log("HERE", active, payload, label);
-  // if (active && payload && payload.length) {
-  return (
-    <div className="rounded bg-slate-300 p-4 text-white">
-      <p className="label">{`${props.name}`}</p>
-      <p className="intro">Intro</p>
-      <p className="desc">Anything you want can be displayed here.</p>
-    </div>
-  );
-  // }
-
-  // return null;
-};
-
-function get_colors(input: IntResp) {
-  return input.props.map((d) => TW_COLORS_TO_HEX_MP[d.color]["500"]);
 }
 
 //For now...
@@ -356,65 +302,4 @@ function get_pie_chart_data(input: IntResp) {
     };
   });
   return out;
-}
-
-function DatePickerWithRange({
-  className,
-  date,
-  set_date,
-}: {
-  className?: string;
-  date: DateRange | undefined;
-  set_date: (new_date: DateRange | undefined) => void;
-}) {
-  // const [date, setDate] = useState<DateRange | undefined>({
-  //   from: subDays(new Date(), 7),
-  //   to: new Date()
-  // });//Default to the past week
-
-  return (
-    <div className="grid gap-2">
-      <Popover>
-        <PopoverTrigger asChild>
-          {/* <Button
-            id="date"
-            variant="outline"
-            className={cn(
-              "w-[300px] justify-start border border-slate-400 text-left font-normal",
-              !date && "text-muted-foreground"
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date?.from && date.to && (
-              <>
-                {format(date.from, "LLL dd, y")} -{" "}
-                {format(date.to, "LLL dd, y")}
-              </>
-            )}
-            {date?.from && !date.to && format(date.from, "LLL dd, y")}
-            {!date?.from && !date?.to && <span>Pick a date</span>}
-          </Button> */}
-          <button className="flex gap-2  h-8 items-center">
-            <CalendarIcon className="h-6 w-6" />
-            <input className="rounded h-full"></input>
-            <input className="rounded h-full"></input>
-          </button>
-        </PopoverTrigger>
-        <PopoverContent
-          className="w-auto border-none bg-white p-0 dark:bg-leblanc"
-          align="start"
-        >
-          <Calendar
-            initialFocus
-            mode="range"
-            defaultMonth={date?.from}
-            selected={date}
-            onSelect={set_date}
-            numberOfMonths={2}
-            showOutsideDays={false}
-          />
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
 }

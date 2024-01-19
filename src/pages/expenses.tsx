@@ -10,7 +10,13 @@ import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
 import { cn } from "src/utils/cn";
 import { BASE_COLORS, BaseColor } from "src/utils/colors";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
-import { ExpenseDataByDay, use_expenses } from "src/utils/useExpenses";
+import {
+  DMY,
+  ExpenseDataByDay,
+  process_days_with_expenses,
+  use_expenses,
+  use_jason,
+} from "src/utils/useExpenses";
 import Layout from "src/components/Layout";
 import {
   BUTTON_HOVER_CLASSES,
@@ -20,9 +26,17 @@ import {
 } from "src/utils/constants";
 import { getServerAuthSession } from "src/server/auth";
 import { GetServerSideProps } from "next";
-import { ExpenseCategoryWithBaseColor } from "src/server/api/routers/router";
+import {
+  DayWithExpenses,
+  ExpenseCategoryWithBaseColor,
+} from "src/server/api/routers/router";
 import { SPINNER_CLASSNAMES } from ".";
 import { TW_COLORS_TO_HEX_MP } from "src/utils/tailwindColorsToHexMp";
+import { DatePickerWithRange } from "src/components/DatePickerWithRange";
+import { subDays } from "date-fns";
+import { DateRange } from "react-day-picker";
+import { get_category_ids_to_names } from "src/utils/getCategoryIdsToNames";
+import { get_category_ids_to_colors } from "src/utils/getCategoryIdsToColors";
 
 //I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
@@ -31,12 +45,35 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     props: { session },
   };
 };
+
+export function date_to_dmy(date?: Date): DMY | undefined {
+  if (!date) {
+    return undefined;
+  }
+
+  return {
+    year: date.getFullYear(),
+    month_idx: date.getMonth(),
+    day: date.getDate(),
+  };
+}
 export default function Expenses() {
   const session = useSession();
-  const expense_data_query = use_expenses();
+  // const expense_data_query = use_expenses();
   const router = useRouter();
-
   const today = new Date();
+
+  const [date, set_date] = useState<DateRange | undefined>({
+    from: undefined,
+    to: undefined,
+  }); //Default to the past week
+
+  const expense_data_query = use_jason({
+    from_date: date_to_dmy(date?.from ?? undefined),
+    to_date: date_to_dmy(date?.to ?? undefined),
+  });
+
+  // console.log("jason_res", jason_res);
 
   useEffect(() => {
     if (session.status === "unauthenticated") {
@@ -67,7 +104,7 @@ export default function Expenses() {
         </div>
       )}
       {expense_data_query.status === "success" &&
-        expense_data_query.data.expenses.length === 0 && (
+        expense_data_query.data.days.length === 0 && (
           <div className="flex h-[95vh] items-center justify-center">
             <h1 className="text-slate-700 dark:text-white">
               Click the '+' button to add a new expense.
@@ -75,11 +112,23 @@ export default function Expenses() {
           </div>
         )}
       {expense_data_query.status === "success" &&
-        expense_data_query.data.expenses.length > 0 && (
+        expense_data_query.data.days.length > 0 && (
           <ChronologicalExpenseList
-            expenses_by_day={expense_data_query.data.expenses}
-            category_id_to_color={expense_data_query.data.category_id_to_color}
-            category_id_to_name={expense_data_query.data.category_id_to_name}
+            invalidate_expenses_qry={() => expense_data_query.invalidate()}
+            date={date}
+            set_date={set_date}
+            expenses_by_day={process_days_with_expenses({
+              days: filter_over_selected_dates(
+                expense_data_query.data.days,
+                date
+              ),
+            })}
+            category_id_to_name={get_category_ids_to_names(
+              expense_data_query.data.expense_categories
+            )}
+            category_id_to_color={get_category_ids_to_colors(
+              expense_data_query.data.expense_categories
+            )}
           />
         )}
       <AddNewExpenseButtonAndModal
@@ -88,6 +137,7 @@ export default function Expenses() {
           "md:bottom-14 md:right-14 md:h-14 md:w-14",
           "lg:shadow-md lg:shadow-blue-300 lg:transition-all lg:hover:-translate-y-0.5 lg:hover:shadow-lg lg:hover:shadow-blue-300 lg:hover:brightness-110"
         )}
+        on_create_success={() => expense_data_query.invalidate()}
         month={today.getMonth() + 1}
         day={today.getDate()}
         year={today.getFullYear()}
@@ -108,19 +158,69 @@ export default function Expenses() {
   );
 }
 
+function filter_over_selected_dates(days: DayWithExpenses[], date?: DateRange) {
+  //Wtf typescript??
+  if (!date) {
+    return days.slice(0, 30);
+  }
+  const from = date.from;
+  const to = date.to;
+  if (!from || !to) {
+    return days.slice(0, 30);
+  }
+  return days.filter((d) => {
+    const from_year = from.getFullYear();
+    const from_month_idx = from.getMonth();
+    const from_day = from.getDate();
+
+    const to_year = to.getFullYear();
+    const to_month_idx = to.getMonth();
+    const to_day = to.getDate();
+
+    if (d.year < from_year || d.year > to_year) {
+      return false;
+    }
+    if (d.year > from_year && d.year < to_year) {
+      return true;
+    }
+
+    let is_after_from = true;
+    if (d.year === from_year) {
+      const is_after_month = d.month > from_month_idx;
+      const same_month_but_after_day =
+        d.month === from_month_idx && d.day >= from_day;
+      is_after_from = is_after_month || same_month_but_after_day;
+    }
+    let is_before_to = true;
+    if (d.year === to_year) {
+      const is_before_month = d.month < to_month_idx;
+      const is_same_month_but_before_day =
+        d.month === to_month_idx && d.day <= to_day;
+      is_before_to = is_before_month || is_same_month_but_before_day;
+    }
+    return is_after_from && is_before_to;
+  });
+}
+
 function ChronologicalExpenseList({
   expenses_by_day,
   category_id_to_name,
   category_id_to_color,
+  date,
+  set_date,
+  invalidate_expenses_qry,
 }: {
   expenses_by_day: ExpenseDataByDay[];
   category_id_to_color: Map<string, BaseColor>;
   category_id_to_name: Map<string, string>;
+  date: DateRange | undefined;
+  set_date: (new_date: DateRange | undefined) => void;
+  invalidate_expenses_qry: () => void;
 }) {
   let output = [];
   for (const dwe of expenses_by_day) {
     output.push(
-      <li key={dwe.id} className="px-3 py-4">
+      <li key={dwe.id} className="py-2">
         <div className="flex items-end justify-between ">
           <h1 className="inline rounded-lg bg-squirtle px-2 py-1 font-bold text-white dark:bg-rengar md:p-2">
             {dwe.date_display}
@@ -133,6 +233,7 @@ function ChronologicalExpenseList({
             // category_id_to_expenses_for_day={dwe.category_id_to_expenses}
             category_id_to_color={category_id_to_color}
             category_id_to_name={category_id_to_name}
+            invalidate_expenses_qry={invalidate_expenses_qry}
           />
           <li className="flex justify-between">
             <p className="font-semibold text-squirtle dark:text-rengar">
@@ -146,7 +247,12 @@ function ChronologicalExpenseList({
       </li>
     );
   }
-  return <>{output}</>;
+  return (
+    <div className="p-4">
+      <DatePickerWithRange date={date} set_date={set_date} />
+      {output}
+    </div>
+  );
 }
 
 function extract_mdy(date_display: `${number}-${number}-${number}`) {
@@ -161,10 +267,12 @@ function ExpenseListForDay({
   day_with_expenses,
   category_id_to_color,
   category_id_to_name,
+  invalidate_expenses_qry,
 }: {
   day_with_expenses: ExpenseDataByDay;
   category_id_to_color: Map<string, BaseColor>;
   category_id_to_name: Map<string, string>;
+  invalidate_expenses_qry: () => void;
 }) {
   let output = [];
   const category_id_to_expenses_for_day =
@@ -180,6 +288,7 @@ function ExpenseListForDay({
       <li key={category_id}>
         <div className="flex justify-between">
           <AddNewExpenseButtonAndModal
+            on_create_success={() => invalidate_expenses_qry()}
             triggerClassnames="hover:cursor-pointer hover:opacity-80 dark:hover:opacity-100 dark:hover:brightness-110"
             month={month}
             day={day}
@@ -209,6 +318,7 @@ function ExpenseListForDay({
                 key={i}
                 expense={expense}
                 category_color={category_color}
+                on_delete={() => invalidate_expenses_qry()}
               />
             );
           })}
@@ -222,15 +332,18 @@ function ExpenseListForDay({
 function ExpenseButton({
   expense,
   category_color,
+  on_delete,
 }: {
   expense: Expense;
   category_color: BaseColor;
+  on_delete: () => void;
 }) {
   const [is_modal_open, set_is_modal_open] = useState(false);
-  const expense_data_qry = use_expenses();
+  // const expense_data_qry = use_expenses();
   const delete_expense_mutn = api.router.delete_expense.useMutation({
     onSuccess: () => {
-      expense_data_qry.invalidate_queries();
+      // expense_data_qry.invalidate_queries();
+      on_delete();
       set_is_modal_open(false); //TODO: Have to figure out how to close the modal once the new data comes in
     },
     onError: () => {
@@ -335,6 +448,7 @@ function extract_date_fields(date_str: string) {
 }
 
 function AddNewExpenseButtonAndModal({
+  on_create_success,
   triggerClassnames,
   month,
   day,
@@ -343,6 +457,7 @@ function AddNewExpenseButtonAndModal({
   expense_category_color,
   children,
 }: {
+  on_create_success: () => void;
   triggerClassnames: string;
   month: number;
   day: number;
@@ -365,13 +480,13 @@ function AddNewExpenseButtonAndModal({
   const [is_color_selection_open, set_is_color_selection_open] =
     useState(false);
 
-  const expense_data_qry = use_expenses();
+  // const expense_data_qry = use_expenses();
   const expense_categories_qry = api.router.get_categories.useQuery();
 
   const create_expense_mtn = api.router.create_expense.useMutation({
     onSuccess: () => {
       set_is_modal_open(false);
-      expense_data_qry.invalidate_queries();
+      on_create_success();
     },
     onError: (err, data, ctx) => {
       console.log(err, data);
@@ -604,11 +719,12 @@ function AddNewExpenseButtonAndModal({
                                     }}
                                   >
                                     <div
-                                      className={`${
+                                      className={cn(
+                                        "h-4 w-4 rounded-full",
                                         TW_COLORS_MP["bg"][exp.color][500]
-                                      } h-4 w-4 rounded-full`}
+                                      )}
                                     />
-                                    <p className="">{exp.name}</p>
+                                    <p>{exp.name}</p>
                                   </li>
                                 );
                               })}
