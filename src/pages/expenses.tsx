@@ -309,7 +309,7 @@ function ExpenseButton({
 }
 
 const AMOUNT_REGEX = new RegExp(/^\d*(\.\d\d)?$/);
-function is_valid_amount(amount: string) {
+export function is_valid_amount(amount: string) {
   const is_zero_amount =
     amount.split("").filter((c) => c !== "." && c !== "0").length === 0;
   return AMOUNT_REGEX.test(amount) && !is_zero_amount;
