@@ -122,14 +122,13 @@ export default function Visualize() {
             <PieChart width={100} height={100}>
               <Pie
                 data={pie_chart_data}
-                blendStroke
                 innerRadius={
                   windowDimensions.width && windowDimensions.width <= breakpoints["md"] ? 80 : 160
                 }
                 outerRadius={
                   windowDimensions.width && windowDimensions.width <= breakpoints["md"] ? 120 : 220
                 }
-                paddingAngle={5}
+                paddingAngle={2}
                 dataKey="value"
               >
                 {pie_chart_data.map((datum, i) => (
