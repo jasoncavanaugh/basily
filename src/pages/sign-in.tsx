@@ -111,6 +111,7 @@ function BasilPreview() {
 }
 
 function ExpensesPreview() {
+  const today = new Date();
   return (
     <div className="relative">
       <ul>
@@ -140,6 +141,9 @@ function ExpensesPreview() {
           "md:bottom-14 md:right-14 md:h-14 md:w-14",
           "lg:shadow-md lg:shadow-blue-300 lg:transition-all lg:hover:-translate-y-0.5 lg:hover:shadow-lg lg:hover:shadow-blue-300 lg:hover:brightness-110"
         )}
+        month={today.getMonth() + 1}
+        day={today.getDate()}
+        year={today.getFullYear()}
       >
         {/* https://tailwindcomponents.com/component/tailwind-css-fab-buttons */}
         <svg
@@ -161,19 +165,52 @@ function VisualizePreview() {
   return <div>Visualize</div>;
 }
 
+function Jason() {
+  return (
+    <li>
+      <div className="flex justify-between">
+        <h2
+          className={cn(
+            "flex items-center rounded-lg",
+            "px-2 py-1 text-sm font-bold md:text-base ",
+            TW_COLORS_MP["bg"]["pink"][200],
+            TW_COLORS_MP["text"]["pink"][700]
+          )}
+        >
+          Groceries +
+        </h2>
+        <p className="text-squirtle dark:text-rengar font-semibold">$83.45</p>
+      </div>
+      <ul className="flex flex-wrap gap-1 py-2">
+        <li>
+          <button
+            className={cn(
+              TW_COLORS_MP["bg"]["pink"][500],
+              "rounded-full px-2 text-white hover:cursor-pointer hover:opacity-80 dark:hover:opacity-100 dark:hover:brightness-110"
+            )}
+          // title="Delete expense"
+          >
+            $83.45
+          </button>
+        </li>
+      </ul>
+    </li>
+  );
+}
+
 function AddNewExpenseButtonAndModal({
   triggerClassnames,
-  // month,
-  // day,
-  // year,
+  month,
+  day,
+  year,
   expense_category_name,
   expense_category_color,
   children,
 }: {
   triggerClassnames: string;
-  // month: number;
-  // day: number;
-  // year: number;
+  month: number;
+  day: number;
+  year: number;
   expense_category_name?: string;
   expense_category_color?: BaseColor;
   children: ReactNode;
@@ -188,8 +225,7 @@ function AddNewExpenseButtonAndModal({
   const [color, set_color] = useState<BaseColor>(
     expense_category_color ?? "pink"
   );
-  const [date, set_date] = useState("");
-  //useState(`${month}/${day}/${year}`);
+  const [date, set_date] = useState(`${month}/${day}/${year}`);
   const [is_color_selection_open, set_is_color_selection_open] =
     useState(false);
   //
@@ -260,11 +296,11 @@ function AddNewExpenseButtonAndModal({
     <RadixModal.Root
       onOpenChange={() => {
         //This is so dumb, I can't believe this is how the Radix modal works
-        // set_amount("");
-        // set_date(`${month}/${day}/${year}`);
-        // set_category_text(expense_category_name ?? "");
-        // set_color(expense_category_color ?? "pink");
-        // set_is_modal_open(!is_modal_open);
+        set_amount("");
+        set_date(`${month}/${day}/${year}`);
+        set_category_text(expense_category_name ?? "");
+        set_color(expense_category_color ?? "pink");
+        set_is_modal_open(!is_modal_open);
       }}
       open={is_modal_open}
     >
@@ -313,9 +349,9 @@ function AddNewExpenseButtonAndModal({
                 inputMode="text"
                 placeholder="0.01"
                 onChange={(e) => {
-                  // set_amount(e.target.value.trim());
+                  set_amount(e.target.value.trim());
                 }}
-                // value={amount}
+                value={amount}
                 className="w-full rounded border border-slate-400 px-2 py-1 focus:outline-slate-400"
                 autoComplete="off"
                 type="text"
@@ -332,8 +368,8 @@ function AddNewExpenseButtonAndModal({
               <input
                 name="date"
                 inputMode="text"
-                // value={date}
-                // onChange={(e) => set_date(e.target.value)}
+                value={date}
+                onChange={(e) => set_date(e.target.value)}
                 className="w-full rounded border border-slate-400 px-2 py-1 focus:outline-slate-400"
                 autoComplete="off"
                 type="text"
