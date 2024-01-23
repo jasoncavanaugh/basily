@@ -22,6 +22,8 @@ import { useTheme } from "next-themes";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
 import { cn } from "src/utils/cn";
 import { is_valid_amount, is_valid_date } from "./expenses";
+import { ExpenseCategoryWithBaseColor } from "src/server/api/routers/router";
+import { Expense } from "@prisma/client";
 
 //I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
@@ -44,24 +46,24 @@ export default function SignIn() {
 
   if (session.status === "loading" || session.status === "authenticated") {
     return (
-      <div className="bg-charmander dark:bg-khazix flex h-screen items-center justify-center p-1 md:p-4">
+      <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
         <Spinner className={SPINNER_CLASSNAMES} />
       </div>
     );
   }
   return (
-    <div className="flex h-[100vh] flex-col md:items-center justify-center md:flex-row">
-      <div className="flex flex-col items-start justify-center gap-3 md:gap-6 rounded-lg  py-8 px-4 md:h-full md:w-[50%] md:p-16">
+    <div className="flex h-[100vh] flex-col justify-center md:flex-row md:items-center">
+      <div className="flex flex-col items-start justify-center gap-3 rounded-lg px-4  py-8 md:h-full md:w-[50%] md:gap-6 md:p-16">
         <Image
           className="w-40 md:w-72"
           src={theme === "dark" ? basil_logo_dark : basil_logo_light}
           alt="Basil logo"
         />
-        <p className="text-base md:text-lg text-slate-700 dark:text-white md:text-2xl">
+        <p className="text-base text-slate-700 dark:text-white md:text-2xl md:text-lg">
           A minimalistic expense tracker
         </p>
         <button
-          className="bg-squirtle dark:bg-rengar rounded-full px-3 py-1 md:px-6 md:py-2 text-sm font-semibold text-white shadow-sm shadow-blue-300 hover:brightness-110 md:text-lg md:text-3xl"
+          className="rounded-full bg-squirtle px-3 py-1 text-sm font-semibold text-white shadow-sm shadow-blue-300 hover:brightness-110 dark:bg-rengar md:px-6 md:py-2 md:text-3xl md:text-lg"
           onClick={() => void signIn()}
         >
           Sign In
@@ -75,13 +77,13 @@ export default function SignIn() {
 function BasilPreview() {
   const [page, set_page] = useState<"expenses" | "visualize">("expenses");
   return (
-    <div className="h-full md:w-[80%] py-4 px-2">
+    <div className="h-full px-2 py-4 md:w-[80%]">
       <div className="flex gap-3">
         <button
           className={cn(
             "rounded-full",
-            "border-squirtle text-squirtle w-[6rem] border py-1 text-sm font-semibold dark:border-transparent",
-            "dark:text-rengar hover:brightness-110 md:w-[8rem] md:text-lg",
+            "w-[6rem] border border-squirtle py-1 text-sm font-semibold text-squirtle dark:border-transparent",
+            "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
             BUTTON_HOVER_CLASSES
           )}
           onClick={() => set_page("expenses")}
@@ -91,8 +93,8 @@ function BasilPreview() {
         <button
           className={cn(
             "rounded-full",
-            "border-squirtle text-squirtle w-[6rem] border py-1 text-sm font-semibold dark:border-transparent",
-            "dark:text-rengar hover:brightness-110 md:w-[8rem] md:text-lg",
+            "w-[6rem] border border-squirtle py-1 text-sm font-semibold text-squirtle dark:border-transparent",
+            "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
             BUTTON_HOVER_CLASSES
           )}
           onClick={() => set_page("visualize")}
@@ -100,40 +102,74 @@ function BasilPreview() {
           Visualize
         </button>
       </div>
-      {page === "expenses" && (
-        <ExpensesPreview />
-      )}
-      {page === "visualize" && (
-        <VisualizePreview />
-      )}
+      {page === "expenses" && <ExpensesPreview />}
+      {page === "visualize" && <VisualizePreview />}
     </div>
   );
 }
 
+type BasilDay = {
+  month: number;
+  day: number;
+  year: number
+  expenses: Expense[]
+  //   user_id  String
+  //   user     User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  //   createdAt   DateTime        @default(now())
+  //   month    Int
+  //   day      Int
+  //   year     Int
+  //   expenses Expense[]
+}
 function ExpensesPreview() {
   const today = new Date();
+  const [expenses_by_day, set_expenses_by_day] = useState<BasilDay[]>([]);
+  // model Day {
+  //   id       String    @id @default(cuid())
+  //   user_id  String
+  //   user     User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  //   createdAt   DateTime        @default(now())
+  //   month    Int
+  //   day      Int
+  //   year     Int
+  //   expenses Expense[]
+  //
+  //   @@unique([user_id, month, day, year])
+  // }
   return (
     <div className="relative">
       <ul>
-        <li className="px-1 py-4">
-          <div className="flex items-end justify-between ">
-            <h1 className="bg-squirtle dark:bg-rengar inline rounded-lg px-2 py-1 font-bold text-white md:p-2">
-              12-1-2023
+        {expenses_by_day.length === 0 && (
+          <div className="flex items-center justify-center">
+            <h1 className="text-slate-700 dark:text-white">
+              Click the '+' button to add a new expense.
             </h1>
           </div>
-          <div className="h-4" />
-          <ul className="bg-pikachu dark:bg-leblanc dark:shadow-leblanc flex flex-col gap-3 rounded-lg p-4 shadow-sm dark:shadow-sm">
-            <Jason />
-            <li className="flex justify-between">
-              <p className="text-squirtle dark:text-rengar font-semibold">
-                Total:{" "}
-              </p>
-              <p className="text-squirtle dark:text-rengar font-semibold">
-                $100.23
-              </p>
+        )}
+        {expenses_by_day.length > 0 && expenses_by_day.map((ebd) => {
+          return (
+            <li className="px-1 py-4">
+              <div className="flex items-end justify-between ">
+                <h1 className="inline rounded-lg bg-squirtle px-2 py-1 font-bold text-white dark:bg-rengar md:p-2">
+                  {ebd.month + 1}-{ebd.day}-{ebd.year}
+                </h1>
+              </div>
+              <div className="h-4" />
+              <ul className="flex flex-col gap-3 rounded-lg bg-pikachu p-4 shadow-sm dark:bg-leblanc dark:shadow-sm dark:shadow-leblanc">
+                <Jason />
+                <li className="flex justify-between">
+                  <p className="font-semibold text-squirtle dark:text-rengar">
+                    Total:{" "}
+                  </p>
+                  <p className="font-semibold text-squirtle dark:text-rengar">
+                    $100.23
+                  </p>
+                </li>
+              </ul>
             </li>
-          </ul>
-        </li>
+          );
+        })}
+
       </ul>
       <AddNewExpenseButtonAndModal
         triggerClassnames={cn(
@@ -179,7 +215,7 @@ function Jason() {
         >
           Groceries +
         </h2>
-        <p className="text-squirtle dark:text-rengar font-semibold">$83.45</p>
+        <p className="font-semibold text-squirtle dark:text-rengar">$83.45</p>
       </div>
       <ul className="flex flex-wrap gap-1 py-2">
         <li>
@@ -228,9 +264,14 @@ function AddNewExpenseButtonAndModal({
   const [date, set_date] = useState(`${month}/${day}/${year}`);
   const [is_color_selection_open, set_is_color_selection_open] =
     useState(false);
+
   //
   // const expense_data_qry = use_expenses();
-  // const expense_categories_qry = api.router.get_categories.useQuery();
+  const [expense_categories, set_expense_categories] = useState<
+    ExpenseCategoryWithBaseColor[]
+  >([]);
+
+  //api.router.get_categories.useQuery();
   //
   // const create_expense_mtn = api.router.create_expense.useMutation({
   //   onSuccess: () => {
@@ -256,41 +297,46 @@ function AddNewExpenseButtonAndModal({
   //     },
   //   });
   //
-  // function handle_create_expense(
-  //   expense_categories: ExpenseCategoryWithBaseColor[]
-  // ) {
-  //   const does_category_exist =
-  //     expense_categories.filter((exp) => exp.name === category_text).length > 0;
-  //   if (!does_category_exist) {
-  //     create_category_and_expense_mtn.mutate({
-  //       name: category_text,
-  //       color: color,
-  //     });
-  //   } else {
-  //     const id = expense_categories.find((c) => c.name === category_text)?.id;
-  //     if (!id) throw new Error("id undefined");
-  //     create_expense_mtn.mutate({
-  //       category_id: id,
-  //       amount: amount,
-  //       date: extract_date_fields(date),
-  //     });
-  //   }
-  // }
+  function handle_create_expense(
+    expense_categories: ExpenseCategoryWithBaseColor[]
+  ) {
+
+    // id: string
+    // user_id: string
+    // createdAt: Date
+    // updatedAt: Date
+    // color: string
+    // name: string
+    const does_category_exist =
+      expense_categories.filter((exp) => exp.name === category_text).length > 0;
+    if (!does_category_exist) {
+      set_expense_categories((prev) => [...prev, { id: category_text, user_id: "", createdAt: new Date(), updatedAt: new Date(), color: color, name: category_text }]);
+    }
+
+    // } else {
+    //   const id = expense_categories.find((c) => c.name === category_text)?.id;
+    //   if (!id) throw new Error("id undefined");
+    //   create_expense_mtn.mutate({
+    //     category_id: id,
+    //     amount: amount,
+    //     date: extract_date_fields(date),
+    //   });
+    // }
+  }
   // if (expense_categories_qry.status === "error") {
   //   console.error(expense_categories_qry.error);
   // }
   //
-  // const is_create_expense_button_disabled =
-  //   category_text.length === 0 ||
-  //   color.length === 0 ||
-  //   amount.length === 0 ||
-  //   !is_valid_amount(amount) ||
-  //   !is_valid_date(date) ||
-  //   is_category_dropdown_open; //This is because if the dropdown is still open, that indicates that the user hasn't selected something yet
-  //
-  // const does_category_exist =
-  //   expense_categories_qry.data?.filter((cat) => cat.name === category_text)
-  //     .length !== 0;
+  const is_create_expense_button_disabled =
+    category_text.length === 0 ||
+    color.length === 0 ||
+    amount.length === 0 ||
+    !is_valid_amount(amount) ||
+    !is_valid_date(date) ||
+    is_category_dropdown_open; //This is because if the dropdown is still open, that indicates that the user hasn't selected something yet
+
+  const does_category_exist =
+    expense_categories.filter((cat) => cat.name === category_text).length !== 0;
 
   return (
     <RadixModal.Root
@@ -322,14 +368,14 @@ function AddNewExpenseButtonAndModal({
         <RadixModal.Content
           className={cn(
             RADIX_MODAL_CONTENT_CLASSES,
-            "border-t-squirtle bg-pikachu dark:border-t-rengar dark:bg-leblanc fixed left-1/2 top-0 w-full -translate-x-1/2 rounded border-t-8",
+            "fixed left-1/2 top-0 w-full -translate-x-1/2 rounded border-t-8 border-t-squirtle bg-pikachu dark:border-t-rengar dark:bg-leblanc",
             "p-4 md:top-1/2 md:w-[40rem] md:-translate-y-1/2 md:rounded-lg lg:p-8"
           )}
         >
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              // handle_create_expense(expense_categories_qry.data!);
+              handle_create_expense(expense_categories);
             }}
           >
             <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-slate-700 dark:text-white">
@@ -386,17 +432,17 @@ function AddNewExpenseButtonAndModal({
               <div className="flex h-16 items-center gap-3">
                 <button
                   type="button"
-                // onClick={() => {
-                //   if (does_category_exist) return;
-                //   set_is_color_selection_open(!is_color_selection_open);
-                // }}
-                // className={cn(
-                //   "h-4 w-4 shrink-0 rounded-full md:h-6 md:w-6",
-                //   TW_COLORS_MP["bg"][color][500],
-                //   does_category_exist
-                //     ? "hover:cursor-not-allowed"
-                //     : "hover:cursor-pointer hover:brightness-110"
-                // )}
+                  onClick={() => {
+                    if (does_category_exist) return;
+                    set_is_color_selection_open(!is_color_selection_open);
+                  }}
+                  className={cn(
+                    "h-4 w-4 shrink-0 rounded-full md:h-6 md:w-6",
+                    TW_COLORS_MP["bg"][color][500],
+                    does_category_exist
+                      ? "hover:cursor-not-allowed"
+                      : "hover:cursor-pointer hover:brightness-110"
+                  )}
                 ></button>
                 {is_color_selection_open && (
                   <div
@@ -417,7 +463,7 @@ function AddNewExpenseButtonAndModal({
                           className={cn(
                             TW_COLORS_MP["bg"][option][500],
                             "h-5 w-5 rounded-full border-2",
-                            "border-pikachu dark:border-leblanc focus:border-black focus:outline-none dark:focus:border-white",
+                            "border-pikachu focus:border-black focus:outline-none dark:border-leblanc dark:focus:border-white",
                             option === color
                               ? "border-slate-900 brightness-110 hover:cursor-default dark:border-white"
                               : "hover:cursor-pointer  hover:border-slate-900 hover:brightness-110 dark:hover:border-white",
@@ -426,6 +472,76 @@ function AddNewExpenseButtonAndModal({
                         />
                       );
                     })}
+                  </div>
+                )}
+                {!is_color_selection_open && (
+                  <div className="w-full">
+                    <input
+                      name="category"
+                      value={category_text}
+                      onChange={(e) => {
+                        set_category_text(e.target.value);
+                        set_is_category_dropdown_open(true);
+                        // set_is_category_color_selection_disabled(false);
+                      }}
+                      className="w-full grow rounded border border-slate-400 px-2 py-1 focus:outline-slate-400"
+                      autoComplete="off"
+                      type="text"
+                    ></input>
+                    <div className="relative m-0 h-0 p-0">
+                      {category_text.length > 0 &&
+                        is_category_dropdown_open && (
+                          <ul className="absolute z-20 flex max-h-[200px] w-full flex-col gap-2 overflow-y-scroll rounded border bg-white p-3 dark:bg-shaco">
+                            {expense_categories
+                              .filter(
+                                (cat) =>
+                                  cat.name.includes(category_text) ||
+                                  category_text.includes(cat.name)
+                              )
+                              .map((exp) => {
+                                return (
+                                  <li
+                                    key={exp.id}
+                                    className={cn(
+                                      "flex items-center gap-3 rounded border border-squirtle_light px-3 py-2 dark:border-violet-300",
+                                      BUTTON_HOVER_CLASSES
+                                    )}
+                                    onClick={() => {
+                                      set_category_text(exp.name);
+                                      set_color(exp.color);
+                                      set_is_category_dropdown_open(false);
+                                      // set_is_category_color_selection_disabled(true);
+                                    }}
+                                  >
+                                    <div
+                                      className={cn(
+                                        "h-4 w-4 rounded-full",
+                                        TW_COLORS_MP["bg"][exp.color][500]
+                                      )}
+                                    />
+                                    <p>{exp.name}</p>
+                                  </li>
+                                );
+                              })}
+                            {category_text.length > 0 &&
+                              !does_category_exist && (
+                                <li
+                                  className={cn(
+                                    "rounded p-2 text-slate-700 dark:text-white",
+                                    BUTTON_HOVER_CLASSES
+                                  )}
+                                  onClick={() => {
+                                    set_is_category_dropdown_open(false);
+                                    set_category_text(category_text.trim());
+                                  }}
+                                >
+                                  <span>+</span>
+                                  {` Create '${category_text.trim()}'`}
+                                </li>
+                              )}
+                          </ul>
+                        )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -448,14 +564,13 @@ function AddNewExpenseButtonAndModal({
               </RadixModal.Close>
               <button
                 className={cn(
-                  "bg-squirtle dark:bg-rengar flex w-[4.5rem] items-center justify-center rounded-full text-xs font-semibold text-white lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold",
-                  true
-                    ? //is_create_expense_button_disabled
+                  "flex w-[4.5rem] items-center justify-center rounded-full bg-squirtle text-xs font-semibold text-white dark:bg-rengar lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold",
+                  is_create_expense_button_disabled ?
                     "opacity-50"
                     : "hover:cursor-pointer hover:brightness-110"
                 )}
                 type="submit"
-              // disabled={is_create_expense_button_disabled}
+                disabled={is_create_expense_button_disabled}
               >
                 Create
               </button>

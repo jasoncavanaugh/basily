@@ -482,6 +482,7 @@ function AddNewExpenseButtonAndModal({
 
   // const expense_data_qry = use_expenses();
   const expense_categories_qry = api.router.get_categories.useQuery();
+  const a = expense_categories_qry.data;
 
   const create_expense_mtn = api.router.create_expense.useMutation({
     onSuccess: () => {
