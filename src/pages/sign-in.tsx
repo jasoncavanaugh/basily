@@ -265,7 +265,6 @@ function AddNewExpenseButtonAndModal({
   const [is_color_selection_open, set_is_color_selection_open] =
     useState(false);
 
-  //
   // const expense_data_qry = use_expenses();
   const [expense_categories, set_expense_categories] = useState<
     ExpenseCategoryWithBaseColor[]

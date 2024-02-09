@@ -78,7 +78,7 @@ export default function Visualize() {
   }, [session.status]);
   if (session.status === "loading" || session.status === "unauthenticated") {
     return (
-      <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
+      <div className="bg-charmander dark:bg-khazix flex h-screen items-center justify-center p-1 md:p-4">
         <Spinner className={SPINNER_CLASSNAMES} />
       </div>
     );
@@ -116,8 +116,8 @@ export default function Visualize() {
       <div className="flex h-[10vh] items-center pl-4">
         <DatePickerWithRange date={date} set_date={set_date} />
       </div>
-      <div className="flex h-[83vh] md:h-[80vh] flex-col items-center md:flex-row md:items-start">
-        <div className="min-h-[50%] w-[92%] rounded-md px-4 dark:bg-khazix md:h-[100%] md:w-[50%]">
+      <div className="flex h-[83vh] flex-col items-center md:h-[80vh] md:flex-row md:items-start">
+        <div className="dark:bg-khazix min-h-[50%] w-[92%] rounded-md px-4 md:h-[100%] md:w-[50%]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart width={100} height={100}>
               <Pie
@@ -136,7 +136,7 @@ export default function Visualize() {
                     key={`${datum.name}-${i}`}
                     fill={TW_COLORS_TO_HEX_MP[datum.color]["500"]}
                     stroke="none"
-                    className="focus:border-0 focus:outline-none focus:border focus:border-red-500 focus:outline-red-500 hover:brightness-125"
+                    className="hover:brightness-125 focus:border-0 focus:border focus:border-red-500 focus:outline-none focus:outline-red-500"
                     // style={{ border: "1px solid red" }}
                   />
                 ))}
@@ -171,22 +171,22 @@ export default function Visualize() {
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="pr-2 w-[100%] md:w-[50%] md:h-[100%] md:p-0 flex flex-col gap-1">
-          <div className="ml-2 font-bold text-xl text-squirtle dark:text-rengar px-4 h-[5%]">
+        <div className="flex w-[100%] flex-col gap-1 pr-2 md:h-[100%] md:w-[50%] md:p-0">
+          <div className="text-squirtle dark:text-rengar ml-2 h-[5%] px-4 text-xl font-bold">
             Total: {cents_to_dollars_display(global_total)}
           </div>
           <ul
             className={cn(
-              "thin-scrollbar mr-4 flex w-[100%] flex-col dark:bg-khazix h-[95%]",
-              "gap-2 rounded pl-5 pr-2 min-h-0 grow md:overflow-scroll md:px-4 md:py-0 md:m-0"
+              "thin-scrollbar dark:bg-khazix mr-4 flex h-[95%] w-[100%] flex-col",
+              "min-h-0 grow gap-2 rounded pl-5 pr-2 md:m-0 md:overflow-scroll md:px-4 md:py-0"
             )}
           >
             {pie_chart_data.map((datum) => {
               return (
                 <li
                   className={cn(
-                    "flex items-center gap-3 bg-bulbasaur dark:bg-leblanc",
-                    "rounded-lg font-bold shadow-sm shadow-slate-300 dark:shadow-leblanc"
+                    "bg-bulbasaur dark:bg-leblanc flex items-center gap-3",
+                    "dark:shadow-leblanc rounded-lg font-bold shadow-sm shadow-slate-300"
                   )}
                 >
                   <div className={cn("flex items-center gap-4 p-4")}>
