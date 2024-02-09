@@ -105,28 +105,32 @@ export default function Visualize() {
 
   console.log("windowDimensions", windowDimensions);
   console.log("expense_data_query", expense_data_query.data);
-  const filtered = filterData(expense_data_query.data, date)
+  const filtered = filterData(expense_data_query.data, date);
   console.log("filtered", filtered);
-  const pie_chart_data = get_pie_chart_data(
-    get_data_intermediate(filtered)
-  );
+  const pie_chart_data = get_pie_chart_data(get_data_intermediate(filtered));
   const { global_total } = get_data_intermediate(filtered);
   return (
     <Layout>
       <div className="flex h-[10vh] items-center pl-4">
         <DatePickerWithRange date={date} set_date={set_date} />
       </div>
-      <div className="flex h-[83vh] md:h-[80vh] flex-col items-center md:flex-row md:items-start">
+      <div className="flex h-[83vh] flex-col items-center md:h-[80vh] md:flex-row md:items-start">
         <div className="min-h-[50%] w-[92%] rounded-md px-4 dark:bg-khazix md:h-[100%] md:w-[50%]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart width={100} height={100}>
               <Pie
                 data={pie_chart_data}
                 innerRadius={
-                  windowDimensions.width && windowDimensions.width <= breakpoints["md"] ? 80 : 160
+                  windowDimensions.width &&
+                  windowDimensions.width <= breakpoints["md"]
+                    ? 80
+                    : 160
                 }
                 outerRadius={
-                  windowDimensions.width && windowDimensions.width <= breakpoints["md"] ? 120 : 220
+                  windowDimensions.width &&
+                  windowDimensions.width <= breakpoints["md"]
+                    ? 120
+                    : 220
                 }
                 paddingAngle={2}
                 dataKey="value"
@@ -136,7 +140,7 @@ export default function Visualize() {
                     key={`${datum.name}-${i}`}
                     fill={TW_COLORS_TO_HEX_MP[datum.color]["500"]}
                     stroke="none"
-                    className="focus:outline-none focus:brightness-125 hover:brightness-125"
+                    className="hover:brightness-125 focus:outline-none focus:brightness-125"
                     // style={{ border: "1px solid red" }}
                   />
                 ))}
@@ -171,14 +175,15 @@ export default function Visualize() {
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="pr-2 w-[100%] md:w-[50%] md:h-[100%] md:p-0 flex flex-col gap-1">
-          <div className="ml-2 font-bold text-xl text-squirtle dark:text-rengar px-4 h-[5%]">
+        <div className="w-[100%] gap-1 pr-2 md:flex md:h-[100%] md:w-[50%] md:flex-col md:p-0">
+          <div className="ml-2 px-4 text-xl font-bold text-squirtle dark:text-rengar md:h-[5%]">
             Total: {cents_to_dollars_display(global_total)}
           </div>
+          <div className="h-2 md:h-0" />
           <ul
             className={cn(
-              "thin-scrollbar mr-4 flex w-[100%] flex-col dark:bg-khazix h-[95%]",
-              "gap-2 rounded pl-5 pr-2 min-h-0 grow md:overflow-scroll md:px-4 md:py-0 md:m-0"
+              "thin-scrollbar mr-4 flex w-[100%] flex-col dark:bg-khazix md:h-[95%]",
+              "min-h-0 grow gap-2 rounded pl-5 pr-2 md:m-0 md:overflow-scroll md:px-4 md:py-0"
             )}
           >
             {pie_chart_data.map((datum) => {
@@ -220,7 +225,10 @@ type IntResp = {
   }[];
 };
 
-function filterData(days_and_ec: GetExpensesOverDateRangeRet, dateRange: DateRange | undefined): GetExpensesOverDateRangeRet {
+function filterData(
+  days_and_ec: GetExpensesOverDateRangeRet,
+  dateRange: DateRange | undefined
+): GetExpensesOverDateRangeRet {
   if (!dateRange || !dateRange.from) {
     return { days: [], expense_categories: days_and_ec.expense_categories };
   }
@@ -234,7 +242,7 @@ function filterData(days_and_ec: GetExpensesOverDateRangeRet, dateRange: DateRan
   const to_day = to.getDate();
   const to_month_idx = to.getMonth();
   const to_year = to.getFullYear();
-  
+
   let filtered_days = [];
   filtered_days = days_and_ec.days.filter((d) => {
     if (d.year < from_year || d.year > to_year) {
@@ -246,21 +254,28 @@ function filterData(days_and_ec: GetExpensesOverDateRangeRet, dateRange: DateRan
     let is_after_from = true;
     if (d.year === from_year) {
       const is_after_month = d.month > from_month_idx;
-      const same_month_but_after_day = d.month === from_month_idx && d.day >= from_day;
+      const same_month_but_after_day =
+        d.month === from_month_idx && d.day >= from_day;
       is_after_from = is_after_month || same_month_but_after_day;
-    } 
+    }
     let is_before_to = true;
     if (d.year === to_year) {
       const is_before_month = d.month < to_month_idx;
-      const is_same_month_but_before_day = d.month === to_month_idx && d.day <= to_day;
+      const is_same_month_but_before_day =
+        d.month === to_month_idx && d.day <= to_day;
       is_before_to = is_before_month || is_same_month_but_before_day;
     }
     return is_after_from && is_before_to;
   });
-  return { days: filtered_days, expense_categories: days_and_ec.expense_categories };
+  return {
+    days: filtered_days,
+    expense_categories: days_and_ec.expense_categories,
+  };
 }
 
-function get_data_intermediate(days_and_ec: GetExpensesOverDateRangeRet): IntResp {
+function get_data_intermediate(
+  days_and_ec: GetExpensesOverDateRangeRet
+): IntResp {
   const out: Record<string, { name: string; color: BaseColor; total: number }> =
     {};
   const category_id_to_color: Record<string, BaseColor> = {};
@@ -298,7 +313,7 @@ function get_pie_chart_data(input: IntResp) {
       name: `${d.name} - ${cents_to_dollars_display(d.total)} (${(
         Math.floor((d.total / input.global_total) * 10000) / 100
       ).toLocaleString()}%)`,
-      color: d.color, 
+      color: d.color,
     };
   });
   return out;
