@@ -255,7 +255,7 @@ function ChronologicalExpenseList({
   );
 }
 
-function extract_mdy(date_display: `${number}-${number}-${number}`) {
+export function extract_mdy(date_display: `${number}-${number}-${number}`) {
   const [month, day, year] = date_display.split("-").map((d) => parseInt(d));
   if (!month || !day || !year) {
     throw new Error("extract_mdy: !month || !day || !year");

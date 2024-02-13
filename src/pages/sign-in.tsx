@@ -4,7 +4,7 @@ import * as RadixModal from "@radix-ui/react-dialog";
 import { BASE_COLORS, BaseColor } from "src/utils/colors";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import { ReactNode, useEffect, useState } from "react";
+import { Dispatch, ReactNode, SetStateAction, useEffect, useState } from "react";
 import { Spinner } from "src/components/Spinner";
 import { getServerAuthSession } from "src/server/auth";
 import {
@@ -77,7 +77,7 @@ export default function SignIn() {
 function BasilPreview() {
   const [page, set_page] = useState<"expenses" | "visualize">("expenses");
   return (
-    <div className="h-full px-2 py-4 md:w-[80%]">
+    <div className="h-[100%] px-2 py-4 md:w-[80%]">
       <div className="flex gap-3">
         <button
           className={cn(
@@ -111,8 +111,8 @@ function BasilPreview() {
 type BasilDay = {
   month: number;
   day: number;
-  year: number
-  expenses: Expense[]
+  year: number;
+  expenses: (Expense & { category_color: BaseColor })[];
   //   user_id  String
   //   user     User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
   //   createdAt   DateTime        @default(now())
@@ -120,6 +120,25 @@ type BasilDay = {
   //   day      Int
   //   year     Int
   //   expenses Expense[]
+};
+
+function getDayName(day_idx: number) {
+  if (day_idx === 0) {
+    return "Sun";
+  } else if (day_idx === 1) {
+    return "Mon";
+  } else if (day_idx === 2) {
+    return "Tues";
+  } else if (day_idx === 3) {
+    return "Wed";
+  } else if (day_idx === 4) {
+    return "Thurs";
+  } else if (day_idx === 5) {
+    return "Fri";
+  } else if (day_idx === 6) {
+    return "Sat";
+  }
+  return "";
 }
 function ExpensesPreview() {
   const today = new Date();
@@ -136,40 +155,32 @@ function ExpensesPreview() {
   //
   //   @@unique([user_id, month, day, year])
   // }
+  //
+  console.log("expenses_by_day", expenses_by_day);
   return (
-    <div className="relative">
-      <ul>
+    <div className="relative h-[100%]">
+      <ul className="h-[90%] border border-red-500">
         {expenses_by_day.length === 0 && (
-          <div className="flex items-center justify-center">
+          <div className="flex h-[100%] items-center justify-center">
             <h1 className="text-slate-700 dark:text-white">
               Click the '+' button to add a new expense.
             </h1>
           </div>
         )}
-        {expenses_by_day.length > 0 && expenses_by_day.map((ebd) => {
-          return (
-            <li className="px-1 py-4">
-              <div className="flex items-end justify-between ">
-                <h1 className="inline rounded-lg bg-squirtle px-2 py-1 font-bold text-white dark:bg-rengar md:p-2">
-                  {ebd.month + 1}-{ebd.day}-{ebd.year}
-                </h1>
-              </div>
-              <div className="h-4" />
-              <ul className="flex flex-col gap-3 rounded-lg bg-pikachu p-4 shadow-sm dark:bg-leblanc dark:shadow-sm dark:shadow-leblanc">
-                <Jason />
-                <li className="flex justify-between">
-                  <p className="font-semibold text-squirtle dark:text-rengar">
-                    Total:{" "}
-                  </p>
-                  <p className="font-semibold text-squirtle dark:text-rengar">
-                    $100.23
-                  </p>
-                </li>
-              </ul>
-            </li>
-          );
-        })}
-
+        {expenses_by_day.length > 0 &&
+          expenses_by_day.map((ebd, i) => {
+            return (
+              <li key={i} className="px-1 py-4">
+                <div className="flex items-end justify-between ">
+                  <h1 className="inline rounded-lg bg-squirtle px-2 py-1 font-bold text-white dark:bg-rengar md:p-2">
+                    {getDayName(new Date(ebd.month + 1, ebd.day, ebd.year).getDay())} {ebd.month + 1}-{ebd.day}-{ebd.year}
+                  </h1>
+                </div>
+                <div className="h-4" />
+                <ExpenseListForDay day_with_expenses={ebd} />
+              </li>
+            );
+          })}
       </ul>
       <AddNewExpenseButtonAndModal
         triggerClassnames={cn(
@@ -180,6 +191,8 @@ function ExpensesPreview() {
         month={today.getMonth() + 1}
         day={today.getDate()}
         year={today.getFullYear()}
+        // expenses_by_day={expenses_by_day}
+        set_expenses_by_day={set_expenses_by_day}
       >
         {/* https://tailwindcomponents.com/component/tailwind-css-fab-buttons */}
         <svg
@@ -199,6 +212,54 @@ function ExpensesPreview() {
 
 function VisualizePreview() {
   return <div>Visualize</div>;
+}
+
+function ExpenseListForDay({ day_with_expenses }: { day_with_expenses: BasilDay }) {
+  return (
+    <ul className="flex flex-col gap-3 rounded-lg bg-pikachu p-4 shadow-sm dark:bg-leblanc dark:shadow-sm dark:shadow-leblanc">
+      {day_with_expenses.expenses.map((exp) => {
+        return (
+          <li key={exp.category_id}>
+            <div className="flex justify-between">
+              <h2
+                className={cn(
+                  "flex items-center rounded-lg",
+                  "px-2 py-1 text-sm font-bold md:text-base ",
+                  TW_COLORS_MP["bg"][category_color][200],
+                  TW_COLORS_MP["text"][category_color][700]
+                )}
+              >
+                {exp.category_id} +
+              </h2>
+              <p className="font-semibold text-squirtle dark:text-rengar">
+                {cents_to_dollars_display(sum_of_expenses)}
+              </p>
+            </div>
+            <ul className="flex flex-wrap gap-1 py-2">
+              {expense_list.map((expense, i) => {
+                return (
+                  <ExpenseButton
+                    key={i}
+                    expense={expense}
+                    category_color={category_color}
+                    on_delete={() => invalidate_expenses_qry()}
+                  />
+                );
+              })}
+            </ul>
+          </li>
+        )
+      })}
+      <li className="flex justify-between">
+        <p className="font-semibold text-squirtle dark:text-rengar">
+          Total:{" "}
+        </p>
+        <p className="font-semibold text-squirtle dark:text-rengar">
+          $100.23
+        </p>
+      </li>
+    </ul>
+  );
 }
 
 function Jason() {
@@ -234,6 +295,30 @@ function Jason() {
   );
 }
 
+function convert_to_cents(amount: string) {
+  const split_amount = amount.split(".");
+  if (split_amount.length > 2 || split_amount.length < 1) {
+    console.error("split_amount.length > 2 || split_amount.length < 1");
+    throw new Error(
+      "'amount' was formatted incorrectly in 'convert_to_cents' function"
+    );
+  }
+  const dollars = parseInt(split_amount[0]!);
+  let amount_in_cents = dollars * 100;
+  if (split_amount.length === 2) {
+    const cents = parseInt(split_amount[1]!);
+    amount_in_cents += cents;
+  }
+  return amount_in_cents;
+}
+function extract_mdy(date_display: string) {
+  const [month, day, year] = date_display.split("/").map((d) => parseInt(d));
+  if (!month || !day || !year) {
+    throw new Error("extract_mdy: !month || !day || !year");
+  }
+  return { month, day, year };
+}
+
 function AddNewExpenseButtonAndModal({
   triggerClassnames,
   month,
@@ -241,6 +326,7 @@ function AddNewExpenseButtonAndModal({
   year,
   expense_category_name,
   expense_category_color,
+  set_expenses_by_day,
   children,
 }: {
   triggerClassnames: string;
@@ -249,6 +335,7 @@ function AddNewExpenseButtonAndModal({
   year: number;
   expense_category_name?: string;
   expense_category_color?: BaseColor;
+  set_expenses_by_day: Dispatch<SetStateAction<BasilDay[]>>;
   children: ReactNode;
 }) {
   const [amount, set_amount] = useState("");
@@ -296,10 +383,18 @@ function AddNewExpenseButtonAndModal({
   //     },
   //   });
   //
-  function handle_create_expense(
-    expense_categories: ExpenseCategoryWithBaseColor[]
-  ) {
-
+  function handle_create_expense({
+    expense_categories,
+    date,
+  }: {
+    expense_categories: ExpenseCategoryWithBaseColor[];
+    date: string;
+    // day: number;
+    // month_idx: number;
+    // year: number;
+    // expenses_by_day: BasilDay[];
+  }) {
+    // setJason(2);
     // id: string
     // user_id: string
     // createdAt: Date
@@ -309,18 +404,61 @@ function AddNewExpenseButtonAndModal({
     const does_category_exist =
       expense_categories.filter((exp) => exp.name === category_text).length > 0;
     if (!does_category_exist) {
-      set_expense_categories((prev) => [...prev, { id: category_text, user_id: "", createdAt: new Date(), updatedAt: new Date(), color: color, name: category_text }]);
+      set_expense_categories((prev) => [
+        ...prev,
+        {
+          id: category_text,
+          user_id: "",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          color: color,
+          name: category_text,
+        },
+      ]);
     }
+    const { month, day, year } = extract_mdy(date);
+    set_expenses_by_day((prev) => {
+      const newExpenses = [...prev];
+      let day_to_add_expense_to = newExpenses.find((cur_day) => {
+        return (
+          cur_day.day === day &&
+          cur_day.month + 1 === month &&
+          cur_day.year === year
+        );
+      });
+      if (!day_to_add_expense_to) {
+        day_to_add_expense_to = {
+          month: month - 1,
+          day: day,
+          year: year,
+          expenses: []
+        }
+        newExpenses.push(day_to_add_expense_to);
+      }
 
-    // } else {
-    //   const id = expense_categories.find((c) => c.name === category_text)?.id;
-    //   if (!id) throw new Error("id undefined");
-    //   create_expense_mtn.mutate({
-    //     category_id: id,
-    //     amount: amount,
-    //     date: extract_date_fields(date),
-    //   });
+      day_to_add_expense_to.expenses.push({
+        id: "",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        amount: convert_to_cents(amount),
+        user_id: "",
+        category_id: category_text,
+        day_id: `${month}/${day}/${year}`,
+      });
+      console.log("prev", prev);
+      return newExpenses;
+    });
+    // set_expenses_by_day(expenses_by_day);
+    // export type Expense = {
+    //   id: string
+    //   createdAt: Date
+    //   updatedAt: Date
+    //   amount: number
+    //   user_id: string
+    //   category_id: string
+    //   day_id: string
     // }
+    set_is_modal_open(false);
   }
   // if (expense_categories_qry.status === "error") {
   //   console.error(expense_categories_qry.error);
@@ -367,14 +505,17 @@ function AddNewExpenseButtonAndModal({
         <RadixModal.Content
           className={cn(
             RADIX_MODAL_CONTENT_CLASSES,
-            "fixed left-1/2 top-0 w-full -translate-x-1/2 rounded border-t-8 border-t-squirtle bg-pikachu dark:border-t-rengar dark:bg-leblanc",
-            "p-4 md:top-1/2 md:w-[40rem] md:-translate-y-1/2 md:rounded-lg lg:p-8"
+            "fixed left-1/2 top-0 w-full -translate-x-1/2 rounded border-t-8 border-t-squirtle bg-pikachu p-4 dark:border-t-rengar dark:bg-leblanc",
+            "md:top-1/2 md:w-[40rem] md:-translate-y-1/2 md:rounded-lg lg:p-8"
           )}
         >
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handle_create_expense(expense_categories);
+              handle_create_expense({
+                expense_categories,
+                date,
+              });
             }}
           >
             <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-slate-700 dark:text-white">
@@ -564,8 +705,8 @@ function AddNewExpenseButtonAndModal({
               <button
                 className={cn(
                   "flex w-[4.5rem] items-center justify-center rounded-full bg-squirtle text-xs font-semibold text-white dark:bg-rengar lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold",
-                  is_create_expense_button_disabled ?
-                    "opacity-50"
+                  is_create_expense_button_disabled
+                    ? "opacity-50"
                     : "hover:cursor-pointer hover:brightness-110"
                 )}
                 type="submit"
