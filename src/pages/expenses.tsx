@@ -372,7 +372,7 @@ function ExpenseButton({
         </li>
       </RadixModal.Trigger>
       <RadixModal.Portal>
-        <RadixModal.Overlay className={cn(RADIX_MODAL_OVERLAY_CLASSES)} />
+        <RadixModal.Overlay className={RADIX_MODAL_OVERLAY_CLASSES} />
         <RadixModal.Content
           className={cn(
             RADIX_MODAL_CONTENT_CLASSES,
