@@ -18,34 +18,34 @@ export default function Layout({ children }: { children: ReactNode }) {
     <div className="md:p-4">
       <div className="flex h-[5%] items-center justify-between px-2 pt-2 md:pt-0">
         <div className="flex gap-2">
-        <Link
-          href={EXPENSES_ROUTE}
-        >
-          <button
-            className={cn(
-              "rounded-full",
-              "w-[6rem] border border-squirtle py-1 text-sm font-semibold text-squirtle dark:border-transparent",
-              "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
-              BUTTON_HOVER_CLASSES
-            )}
+          <Link
+            href={EXPENSES_ROUTE}
           >
-            Expenses
-          </button>
-        </Link>
-        <Link
-          href={VISUALIZE_ROUTE}
-        >
-          <button
-            className={cn(
-              "rounded-full",
-              "w-[6rem] border border-squirtle py-1 text-sm font-semibold text-squirtle dark:border-transparent",
-              "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
-              BUTTON_HOVER_CLASSES
-            )}
+            <button
+              className={cn(
+                "rounded-full",
+                "w-[6rem] border border-squirtle py-1 text-sm font-semibold text-squirtle dark:border-transparent",
+                "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
+                BUTTON_HOVER_CLASSES
+              )}
+            >
+              Expenses
+            </button>
+          </Link>
+          <Link
+            href={VISUALIZE_ROUTE}
           >
-            Visualize
-          </button>
-        </Link>
+            <button
+              className={cn(
+                "rounded-full",
+                "w-[6rem] border border-squirtle py-1 text-sm font-semibold text-squirtle dark:border-transparent",
+                "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
+                BUTTON_HOVER_CLASSES
+              )}
+            >
+              Visualize
+            </button>
+          </Link>
         </div>
         <div className="flex items-center justify-end gap-2 lg:gap-4">
           <ThemeButton />

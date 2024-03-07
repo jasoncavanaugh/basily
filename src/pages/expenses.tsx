@@ -255,7 +255,7 @@ function ChronologicalExpenseList({
   );
 }
 
-function extract_mdy(date_display: `${number}-${number}-${number}`) {
+export function extract_mdy(date_display: `${number}-${number}-${number}`) {
   const [month, day, year] = date_display.split("-").map((d) => parseInt(d));
   if (!month || !day || !year) {
     throw new Error("extract_mdy: !month || !day || !year");
@@ -372,7 +372,7 @@ function ExpenseButton({
         </li>
       </RadixModal.Trigger>
       <RadixModal.Portal>
-        <RadixModal.Overlay className={cn(RADIX_MODAL_OVERLAY_CLASSES)} />
+        <RadixModal.Overlay className={RADIX_MODAL_OVERLAY_CLASSES} />
         <RadixModal.Content
           className={cn(
             RADIX_MODAL_CONTENT_CLASSES,
@@ -422,7 +422,7 @@ function ExpenseButton({
 }
 
 const AMOUNT_REGEX = new RegExp(/^\d*(\.\d\d)?$/);
-function is_valid_amount(amount: string) {
+export function is_valid_amount(amount: string) {
   const is_zero_amount =
     amount.split("").filter((c) => c !== "." && c !== "0").length === 0;
   return AMOUNT_REGEX.test(amount) && !is_zero_amount;
@@ -430,7 +430,7 @@ function is_valid_amount(amount: string) {
 const DATE_REGEX = new RegExp(
   /^(0?[1-9]|1[012])[/](0?[1-9]|[12][0-9]|3[01])[/](19|20)\d\d$/
 );
-function is_valid_date(date_str: string) {
+export function is_valid_date(date_str: string) {
   return DATE_REGEX.test(date_str);
 }
 function extract_date_fields(date_str: string) {
@@ -482,6 +482,7 @@ function AddNewExpenseButtonAndModal({
 
   // const expense_data_qry = use_expenses();
   const expense_categories_qry = api.router.get_categories.useQuery();
+  const a = expense_categories_qry.data;
 
   const create_expense_mtn = api.router.create_expense.useMutation({
     onSuccess: () => {

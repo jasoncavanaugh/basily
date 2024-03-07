@@ -50,20 +50,6 @@ export default function Visualize() {
 
   console.log(year_ago, today_date);
   const windowDimensions = useWindowDimensions();
-  //windowDimensions.width
-  // const expense_data_query = api.router.get_expenses_over_date_range.useQuery({
-  //   from_date: {
-  //     day: year_ago.getDate(),
-  //     month_idx: year_ago.getMonth(),
-  //     year: year_ago.getFullYear(),
-  //   },
-  //   to_date: {
-  //     day: today_date.getDate(),
-  //     month_idx: today_date.getMonth(),
-  //     year: today_date.getFullYear(),
-  //   },
-  // });
-  //
   const expense_data_query = use_jason({
     from_date: date_to_dmy(date?.from ?? undefined),
     to_date: date_to_dmy(date?.to ?? undefined),
@@ -78,7 +64,7 @@ export default function Visualize() {
   }, [session.status]);
   if (session.status === "loading" || session.status === "unauthenticated") {
     return (
-      <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
+      <div className="bg-charmander dark:bg-khazix flex h-screen items-center justify-center p-1 md:p-4">
         <Spinner className={SPINNER_CLASSNAMES} />
       </div>
     );
@@ -190,8 +176,8 @@ export default function Visualize() {
               return (
                 <li
                   className={cn(
-                    "flex items-center gap-3 bg-bulbasaur dark:bg-leblanc",
-                    "rounded-lg font-bold shadow-sm shadow-slate-300 dark:shadow-leblanc"
+                    "bg-bulbasaur dark:bg-leblanc flex items-center gap-3",
+                    "dark:shadow-leblanc rounded-lg font-bold shadow-sm shadow-slate-300"
                   )}
                 >
                   <div className={cn("flex items-center gap-4 p-4")}>
