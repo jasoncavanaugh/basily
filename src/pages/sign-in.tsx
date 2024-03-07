@@ -31,6 +31,7 @@ import { is_valid_amount, is_valid_date } from "./expenses";
 import { ExpenseCategoryWithBaseColor } from "src/server/api/routers/router";
 import { Expense } from "@prisma/client";
 import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
+import { ThemeButton } from "src/components/ThemeButton";
 
 type DayWithExpenses = {
   day: string;
@@ -54,7 +55,6 @@ export default function SignIn() {
   const session = useSession();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  console.log(theme);
 
   useEffect(() => {
     if (session.status === "authenticated") {
@@ -94,33 +94,39 @@ export default function SignIn() {
 
 function BasilPreview() {
   const [page, set_page] = useState<"expenses" | "visualize">("expenses");
+  const [expenses_by_day, set_expenses_by_day] = useState<DayWithExpenses[]>(
+    []
+  );
   return (
-    <div className="h-[100%] px-2 py-4 md:w-[80%]">
-      <div className="flex h-[5%] gap-3">
-        <button
-          className={cn(
-            "rounded-full",
-            "w-[6rem] border border-squirtle py-1 text-sm font-semibold text-squirtle dark:border-transparent",
-            "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
-            BUTTON_HOVER_CLASSES
-          )}
-          onClick={() => set_page("expenses")}
-        >
-          Expenses
-        </button>
-        <button
-          className={cn(
-            "rounded-full",
-            "w-[6rem] border border-squirtle py-1 text-sm font-semibold text-squirtle dark:border-transparent",
-            "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
-            BUTTON_HOVER_CLASSES
-          )}
-          onClick={() => set_page("visualize")}
-        >
-          Visualize
-        </button>
+    <div className="h-[100%] px-2 py-4 md:w-[80%] overflow-scroll thin-scrollbar">
+      <div className="flex h-[5%] justify-between items-center">
+        <div className="flex gap-3">
+          <button
+            className={cn(
+              "rounded-full",
+              "w-[6rem] border border-squirtle py-1 text-sm font-semibold text-squirtle dark:border-transparent",
+              "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
+              BUTTON_HOVER_CLASSES
+            )}
+            onClick={() => set_page("expenses")}
+          >
+            Expenses
+          </button>
+          <button
+            className={cn(
+              "rounded-full",
+              "w-[6rem] border border-squirtle py-1 text-sm font-semibold text-squirtle dark:border-transparent",
+              "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
+              BUTTON_HOVER_CLASSES
+            )}
+            onClick={() => set_page("visualize")}
+          >
+            Visualize
+          </button>
+        </div>
+        <ThemeButton/>
       </div>
-      {page === "expenses" && <ExpensesPreview />}
+      {page === "expenses" && <ExpensesPreview expenses_by_day={expenses_by_day} set_expenses_by_day={set_expenses_by_day}  />} 
       {page === "visualize" && <VisualizePreview />}
     </div>
   );
@@ -158,11 +164,11 @@ function getDayName(day_idx: number) {
   }
   return "";
 }
-function ExpensesPreview() {
+function ExpensesPreview({ expenses_by_day, set_expenses_by_day }: {
+  expenses_by_day: Array<DayWithExpenses>;
+  set_expenses_by_day: Dispatch<SetStateAction<DayWithExpenses[]>>;
+}) {
   const today = new Date();
-  const [expenses_by_day, set_expenses_by_day] = useState<DayWithExpenses[]>(
-    []
-  );
   // model Day {
   //   id       String    @id @default(cuid())
   //   user_id  String
@@ -176,10 +182,9 @@ function ExpensesPreview() {
   //   @@unique([user_id, month, day, year])
   // }
   //
-  console.log("expenses_by_day", expenses_by_day);
   return (
     <div className="relative h-[95%]">
-      <ul className="h-[95%]">
+      <ul className="h-[95%] ">
         {expenses_by_day.length === 0 && (
           <div className="flex h-[100%] items-center justify-center">
             <h1 className="text-slate-700 dark:text-white">
@@ -188,14 +193,27 @@ function ExpensesPreview() {
           </div>
         )}
         {expenses_by_day.length > 0 &&
-          expenses_by_day.map((ebd, i) => {
+          expenses_by_day.sort((a, b) => {
+            const a_mdy = extract_mdy(a.day);
+            const b_mdy = extract_mdy(b.day);
+            if (a_mdy.year != b_mdy.year) {
+              return b_mdy.year - a_mdy.year;
+            }
+            if (a_mdy.month != b_mdy.month) {
+              return b_mdy.month - a_mdy.month;
+            }
+            if (a_mdy.day != b_mdy.day) {
+              return b_mdy.day - a_mdy.day;
+            }
+            return 0;
+          }).map((ebd, i) => {
             const mdy = extract_mdy(ebd.day);
             return (
-              <li key={i} className="px-1 py-4">
+              <li key={i} className="px-1 py-4 mr-1">
                 <div className="flex items-end justify-between ">
                   <h1 className="inline rounded-lg bg-squirtle px-2 py-1 font-bold text-white dark:bg-rengar md:p-2">
                     {getDayName(
-                      new Date(mdy.month, mdy.day, mdy.year).getDay()
+                      new Date(mdy.year, mdy.month - 1, mdy.day).getDay()
                     )}{" "}
                     {mdy.month}-{mdy.day}-{mdy.year}
                   </h1>
@@ -377,9 +395,7 @@ function AddNewExpenseButtonAndModal({
   const [color, set_color] = useState<BaseColor>("pink");
 
   const today = new Date();
-  const [date, set_date] = useState(
-    `${today.getMonth()}/${today.getDate()}/${today.getFullYear()}`
-  );
+  const [date, set_date] = useState(`${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`);
   const [is_color_selection_open, set_is_color_selection_open] =
     useState(false);
 
@@ -441,7 +457,7 @@ function AddNewExpenseButtonAndModal({
         //This is so dumb, I can't believe this is how the Radix modal works
         set_amount("");
         set_date(
-          `${today.getMonth()}/${today.getDate()}/${today.getFullYear()}`
+          `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`
         );
         set_category_text("");
         set_color("pink");
