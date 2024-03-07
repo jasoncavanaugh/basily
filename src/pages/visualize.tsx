@@ -50,20 +50,6 @@ export default function Visualize() {
 
   console.log(year_ago, today_date);
   const windowDimensions = useWindowDimensions();
-  //windowDimensions.width
-  // const expense_data_query = api.router.get_expenses_over_date_range.useQuery({
-  //   from_date: {
-  //     day: year_ago.getDate(),
-  //     month_idx: year_ago.getMonth(),
-  //     year: year_ago.getFullYear(),
-  //   },
-  //   to_date: {
-  //     day: today_date.getDate(),
-  //     month_idx: today_date.getMonth(),
-  //     year: today_date.getFullYear(),
-  //   },
-  // });
-  //
   const expense_data_query = use_jason({
     from_date: date_to_dmy(date?.from ?? undefined),
     to_date: date_to_dmy(date?.to ?? undefined),

@@ -32,6 +32,10 @@ import { ExpenseCategoryWithBaseColor } from "src/server/api/routers/router";
 import { Expense } from "@prisma/client";
 import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
 import { ThemeButton } from "src/components/ThemeButton";
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { useWindowDimensions } from "src/utils/useWindowDimensions";
+import { breakpoints } from "src/utils/tailwindBreakpoints";
+import { TW_COLORS_TO_HEX_MP } from "src/utils/tailwindColorsToHexMp";
 
 type DayWithExpenses = {
   day: string;
@@ -94,12 +98,12 @@ export default function SignIn() {
 
 function BasilPreview() {
   const [page, set_page] = useState<"expenses" | "visualize">("expenses");
-  const [expenses_by_day, set_expenses_by_day] = useState<DayWithExpenses[]>(
-    []
-  );
+  const [expenses_by_day, set_expenses_by_day] = useState<
+    Array<DayWithExpenses>
+  >([]);
   return (
-    <div className="h-[100%] px-2 py-4 md:w-[80%] overflow-scroll thin-scrollbar">
-      <div className="flex h-[5%] justify-between items-center">
+    <div className="thin-scrollbar h-[100%] overflow-scroll px-2 py-4 md:w-[80%]">
+      <div className="flex h-[5%] items-center justify-between">
         <div className="flex gap-3">
           <button
             className={cn(
@@ -124,10 +128,17 @@ function BasilPreview() {
             Visualize
           </button>
         </div>
-        <ThemeButton/>
+        <ThemeButton />
       </div>
-      {page === "expenses" && <ExpensesPreview expenses_by_day={expenses_by_day} set_expenses_by_day={set_expenses_by_day}  />} 
-      {page === "visualize" && <VisualizePreview />}
+      {page === "expenses" && (
+        <ExpensesPreview
+          expenses_by_day={expenses_by_day}
+          set_expenses_by_day={set_expenses_by_day}
+        />
+      )}
+      {page === "visualize" && (
+        <VisualizePreview expenses_by_day={expenses_by_day} />
+      )}
     </div>
   );
 }
@@ -164,7 +175,10 @@ function getDayName(day_idx: number) {
   }
   return "";
 }
-function ExpensesPreview({ expenses_by_day, set_expenses_by_day }: {
+function ExpensesPreview({
+  expenses_by_day,
+  set_expenses_by_day,
+}: {
   expenses_by_day: Array<DayWithExpenses>;
   set_expenses_by_day: Dispatch<SetStateAction<DayWithExpenses[]>>;
 }) {
@@ -193,36 +207,38 @@ function ExpensesPreview({ expenses_by_day, set_expenses_by_day }: {
           </div>
         )}
         {expenses_by_day.length > 0 &&
-          expenses_by_day.sort((a, b) => {
-            const a_mdy = extract_mdy(a.day);
-            const b_mdy = extract_mdy(b.day);
-            if (a_mdy.year != b_mdy.year) {
-              return b_mdy.year - a_mdy.year;
-            }
-            if (a_mdy.month != b_mdy.month) {
-              return b_mdy.month - a_mdy.month;
-            }
-            if (a_mdy.day != b_mdy.day) {
-              return b_mdy.day - a_mdy.day;
-            }
-            return 0;
-          }).map((ebd, i) => {
-            const mdy = extract_mdy(ebd.day);
-            return (
-              <li key={i} className="px-1 py-4 mr-1">
-                <div className="flex items-end justify-between ">
-                  <h1 className="inline rounded-lg bg-squirtle px-2 py-1 font-bold text-white dark:bg-rengar md:p-2">
-                    {getDayName(
-                      new Date(mdy.year, mdy.month - 1, mdy.day).getDay()
-                    )}{" "}
-                    {mdy.month}-{mdy.day}-{mdy.year}
-                  </h1>
-                </div>
-                <div className="h-4" />
-                <ExpenseListForDay day_with_expenses={ebd} />
-              </li>
-            );
-          })}
+          expenses_by_day
+            .sort((a, b) => {
+              const a_mdy = extract_mdy(a.day);
+              const b_mdy = extract_mdy(b.day);
+              if (a_mdy.year != b_mdy.year) {
+                return b_mdy.year - a_mdy.year;
+              }
+              if (a_mdy.month != b_mdy.month) {
+                return b_mdy.month - a_mdy.month;
+              }
+              if (a_mdy.day != b_mdy.day) {
+                return b_mdy.day - a_mdy.day;
+              }
+              return 0;
+            })
+            .map((ebd, i) => {
+              const mdy = extract_mdy(ebd.day);
+              return (
+                <li key={i} className="mr-1 px-1 py-4">
+                  <div className="flex items-end justify-between ">
+                    <h1 className="inline rounded-lg bg-squirtle px-2 py-1 font-bold text-white dark:bg-rengar md:p-2">
+                      {getDayName(
+                        new Date(mdy.year, mdy.month - 1, mdy.day).getDay()
+                      )}{" "}
+                      {mdy.month}-{mdy.day}-{mdy.year}
+                    </h1>
+                  </div>
+                  <div className="h-4" />
+                  <ExpenseListForDay day_with_expenses={ebd} />
+                </li>
+              );
+            })}
       </ul>
       <AddNewExpenseButtonAndModal
         // triggerClassnames={cn(
@@ -252,8 +268,184 @@ function ExpensesPreview({ expenses_by_day, set_expenses_by_day }: {
   );
 }
 
-function VisualizePreview() {
-  return <div>Visualize</div>;
+function get_global_total(expenses_by_day: Array<DayWithExpenses>) {
+  let total = 0;
+  for (const dwe of expenses_by_day) {
+    const color_and_expenses_lst = Object.values(dwe.expense_categories);
+    for (const color_and_expenses of color_and_expenses_lst) {
+      for (const e of color_and_expenses.expenses) {
+        total += e;
+      }
+    }
+  }
+  return total;
+}
+function get_pie_data(
+  expenses_by_day: Array<DayWithExpenses>,
+  global_total: number
+) {
+  const intermediate: Array<{
+    category_total: number;
+    category_name: string;
+    color: BaseColor;
+  }> = [];
+  for (const dwe of expenses_by_day) {
+    const categories = Object.keys(dwe.expense_categories); //.map((color_and_expenses) => color_and_expenses.expenses.;
+    for (const cat of categories) {
+      let target = intermediate.find((e) => e.category_name === cat);
+      if (!target) {
+        target = {
+          category_name: cat,
+          category_total: 0,
+          color: dwe.expense_categories[cat]!.color,
+        };
+        intermediate.push(target);
+      }
+      target.category_total += dwe.expense_categories[cat]!.expenses.reduce(
+        (acc, e) => acc + e,
+        0
+      );
+    }
+  }
+
+  return intermediate.map((e) => {
+    return {
+      value: e.category_total / global_total,
+      name: `${e.category_name} - ${cents_to_dollars_display(
+        e.category_total
+      )} (${(
+        Math.floor((e.category_total / global_total) * 10000) / 100
+      ).toLocaleString()}%)`,
+      color: e.color,
+    };
+  });
+  /*  Array<{ category_total, category_name, color }>
+   * Array<{ value: category_total / global_total, name: `{category_name} - {category_total} ({percentage})`, color: BaseColor }>
+   *
+   */
+}
+function VisualizePreview({
+  expenses_by_day,
+}: {
+  expenses_by_day: Array<DayWithExpenses>;
+}) {
+  const windowDimensions = useWindowDimensions();
+  const global_total = get_global_total(expenses_by_day);
+  const pie_chart_data = get_pie_data(expenses_by_day, global_total);
+  /*
+{
+    value: number;
+    name: string;
+    color: "rose" | "pink" | "fuchsia" | "purple" | "violet" | "indigo" | "blue" | "sky" | "cyan" | "teal" | "emerald" | "green" | "lime" | "yellow" | "amber" | "orange" | "red" | "slate";
+}[]
+*/
+  // const out = input.props.map((d) => {
+  //   const c = d.color;
+  //   return {
+  //     value: d.total / input.global_total,
+  //     name: `${d.name} - ${cents_to_dollars_display(d.total)} (${(
+  //       Math.floor((d.total / input.global_total) * 10000) / 100
+  //     ).toLocaleString()}%)`,
+  //     color: d.color,
+  //   };
+  // });
+  //
+  return (
+    <div className="flex h-[70vh] flex-col items-center md:h-[90vh] md:flex-row md:items-start">
+      <div className="min-h-[35vh] w-[92%] rounded-md px-4 dark:bg-khazix md:h-[100%] md:w-[50%]">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart width={100} height={100}>
+            <Pie
+              data={pie_chart_data}
+              innerRadius={
+                windowDimensions.width &&
+                windowDimensions.width <= breakpoints["md"]
+                  ? 80
+                  : 160
+              }
+              outerRadius={
+                windowDimensions.width &&
+                windowDimensions.width <= breakpoints["md"]
+                  ? 120
+                  : 220
+              }
+              paddingAngle={2}
+              dataKey="value"
+            >
+              {pie_chart_data.map((datum, i) => (
+                <Cell
+                  key={`${datum.name}-${i}`}
+                  fill={TW_COLORS_TO_HEX_MP[datum.color]["500"]}
+                  stroke="none"
+                  className="hover:brightness-125 focus:border focus:border-0 focus:border-red-500 focus:outline-none focus:outline-red-500"
+                />
+              ))}
+            </Pie>
+            <Tooltip
+              wrapperClassName="bg-red-500 p-0"
+              contentStyle={{
+                fontStyle: "italic",
+                backgroundColor: "blue",
+              }}
+              content={(v) => {
+                const stuff = v.payload ? v.payload[0] : null;
+                if (!stuff) {
+                  return null;
+                }
+                const col = stuff.payload.color as BaseColor;
+                return (
+                  <div
+                    className={cn(
+                      "rounded-lg px-3 py-2 font-semibold",
+                      TW_COLORS_MP["text"][col]["700"],
+                      TW_COLORS_MP["bg"][col]["200"]
+                    )}
+                  >
+                    {stuff.name}
+                  </div>
+                );
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="w-[100%] pr-2 md:h-[100%] md:w-[50%] md:p-0 overflow-x-hidden overflow-y-scroll thin-scrollbar">
+        <div className="ml-2 px-4 text-xl font-bold text-squirtle dark:text-rengar">
+          Total: {cents_to_dollars_display(global_total)}
+        </div>
+        <div className="h-4" />
+        <ul
+          className={cn(
+            "thin-scrollbar mr-4 flex  w-[100%] flex-col dark:bg-khazix",
+            "min-h-0 grow gap-2 rounded pl-5 pr-2 md:m-0 md:overflow-scroll md:px-4 md:py-0"
+          )}
+        >
+          {pie_chart_data.map((datum) => {
+            return (
+              <li
+                className={cn(
+                  "flex items-center gap-3 bg-bulbasaur dark:bg-leblanc",
+                  "rounded-lg font-bold shadow-sm shadow-slate-300 dark:shadow-leblanc"
+                )}
+              >
+                <div className={cn("flex items-center gap-4 p-4")}>
+                  <div
+                    className={cn(
+                      "h-4 w-4 rounded-full",
+                      TW_COLORS_MP["bg"][datum.color]["500"]
+                    )}
+                  />
+                  <p className={cn(TW_COLORS_MP["text"][datum.color]["500"])}>
+                    {datum.name}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
+  );
 }
 
 function get_sum_for_day(day_with_expenses: DayWithExpenses) {
@@ -395,7 +587,9 @@ function AddNewExpenseButtonAndModal({
   const [color, set_color] = useState<BaseColor>("pink");
 
   const today = new Date();
-  const [date, set_date] = useState(`${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`);
+  const [date, set_date] = useState(
+    `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`
+  );
   const [is_color_selection_open, set_is_color_selection_open] =
     useState(false);
 
@@ -433,7 +627,7 @@ function AddNewExpenseButtonAndModal({
         color: existing_category.color,
         expenses: [],
       };
-    } 
+    }
     const category = targetDay.expense_categories[category_text];
     category?.expenses.push(convert_to_cents(amount));
     set_expenses_by_day(new_expenses_by_day);
