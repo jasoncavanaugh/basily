@@ -74,8 +74,8 @@ export default function SignIn() {
     );
   }
   return (
-    <div className="flex h-[100vh] flex-col justify-center md:flex-row md:items-center">
-      <div className="flex flex-col items-start justify-center gap-3 rounded-lg px-4  py-8 md:h-full md:w-[50%] md:gap-6 md:p-16">
+    <div className="flex h-[100vh] flex-col md:justify-center md:flex-row md:items-center">
+      <div className="flex flex-col items-start justify-center gap-3 rounded-lg px-4  py-8 h-[20%] md:h-[100%] md:w-[50%] md:gap-6 md:p-16">
         <Image
           className="w-40 md:w-72"
           src={theme === "dark" ? basil_logo_dark : basil_logo_light}
@@ -102,7 +102,7 @@ function BasilPreview() {
     Array<DayWithExpenses>
   >([]);
   return (
-    <div className="thin-scrollbar h-[100%] overflow-scroll px-2 py-4 md:w-[80%]">
+    <div className="thin-scrollbar h-[80%] md:h-[100%] overflow-scroll px-2 py-4 md:w-[80%]">
       <div className="flex h-[5%] items-center justify-between">
         <div className="flex gap-3">
           <button
