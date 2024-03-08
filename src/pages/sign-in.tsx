@@ -377,7 +377,7 @@ function VisualizePreview({
                   key={`${datum.name}-${i}`}
                   fill={TW_COLORS_TO_HEX_MP[datum.color]["500"]}
                   stroke="none"
-                  className="hover:brightness-125 focus:border focus:border-0 focus:border-red-500 focus:outline-none focus:outline-red-500"
+                    className="hover:brightness-125 focus:outline-none focus:brightness-125"
                 />
               ))}
             </Pie>
