@@ -183,19 +183,6 @@ function ExpensesPreview({
   set_expenses_by_day: Dispatch<SetStateAction<DayWithExpenses[]>>;
 }) {
   const today = new Date();
-  // model Day {
-  //   id       String    @id @default(cuid())
-  //   user_id  String
-  //   user     User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  //   createdAt   DateTime        @default(now())
-  //   month    Int
-  //   day      Int
-  //   year     Int
-  //   expenses Expense[]
-  //
-  //   @@unique([user_id, month, day, year])
-  // }
-  //
   return (
     <div className="relative h-[95%]">
       <ul className="h-[95%] ">
@@ -241,14 +228,6 @@ function ExpensesPreview({
             })}
       </ul>
       <AddNewExpenseButtonAndModal
-        // triggerClassnames={cn(
-        //   "bg-squirtle dark:bg-rengar fixed bottom-5 right-5 flex h-12 w-12 items-center justify-center rounded-full p-0 shadow shadow-blue-300 hover:cursor-pointer",
-        //   "md:bottom-14 md:right-14 md:h-14 md:w-14",
-        //   "lg:shadow-md lg:shadow-blue-300 lg:transition-all lg:hover:-translate-y-0.5 lg:hover:shadow-lg lg:hover:shadow-blue-300 lg:hover:brightness-110"
-        // )}
-        // month={today.getMonth() + 1}
-        // day={today.getDate()}
-        // year={today.getFullYear()}
         expenses_by_day={expenses_by_day}
         set_expenses_by_day={set_expenses_by_day}
       >
@@ -332,24 +311,6 @@ function VisualizePreview({
   const windowDimensions = useWindowDimensions();
   const global_total = get_global_total(expenses_by_day);
   const pie_chart_data = get_pie_data(expenses_by_day, global_total);
-  /*
-{
-    value: number;
-    name: string;
-    color: "rose" | "pink" | "fuchsia" | "purple" | "violet" | "indigo" | "blue" | "sky" | "cyan" | "teal" | "emerald" | "green" | "lime" | "yellow" | "amber" | "orange" | "red" | "slate";
-}[]
-*/
-  // const out = input.props.map((d) => {
-  //   const c = d.color;
-  //   return {
-  //     value: d.total / input.global_total,
-  //     name: `${d.name} - ${cents_to_dollars_display(d.total)} (${(
-  //       Math.floor((d.total / input.global_total) * 10000) / 100
-  //     ).toLocaleString()}%)`,
-  //     color: d.color,
-  //   };
-  // });
-  //
   return (
     <div className="flex h-[70vh] flex-col items-center md:h-[90vh] md:flex-row md:items-start">
       <div className="min-h-[35vh] w-[92%] rounded-md px-4 dark:bg-khazix md:h-[100%] md:w-[50%]">
@@ -493,7 +454,6 @@ function ExpenseListForDay({
                         TW_COLORS_MP["bg"][a!.color][500],
                         "rounded-full px-2 text-white hover:cursor-pointer hover:opacity-80 dark:hover:opacity-100 dark:hover:brightness-110"
                       )}
-                      // title="Delete expense"
                     >
                       {cents_to_dollars_display(expense)}
                     </button>
@@ -538,19 +498,6 @@ function extract_mdy(date_display: string) {
   return { month, day, year };
 }
 
-/*
- * expenses_by_day => [
- *     {
- *       day: mm-dd-yyyy,
- *       exense_categories => {
- *           category_name: {
- *               color: string;
- *             Array<Expenses>
- *             }
- *       }
- *     }
- * ]
- */
 function get_expense_categories(expenses_by_day: Array<DayWithExpenses>) {
   let out = [];
   const seen = new Set();
