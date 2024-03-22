@@ -89,9 +89,15 @@ export default function Expenses() {
       </div>
     );
   }
-
+  const filtered_expenses_by_day = filter_over_selected_dates(
+    expense_data_query.data?.days ?? [],
+    date
+  );
   return (
     <Layout>
+      <div className="pt-4 px-4">
+        <DatePickerWithRange date={date} set_date={set_date} />
+      </div>
       {expense_data_query.status === "loading" && (
         <div className="flex h-[95vh] items-center justify-center">
           <Spinner className={SPINNER_CLASSNAMES} />
@@ -107,22 +113,29 @@ export default function Expenses() {
       {expense_data_query.status === "success" &&
         expense_data_query.data.days.length === 0 && (
           <div className="flex h-[95vh] items-center justify-center">
-            <h1 className="text-slate-700 dark:text-white">
+            <h1 className="text-slate-700 dark:text-white italic">
               Click the '+' button to add a new expense.
             </h1>
           </div>
         )}
       {expense_data_query.status === "success" &&
-        expense_data_query.data.days.length > 0 && (
+        expense_data_query.data.days.length > 0 &&
+        filtered_expenses_by_day.length === 0 && (
+          <div className="flex h-[95vh] items-center justify-center">
+            <h1 className="text-slate-700 dark:text-white text-wrap p-4 flex justify-center text-center italic">
+              No expenses found over selected date range
+            </h1>
+          </div>
+        )}
+      {expense_data_query.status === "success" &&
+        expense_data_query.data.days.length > 0 &&
+        filtered_expenses_by_day.length > 0 && (
           <ChronologicalExpenseList
             invalidate_expenses_qry={() => expense_data_query.invalidate()}
             date={date}
             set_date={set_date}
             expenses_by_day={process_days_with_expenses({
-              days: filter_over_selected_dates(
-                expense_data_query.data.days,
-                date
-              ),
+              days: filtered_expenses_by_day,
             })}
             category_id_to_name={get_category_ids_to_names(
               expense_data_query.data.expense_categories
@@ -219,9 +232,7 @@ function ChronologicalExpenseList({
   invalidate_expenses_qry: () => void;
 }) {
   return (
-    <div className="p-4">
-      <DatePickerWithRange date={date} set_date={set_date} />
-      <div className="h-4" />
+    <div className="px-4">
       {expenses_by_day.map((dwe) => {
         const { month, day, year } = extract_mdy(dwe.date_display);
         return (
