@@ -37,6 +37,7 @@ import { subDays } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { get_category_ids_to_names } from "src/utils/getCategoryIdsToNames";
 import { get_category_ids_to_colors } from "src/utils/getCategoryIdsToColors";
+import { getDayName } from "./sign-in";
 
 //I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
@@ -217,40 +218,49 @@ function ChronologicalExpenseList({
   set_date: (new_date: DateRange | undefined) => void;
   invalidate_expenses_qry: () => void;
 }) {
-  let output = [];
-  for (const dwe of expenses_by_day) {
-    output.push(
-      <li key={dwe.id} className="py-2">
-        <div className="flex items-end justify-between ">
-          <h1 className="inline rounded-lg bg-squirtle px-2 py-1 font-bold text-white dark:bg-rengar md:p-2">
-            {dwe.date_display}
-          </h1>
-        </div>
-        <div className="h-4" />
-        <ul className="flex flex-col gap-3 rounded-lg bg-pikachu p-4 shadow-sm dark:bg-leblanc dark:shadow-sm dark:shadow-leblanc">
-          <ExpenseListForDay
-            day_with_expenses={dwe}
-            // category_id_to_expenses_for_day={dwe.category_id_to_expenses}
-            category_id_to_color={category_id_to_color}
-            category_id_to_name={category_id_to_name}
-            invalidate_expenses_qry={invalidate_expenses_qry}
-          />
-          <li className="flex justify-between">
-            <p className="font-semibold text-squirtle dark:text-rengar">
-              Total:{" "}
-            </p>
-            <p className="font-semibold text-squirtle dark:text-rengar">
-              {cents_to_dollars_display(dwe.total_for_day)}
-            </p>
-          </li>
-        </ul>
-      </li>
-    );
-  }
   return (
     <div className="p-4">
       <DatePickerWithRange date={date} set_date={set_date} />
-      {output}
+      <div className="h-4" />
+      {expenses_by_day.map((dwe) => {
+        const { month, day, year } = extract_mdy(dwe.date_display);
+        return (
+          <li key={dwe.id} className="py-2">
+            <div className="flex items-end justify-between ">
+              <AddNewExpenseButtonAndModal
+                on_create_success={() => invalidate_expenses_qry()}
+                triggerClassnames="hover:cursor-pointer hover:opacity-80 dark:hover:opacity-100 dark:hover:brightness-110"
+                month={month}
+                day={day}
+                year={year}
+              >
+                <h1 className="inline rounded-lg bg-squirtle px-2 py-1 font-bold text-white dark:bg-rengar md:p-2">
+                  {getDayName(new Date(year, month - 1, day).getDay())}{" "}
+                  {dwe.date_display} +
+                </h1>
+              </AddNewExpenseButtonAndModal>
+            </div>
+            <div className="h-4" />
+            <ul className="flex flex-col gap-3 rounded-lg bg-pikachu p-4 shadow-sm dark:bg-leblanc dark:shadow-sm dark:shadow-leblanc">
+              <ExpenseListForDay
+                day_with_expenses={dwe}
+                // category_id_to_expenses_for_day={dwe.category_id_to_expenses}
+                category_id_to_color={category_id_to_color}
+                category_id_to_name={category_id_to_name}
+                invalidate_expenses_qry={invalidate_expenses_qry}
+              />
+              <li className="flex justify-between">
+                <p className="font-semibold text-squirtle dark:text-rengar">
+                  Total:{" "}
+                </p>
+                <p className="font-semibold text-squirtle dark:text-rengar">
+                  {cents_to_dollars_display(dwe.total_for_day)}
+                </p>
+              </li>
+            </ul>
+          </li>
+        );
+      })}
     </div>
   );
 }

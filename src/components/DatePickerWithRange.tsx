@@ -36,7 +36,7 @@ export function DatePickerWithRange({
               </>
             )}
             {date?.from && !date.to && format(date.from, "LLL dd, y")}
-            {!date?.from && !date?.to && <span>Pick a date</span>}
+            {!date?.from && !date?.to && <span>Pick a date range</span>}
           </Button>
         </PopoverTrigger>
         <PopoverContent

@@ -74,8 +74,8 @@ export default function SignIn() {
     );
   }
   return (
-    <div className="flex h-[100vh] flex-col md:justify-center md:flex-row md:items-center">
-      <div className="flex flex-col items-start justify-center gap-3 rounded-lg px-4  py-8 h-[20%] md:h-[100%] md:w-[50%] md:gap-6 md:p-16">
+    <div className="flex h-[100vh] flex-col md:flex-row md:items-center md:justify-center">
+      <div className="flex h-[20%] flex-col items-start justify-center gap-3 rounded-lg  px-4 py-8 md:h-[100%] md:w-[50%] md:gap-6 md:p-16">
         <Image
           className="w-40 md:w-72"
           src={theme === "dark" ? basil_logo_dark : basil_logo_light}
@@ -102,7 +102,7 @@ function BasilPreview() {
     Array<DayWithExpenses>
   >([]);
   return (
-    <div className="thin-scrollbar h-[80%] md:h-[100%] overflow-scroll px-2 py-4 md:w-[80%]">
+    <div className="thin-scrollbar h-[80%] overflow-scroll px-2 py-4 md:h-[100%] md:w-[80%]">
       <div className="flex h-[5%] items-center justify-between">
         <div className="flex gap-3">
           <button
@@ -157,7 +157,7 @@ type BasilDay = {
   //   expenses Expense[]
 };
 
-function getDayName(day_idx: number) {
+export function getDayName(day_idx: number) {
   if (day_idx === 0) {
     return "Sun";
   } else if (day_idx === 1) {
@@ -338,7 +338,7 @@ function VisualizePreview({
                   key={`${datum.name}-${i}`}
                   fill={TW_COLORS_TO_HEX_MP[datum.color]["500"]}
                   stroke="none"
-                    className="hover:brightness-125 focus:outline-none focus:brightness-125"
+                  className="hover:brightness-125 focus:outline-none focus:brightness-125"
                 />
               ))}
             </Pie>
@@ -370,7 +370,7 @@ function VisualizePreview({
           </PieChart>
         </ResponsiveContainer>
       </div>
-      <div className="w-[100%] pr-2 md:h-[100%] md:w-[50%] md:p-0 overflow-x-hidden overflow-y-scroll thin-scrollbar">
+      <div className="thin-scrollbar w-[100%] overflow-x-hidden overflow-y-scroll pr-2 md:h-[100%] md:w-[50%] md:p-0">
         <div className="ml-2 px-4 text-xl font-bold text-squirtle dark:text-rengar">
           Total: {cents_to_dollars_display(global_total)}
         </div>
@@ -816,9 +816,6 @@ function AddNewExpenseButtonAndModal({
                     "hover:brightness-110 lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
                   )}
                   type="button"
-                  // onClick={() => {
-                  //   set_is_modal_open(false);
-                  // }}
                 >
                   Cancel
                 </button>
