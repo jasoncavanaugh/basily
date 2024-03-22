@@ -98,8 +98,9 @@ export default function Visualize() {
   }
 
   const filtered = filter_data_over_date_range(expense_data_qry.data, date);
-  const pie_chart_data = get_pie_chart_data(get_data_intermediate(filtered));
-  const { global_total } = get_data_intermediate(filtered);
+  const intermediate = get_data_intermediate(filtered, selected_categories);
+  const pie_chart_data = get_pie_chart_data(intermediate, selected_categories);
+  const { global_total } = intermediate;
   return (
     <Layout>
       <div className="flex h-[10vh] items-center pl-4">
@@ -110,7 +111,7 @@ export default function Visualize() {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart width={100} height={100}>
               <Pie
-                data={pie_chart_data.filter((d) => selected_categories.includes(d.category_id))}
+                data={pie_chart_data.filter((pcd) => selected_categories.includes(pcd.category_id))}
                 innerRadius={
                   windowDimensions.width &&
                   windowDimensions.width <= breakpoints["md"]
@@ -126,7 +127,7 @@ export default function Visualize() {
                 paddingAngle={2}
                 dataKey="value"
               >
-                {pie_chart_data.map((datum, i) => {
+                {pie_chart_data.filter((pcd) => selected_categories.includes(pcd.category_id)).map((datum, i) => {
                   console.log(datum);
                   return (
                     <Cell
@@ -177,7 +178,7 @@ export default function Visualize() {
               "min-h-0 grow gap-2 rounded pl-5 pr-2 md:m-0 md:overflow-scroll md:px-4 md:py-0"
             )}
           >
-            {pie_chart_data.map((datum) => {
+            {pie_chart_data.sort((a,b) => a.name < b.name ? -1 : 1).map((datum) => {
               const is_selected = selected_categories.includes(datum.category_id);
               return (
                 <li
@@ -282,20 +283,10 @@ function filter_data_over_date_range(
     expense_categories: days_and_ec.expense_categories,
   };
 }
-function filter_over_selected_categories(
-  data: GetExpensesOverDateRangeRet,
-  selected_categories: Array<string>
-) {
-  return {
-    ...data,
-    expense_categories: data.expense_categories.filter((ec) =>
-      selected_categories.includes(ec.id)
-    ),
-  };
-}
 
 function get_data_intermediate(
-  days_and_ec: GetExpensesOverDateRangeRet
+  days_and_ec: GetExpensesOverDateRangeRet,
+  selected_categories: Array<string>
 ): IntResp {
   const out: Record<string, { category_id: string; name: string; color: BaseColor; total: number }> =
     {};
@@ -311,6 +302,7 @@ function get_data_intermediate(
   let global_total = 0;
   for (const d of days_and_ec.days) {
     for (const e of d.expenses) {
+      const is_category_selected = selected_categories.includes(e.category_id)
       if (!out[e.category_id]) {
         out[e.category_id] = {
           category_id: e.category_id,
@@ -320,22 +312,30 @@ function get_data_intermediate(
         };
       }
       out[e.category_id]!.total += e.amount;
-      global_total += e.amount;
+      if (is_category_selected) {
+        global_total += e.amount;
+      }
     }
   }
   // Object.values(out);
   return { global_total, props: Object.values(out) };
 }
 
-function get_pie_chart_data(input: IntResp) {
+function get_pie_chart_data(input: IntResp, selected_categories: Array<string>) {
   return input.props
     .map((d) => {
+      let name = `${d.name} - ${cents_to_dollars_display(d.total)}`;
+      const is_category_selected = selected_categories.includes(d.category_id);
+      if (is_category_selected) {
+        name += ` (${(
+          Math.floor((d.total / input.global_total) * 10000) / 100
+        ).toLocaleString()}%)`;
+      }
+
       return {
         category_id: d.category_id,
         value: d.total / input.global_total,
-        name: `${d.name} - ${cents_to_dollars_display(d.total)} (${(
-          Math.floor((d.total / input.global_total) * 10000) / 100
-        ).toLocaleString()}%)`,
+        name: name,
         color: d.color,
       };
     });
