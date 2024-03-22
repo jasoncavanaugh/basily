@@ -50,12 +50,20 @@ export default function Visualize() {
 
   console.log(year_ago, today_date);
   const windowDimensions = useWindowDimensions();
-  const expense_data_query = use_jason({
+  const expense_data_qry = use_jason({
     from_date: date_to_dmy(date?.from ?? undefined),
     to_date: date_to_dmy(date?.to ?? undefined),
   });
+  const [selected_categories, set_selected_categories] = useState<Array<string>>([]);
+  useEffect(() => {
+    if (expense_data_qry.status === "success") {
+      console.log("In useEffect if");
+      console.log("expense_data_qry.data", expense_data_qry.data);
+      set_selected_categories(expense_data_qry.data.expense_categories.map((ec) => ec.id));
+    }
+  }, [expense_data_qry.data]);
 
-  console.log("expense_data_query", expense_data_query.data);
+  console.log("selected_categories", selected_categories);
 
   useEffect(() => {
     if (session.status === "unauthenticated") {
@@ -64,20 +72,20 @@ export default function Visualize() {
   }, [session.status]);
   if (session.status === "loading" || session.status === "unauthenticated") {
     return (
-      <div className="bg-charmander dark:bg-khazix flex h-screen items-center justify-center p-1 md:p-4">
+      <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
         <Spinner className={SPINNER_CLASSNAMES} />
       </div>
     );
   }
 
-  if (expense_data_query.status === "loading") {
+  if (expense_data_qry.status === "loading") {
     return (
       <div className="flex h-[95vh] items-center justify-center">
         <Spinner className={SPINNER_CLASSNAMES} />
       </div>
     );
   }
-  if (expense_data_query.status === "error") {
+  if (expense_data_qry.status === "error") {
     return (
       <Layout>
         <div className="flex h-[95vh] items-center justify-center">
@@ -89,10 +97,7 @@ export default function Visualize() {
     );
   }
 
-  console.log("windowDimensions", windowDimensions);
-  console.log("expense_data_query", expense_data_query.data);
-  const filtered = filterData(expense_data_query.data, date);
-  console.log("filtered", filtered);
+  const filtered = filter_data_over_date_range(expense_data_qry.data, date);
   const pie_chart_data = get_pie_chart_data(get_data_intermediate(filtered));
   const { global_total } = get_data_intermediate(filtered);
   return (
@@ -105,7 +110,7 @@ export default function Visualize() {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart width={100} height={100}>
               <Pie
-                data={pie_chart_data}
+                data={pie_chart_data.filter((d) => selected_categories.includes(d.category_id))}
                 innerRadius={
                   windowDimensions.width &&
                   windowDimensions.width <= breakpoints["md"]
@@ -121,15 +126,17 @@ export default function Visualize() {
                 paddingAngle={2}
                 dataKey="value"
               >
-                {pie_chart_data.map((datum, i) => (
-                  <Cell
-                    key={`${datum.name}-${i}`}
-                    fill={TW_COLORS_TO_HEX_MP[datum.color]["500"]}
-                    stroke="none"
-                    className="hover:brightness-125 focus:outline-none focus:brightness-125"
-                    // style={{ border: "1px solid red" }}
-                  />
-                ))}
+                {pie_chart_data.map((datum, i) => {
+                  console.log(datum);
+                  return (
+                    <Cell
+                      key={`${datum.name}-${i}`}
+                      fill={TW_COLORS_TO_HEX_MP[datum.color]["500"]}
+                      stroke="none"
+                      className="hover:brightness-125 focus:outline-none focus:brightness-125"
+                    />
+                  );
+                })}
               </Pie>
               <Tooltip
                 wrapperClassName="bg-red-500 p-0"
@@ -139,12 +146,10 @@ export default function Visualize() {
                 }}
                 content={(v) => {
                   const stuff = v.payload ? v.payload[0] : null;
-                  console.log("wtf", stuff);
                   if (!stuff) {
                     return null;
                   }
                   const col = stuff.payload.color as BaseColor;
-                  console.log("col", col);
                   return (
                     <div
                       className={cn(
@@ -173,19 +178,37 @@ export default function Visualize() {
             )}
           >
             {pie_chart_data.map((datum) => {
+              const is_selected = selected_categories.includes(datum.category_id);
               return (
                 <li
                   className={cn(
-                    "bg-bulbasaur dark:bg-leblanc flex items-center gap-3",
-                    "dark:shadow-leblanc rounded-lg font-bold shadow-sm shadow-slate-300"
+                    "flex items-center gap-3 bg-bulbasaur dark:bg-leblanc",
+                    "rounded-lg font-bold shadow-sm shadow-slate-300 dark:shadow-leblanc",
+                    !is_selected && "opacity-50"
                   )}
                 >
                   <div className={cn("flex items-center gap-4 p-4")}>
-                    <div
+                    <button
+                      onClick={() => {
+                        let new_selected_categories = [];
+                        if (is_selected) {
+                          new_selected_categories = [
+                            ...selected_categories.filter(
+                              (sc) => sc !== datum.category_id
+                            ),
+                          ];
+                        } else {
+                          new_selected_categories = [...selected_categories];
+                          new_selected_categories.push(datum.category_id);
+                        }
+                        set_selected_categories(new_selected_categories);
+                      }}
                       className={cn(
-                        "h-4 w-4 rounded-full",
-                        TW_COLORS_MP["bg"][datum.color]["500"]
+                        "h-4 w-4 rounded-full border",
+                        TW_COLORS_MP["border"][datum.color]["500"],
+                        is_selected && TW_COLORS_MP["bg"][datum.color]["500"]
                       )}
+                      type="button"
                     />
                     <p className={cn(TW_COLORS_MP["text"][datum.color]["500"])}>
                       {datum.name}
@@ -204,14 +227,15 @@ export default function Visualize() {
 //For now...
 type IntResp = {
   global_total: number;
-  props: {
+  props: Array<{
+    category_id: string;
     name: string;
     color: BaseColor;
     total: number;
-  }[];
+  }>;
 };
 
-function filterData(
+function filter_data_over_date_range(
   days_and_ec: GetExpensesOverDateRangeRet,
   dateRange: DateRange | undefined
 ): GetExpensesOverDateRangeRet {
@@ -258,11 +282,22 @@ function filterData(
     expense_categories: days_and_ec.expense_categories,
   };
 }
+function filter_over_selected_categories(
+  data: GetExpensesOverDateRangeRet,
+  selected_categories: Array<string>
+) {
+  return {
+    ...data,
+    expense_categories: data.expense_categories.filter((ec) =>
+      selected_categories.includes(ec.id)
+    ),
+  };
+}
 
 function get_data_intermediate(
   days_and_ec: GetExpensesOverDateRangeRet
 ): IntResp {
-  const out: Record<string, { name: string; color: BaseColor; total: number }> =
+  const out: Record<string, { category_id: string; name: string; color: BaseColor; total: number }> =
     {};
   const category_id_to_color: Record<string, BaseColor> = {};
   for (const ec of days_and_ec.expense_categories) {
@@ -278,6 +313,7 @@ function get_data_intermediate(
     for (const e of d.expenses) {
       if (!out[e.category_id]) {
         out[e.category_id] = {
+          category_id: e.category_id,
           name: category_id_to_name[e.category_id]!,
           color: category_id_to_color[e.category_id]!,
           total: 0,
@@ -292,15 +328,15 @@ function get_data_intermediate(
 }
 
 function get_pie_chart_data(input: IntResp) {
-  const out = input.props.map((d) => {
-    const c = d.color;
-    return {
-      value: d.total / input.global_total,
-      name: `${d.name} - ${cents_to_dollars_display(d.total)} (${(
-        Math.floor((d.total / input.global_total) * 10000) / 100
-      ).toLocaleString()}%)`,
-      color: d.color,
-    };
-  });
-  return out;
+  return input.props
+    .map((d) => {
+      return {
+        category_id: d.category_id,
+        value: d.total / input.global_total,
+        name: `${d.name} - ${cents_to_dollars_display(d.total)} (${(
+          Math.floor((d.total / input.global_total) * 10000) / 100
+        ).toLocaleString()}%)`,
+        color: d.color,
+      };
+    });
 }

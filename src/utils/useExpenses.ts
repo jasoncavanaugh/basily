@@ -155,6 +155,7 @@ export function use_jason(date_picker_dates: { from_date?: DMY; to_date?: DMY } 
     }
     return 0;
   });
+  console.log("In success block", "store", expenses_store.expenses_qry_res, "qry", expenses_qry.data);
   return {
     status: "success",
     error: undefined,
