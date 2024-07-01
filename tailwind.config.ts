@@ -18,6 +18,7 @@ export default {
         khazix: "hsla(277, 35%, 7%, 1)",
         leblanc: "hsla(277, 20%, 17%, 1)",
         shaco: "hsla(277, 33%, 25%, 1)",
+        jinx: "hsla(277, 35%, 8%, 1)",
       },
     },
   },

@@ -104,13 +104,14 @@ function BasilPreview() {
   return (
     <div className="thin-scrollbar h-[80%] overflow-scroll px-2 py-4 md:h-[100%] md:w-[80%]">
       <div className="flex h-[5%] items-center justify-between">
-        <div className="flex gap-3">
+        <div className="flex gap-1 rounded-lg bg-slate-300 px-1 py-1 dark:bg-leblanc">
           <button
             className={cn(
-              "rounded-full",
-              "w-[6rem] border border-squirtle py-1 text-sm font-semibold text-squirtle dark:border-transparent",
+              "rounded-lg",
+              "w-[6rem] py-1 text-sm font-semibold text-squirtle dark:border-transparent",
               "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
-              BUTTON_HOVER_CLASSES
+              "hover:cursor-pointer hover:bg-slate-300 dark:hover:bg-jinx dark:hover:opacity-80",
+              page !== "visualize" && "bg-slate-200 dark:bg-jinx"
             )}
             onClick={() => set_page("expenses")}
           >
@@ -118,10 +119,11 @@ function BasilPreview() {
           </button>
           <button
             className={cn(
-              "rounded-full",
-              "w-[6rem] border border-squirtle py-1 text-sm font-semibold text-squirtle dark:border-transparent",
+              "rounded-lg",
+              "w-[6rem] py-1 text-sm font-semibold text-squirtle dark:border-transparent",
               "hover:brightness-110 dark:text-rengar md:w-[8rem] md:text-lg",
-              BUTTON_HOVER_CLASSES
+              "hover:cursor-pointer hover:bg-slate-300 dark:hover:bg-jinx dark:hover:opacity-80",
+              page === "visualize" && "bg-slate-200 dark:bg-jinx"
             )}
             onClick={() => set_page("visualize")}
           >
