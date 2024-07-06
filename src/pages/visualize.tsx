@@ -1,9 +1,8 @@
-import { format, subDays, subYears } from "date-fns";
+import { subDays, subYears } from "date-fns";
 import { useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { Spinner } from "src/components/Spinner";
 import { GetExpensesOverDateRangeRet } from "src/server/api/routers/router";
-import { api } from "src/utils/api";
 import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
 import { cn } from "src/utils/cn";
 import { BaseColor } from "src/utils/colors";
@@ -19,7 +18,7 @@ import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
 import { useWindowDimensions } from "src/utils/useWindowDimensions";
 import { breakpoints } from "src/utils/tailwindBreakpoints";
 import { DatePickerWithRange } from "src/components/DatePickerWithRange";
-import { use_jason } from "src/utils/useExpenses";
+import { use_expenses_over_date_range } from "src/utils/useExpenses";
 import { date_to_dmy } from "./expenses";
 
 //I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
@@ -42,20 +41,21 @@ export default function Visualize() {
 
   console.log(year_ago, today_date);
   const windowDimensions = useWindowDimensions();
-  const expense_data_qry = use_jason({
-    from_date: date_to_dmy(date?.from ?? undefined),
-    to_date: date_to_dmy(date?.to ?? undefined),
-  });
-  const [selected_categories, set_selected_categories] = useState<Array<string>>([]);
+  const date_range =
+    date && date?.from && date?.to //if from and to dates are selected...
+      ? { from_date: date_to_dmy(date.from), to_date: date_to_dmy(date.to) } //...send over date range
+      : undefined; //...otherwise not
+  const expense_data_qry = use_expenses_over_date_range(date_range);
+  const [selected_categories, set_selected_categories] = useState<
+    Array<string>
+  >([]);
   useEffect(() => {
     if (expense_data_qry.status === "success") {
-      console.log("In useEffect if");
-      console.log("expense_data_qry.data", expense_data_qry.data);
-      set_selected_categories(expense_data_qry.data.expense_categories.map((ec) => ec.id));
+      set_selected_categories(
+        expense_data_qry.data.expense_categories.map((ec) => ec.id)
+      );
     }
   }, [expense_data_qry.data]);
-
-  console.log("selected_categories", selected_categories);
 
   useEffect(() => {
     if (session.status === "unauthenticated") {
@@ -95,122 +95,143 @@ export default function Visualize() {
   const { global_total } = intermediate;
   return (
     <Layout>
-      <div className="flex h-[10vh] items-center pl-4">
-        <DatePickerWithRange date={date} set_date={set_date} />
-      </div>
-      <div className="flex h-[83vh] flex-col items-center md:h-[80vh] md:flex-row md:items-start">
-        <div className="min-h-[50%] w-[92%] rounded-md px-4 dark:bg-khazix md:h-[100%] md:w-[50%]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart width={100} height={100}>
-              <Pie
-                data={pie_chart_data.filter((pcd) => selected_categories.includes(pcd.category_id))}
-                innerRadius={
-                  windowDimensions.width &&
-                  windowDimensions.width <= breakpoints["md"]
-                    ? 80
-                    : 160
-                }
-                outerRadius={
-                  windowDimensions.width &&
-                  windowDimensions.width <= breakpoints["md"]
-                    ? 120
-                    : 220
-                }
-                paddingAngle={2}
-                dataKey="value"
-              >
-                {pie_chart_data.filter((pcd) => selected_categories.includes(pcd.category_id)).map((datum, i) => {
-                  console.log(datum);
-                  return (
-                    <Cell
-                      key={`${datum.name}-${i}`}
-                      fill={TW_COLORS_TO_HEX_MP[datum.color]["500"]}
-                      stroke="none"
-                      className="hover:brightness-125 focus:outline-none focus:brightness-125"
-                    />
-                  );
-                })}
-              </Pie>
-              <Tooltip
-                wrapperClassName="bg-red-500 p-0"
-                contentStyle={{
-                  fontStyle: "italic",
-                  backgroundColor: "blue",
-                }}
-                content={(v) => {
-                  const stuff = v.payload ? v.payload[0] : null;
-                  if (!stuff) {
-                    return null;
+      <div className="flex h-[95%] flex-col gap-1">
+        <div className="flex h-[10vh] items-center pl-4">
+          <DatePickerWithRange date={date} set_date={set_date} />
+        </div>
+        <div className="flex h-[83vh] flex-col items-center md:h-[80vh] md:flex-row md:items-start">
+          <div className="min-h-[50%] w-[92%] rounded-md px-4 dark:bg-khazix md:h-[100%] md:w-[50%]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart width={100} height={100}>
+                <Pie
+                  // animationDuration={1000}
+                  // animationEasing="ease-in-out"
+                  data={pie_chart_data.filter((pcd) =>
+                    selected_categories.includes(pcd.category_id)
+                  )}
+                  innerRadius={
+                    windowDimensions.width &&
+                    windowDimensions.width <= breakpoints["md"]
+                      ? 80
+                      : 160
                   }
-                  const col = stuff.payload.color as BaseColor;
+                  outerRadius={
+                    windowDimensions.width &&
+                    windowDimensions.width <= breakpoints["md"]
+                      ? 120
+                      : 220
+                  }
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {pie_chart_data
+                    .filter((pcd) =>
+                      selected_categories.includes(pcd.category_id)
+                    )
+                    .map((datum, i) => {
+                      console.log(datum);
+                      return (
+                        <Cell
+                          key={`${datum.name}-${i}`}
+                          fill={TW_COLORS_TO_HEX_MP[datum.color]["500"]}
+                          stroke="none"
+                          className="hover:brightness-125 focus:outline-none focus:brightness-125"
+                        />
+                      );
+                    })}
+                </Pie>
+                <Tooltip
+                  wrapperClassName="bg-red-500 p-0"
+                  contentStyle={{
+                    fontStyle: "italic",
+                    backgroundColor: "blue",
+                  }}
+                  content={(v) => {
+                    const stuff = v.payload ? v.payload[0] : null;
+                    if (!stuff) {
+                      return null;
+                    }
+                    const col = stuff.payload.color as BaseColor;
+                    return (
+                      <div
+                        className={cn(
+                          "rounded-lg px-3 py-2 font-semibold",
+                          TW_COLORS_MP["text"][col]["700"],
+                          TW_COLORS_MP["bg"][col]["200"]
+                        )}
+                      >
+                        {stuff.name}
+                      </div>
+                    );
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="w-[100%] gap-1 pr-2 md:flex md:h-[100%] md:w-[50%] md:flex-col md:p-0">
+            <div className="ml-2 px-4 text-xl font-bold text-squirtle dark:text-rengar md:h-[5%]">
+              Total: {cents_to_dollars_display(global_total)}
+            </div>
+            <div className="h-2 md:h-0" />
+            <ul
+              className={cn(
+                "thin-scrollbar mr-4 flex w-[100%] flex-col dark:bg-khazix md:h-[95%]",
+                "min-h-0 grow gap-2 rounded pl-5 pr-2 md:m-0 md:overflow-scroll md:px-4 md:py-0"
+              )}
+            >
+              {pie_chart_data
+                .sort((a, b) => (a.name < b.name ? -1 : 1))
+                .map((datum) => {
+                  const is_selected = selected_categories.includes(
+                    datum.category_id
+                  );
                   return (
-                    <div
+                    <li
                       className={cn(
-                        "rounded-lg px-3 py-2 font-semibold",
-                        TW_COLORS_MP["text"][col]["700"],
-                        TW_COLORS_MP["bg"][col]["200"]
+                        "flex items-center gap-3 bg-bulbasaur dark:bg-leblanc",
+                        "rounded-lg font-bold shadow-sm shadow-slate-300 dark:shadow-leblanc",
+                        !is_selected && "opacity-50"
                       )}
                     >
-                      {stuff.name}
-                    </div>
+                      <div className={cn("flex items-center gap-4 p-4")}>
+                        <button
+                          onClick={() => {
+                            let new_selected_categories = [];
+                            if (is_selected) {
+                              new_selected_categories = [
+                                ...selected_categories.filter(
+                                  (sc) => sc !== datum.category_id
+                                ),
+                              ];
+                            } else {
+                              new_selected_categories = [
+                                ...selected_categories,
+                              ];
+                              new_selected_categories.push(datum.category_id);
+                            }
+                            set_selected_categories(new_selected_categories);
+                          }}
+                          className={cn(
+                            "h-4 w-4 rounded-full border",
+                            TW_COLORS_MP["border"][datum.color]["500"],
+                            is_selected &&
+                              TW_COLORS_MP["bg"][datum.color]["500"]
+                          )}
+                          type="button"
+                        />
+                        <p
+                          className={cn(
+                            TW_COLORS_MP["text"][datum.color]["500"]
+                          )}
+                        >
+                          {datum.name}
+                        </p>
+                      </div>
+                    </li>
                   );
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="w-[100%] gap-1 pr-2 md:flex md:h-[100%] md:w-[50%] md:flex-col md:p-0">
-          <div className="ml-2 px-4 text-xl font-bold text-squirtle dark:text-rengar md:h-[5%]">
-            Total: {cents_to_dollars_display(global_total)}
+                })}
+            </ul>
           </div>
-          <div className="h-2 md:h-0" />
-          <ul
-            className={cn(
-              "thin-scrollbar mr-4 flex w-[100%] flex-col dark:bg-khazix md:h-[95%]",
-              "min-h-0 grow gap-2 rounded pl-5 pr-2 md:m-0 md:overflow-scroll md:px-4 md:py-0"
-            )}
-          >
-            {pie_chart_data.sort((a,b) => a.name < b.name ? -1 : 1).map((datum) => {
-              const is_selected = selected_categories.includes(datum.category_id);
-              return (
-                <li
-                  className={cn(
-                    "flex items-center gap-3 bg-bulbasaur dark:bg-leblanc",
-                    "rounded-lg font-bold shadow-sm shadow-slate-300 dark:shadow-leblanc",
-                    !is_selected && "opacity-50"
-                  )}
-                >
-                  <div className={cn("flex items-center gap-4 p-4")}>
-                    <button
-                      onClick={() => {
-                        let new_selected_categories = [];
-                        if (is_selected) {
-                          new_selected_categories = [
-                            ...selected_categories.filter(
-                              (sc) => sc !== datum.category_id
-                            ),
-                          ];
-                        } else {
-                          new_selected_categories = [...selected_categories];
-                          new_selected_categories.push(datum.category_id);
-                        }
-                        set_selected_categories(new_selected_categories);
-                      }}
-                      className={cn(
-                        "h-4 w-4 rounded-full border",
-                        TW_COLORS_MP["border"][datum.color]["500"],
-                        is_selected && TW_COLORS_MP["bg"][datum.color]["500"]
-                      )}
-                      type="button"
-                    />
-                    <p className={cn(TW_COLORS_MP["text"][datum.color]["500"])}>
-                      {datum.name}
-                    </p>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
         </div>
       </div>
     </Layout>
@@ -280,8 +301,10 @@ function get_data_intermediate(
   days_and_ec: GetExpensesOverDateRangeRet,
   selected_categories: Array<string>
 ): IntResp {
-  const out: Record<string, { category_id: string; name: string; color: BaseColor; total: number }> =
-    {};
+  const out: Record<
+    string,
+    { category_id: string; name: string; color: BaseColor; total: number }
+  > = {};
   const category_id_to_color: Record<string, BaseColor> = {};
   for (const ec of days_and_ec.expense_categories) {
     category_id_to_color[ec.id] = ec.color;
@@ -294,7 +317,7 @@ function get_data_intermediate(
   let global_total = 0;
   for (const d of days_and_ec.days) {
     for (const e of d.expenses) {
-      const is_category_selected = selected_categories.includes(e.category_id)
+      const is_category_selected = selected_categories.includes(e.category_id);
       if (!out[e.category_id]) {
         out[e.category_id] = {
           category_id: e.category_id,
@@ -313,22 +336,24 @@ function get_data_intermediate(
   return { global_total, props: Object.values(out) };
 }
 
-function get_pie_chart_data(input: IntResp, selected_categories: Array<string>) {
-  return input.props
-    .map((d) => {
-      let name = `${d.name} - ${cents_to_dollars_display(d.total)}`;
-      const is_category_selected = selected_categories.includes(d.category_id);
-      if (is_category_selected) {
-        name += ` (${(
-          Math.floor((d.total / input.global_total) * 10000) / 100
-        ).toLocaleString()}%)`;
-      }
+function get_pie_chart_data(
+  input: IntResp,
+  selected_categories: Array<string>
+) {
+  return input.props.map((d) => {
+    let name = `${d.name} - ${cents_to_dollars_display(d.total)}`;
+    const is_category_selected = selected_categories.includes(d.category_id);
+    if (is_category_selected) {
+      name += ` (${(
+        Math.floor((d.total / input.global_total) * 10000) / 100
+      ).toLocaleString()}%)`;
+    }
 
-      return {
-        category_id: d.category_id,
-        value: d.total / input.global_total,
-        name: name,
-        color: d.color,
-      };
-    });
+    return {
+      category_id: d.category_id,
+      value: d.total / input.global_total,
+      name: name,
+      color: d.color,
+    };
+  });
 }

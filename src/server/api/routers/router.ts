@@ -15,15 +15,15 @@ export type ExpenseCategoryWithExpenses = ExpenseCategoryWithBaseColor & {
   expenses: Expense[];
 };
 
-export type DayWithExpenses = Day & { expenses: Expense[] }
+export type DayWithExpenses = Day & { expenses: Expense[] };
 export type GetExpensesOverDateRangeRet = {
   days: DayWithExpenses[];
   expense_categories: ExpenseCategoryWithBaseColor[];
 };
 
 const DateZodSchema = z.object({
-  day: z.number(),
-  month_idx: z.number(),
+  day: z.number().gt(0),
+  month_idx: z.number().gte(0).lte(11),
   year: z.number(),
 });
 
@@ -46,8 +46,8 @@ function convert_to_cents(amount: string) {
   }
   return amount_in_cents;
 }
-
 const _NUMBER_OF_ROWS_PER_PAGE = 30;
+
 /*
  * ROUTES
  */
@@ -69,40 +69,24 @@ export const router = createTRPCRouter({
   get_expenses_over_date_range: protectedProcedure
     .input(
       z.object({
-        from_date: DateZodSchema,
-        to_date: DateZodSchema,
+        from_year: z.number(),
+        to_year: z.number(),
       })
     )
     .query(async ({ input, ctx }) => {
-      const { from_date, to_date } = input;
-
-      let days: DayWithExpenses[] | null = null;
-      if (from_date.year === to_date.year) {
-        //if (from_year == to_year) -> compare months and days
-        days = await ctx.prisma.day.findMany({
-          where: {
-            AND: [
-              { month: { lte: to_date.month_idx, gte: from_date.month_idx } },
-              { year: from_date.year },
-              { day: { lte: to_date.day, gte: from_date.day } },
-              { user_id: ctx.session.user.id },
-            ],
-          },
-          include: { expenses: true },
-        });
-      } else {
-        /* if (from_year < to_year) -> {
-         *    Just return from_year <= year <= to_year 
-         *    Do the rest of the filtering on the frontend
-         * }
-         */
-        days = await ctx.prisma.day.findMany({
-          where: {
-            year: { lte: to_date.year, gte: from_date.year },
-          },
-          include: { expenses: true },
-        });
-      }
+      const { from_year, to_year } = input;
+      const days = await ctx.prisma.day.findMany({
+        where: {
+          year: { lte: to_year, gte: from_year },
+        },
+        include: { expenses: true },
+      });
+      //Sort from latest to oldest
+      days.sort((a, b) => {
+        const a_date = new Date(a.year, a.month, a.day);
+        const b_date = new Date(b.year, b.month, b.day);
+        return a_date < b_date ? 1 : -1;
+      });
 
       //Get categories
       const expense_categories = (await ctx.prisma.expenseCategory.findMany({

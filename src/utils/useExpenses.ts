@@ -5,11 +5,7 @@ import { get_category_ids_to_colors } from "./getCategoryIdsToColors";
 import { get_category_ids_to_names } from "./getCategoryIdsToNames";
 import { subYears } from "date-fns";
 import { create } from "zustand";
-import {
-  DayWithExpenses,
-  GetExpensesOverDateRangeRet,
-} from "src/server/api/routers/router";
-import { useEffect } from "react";
+import { DayWithExpenses } from "src/server/api/routers/router";
 
 export type DMY = {
   day: number;
@@ -17,154 +13,98 @@ export type DMY = {
   year: number;
 };
 type ExpensesStoreState = {
-  expenses_qry_res: GetExpensesOverDateRangeRet;
-  set_expenses_qry_res: (new_res: GetExpensesOverDateRangeRet) => void;
-  from_date: DMY;
-  set_from_date: (new_from: DMY) => void;
-  to_date: DMY;
-  set_to_date: (new_to: DMY) => void;
+  from_year: number;
+  set_from_year: (new_from: number) => void;
+  to_year: number;
+  set_to_year: (new_to: number) => void;
 };
-const use_expenses_store = create<ExpensesStoreState>((set) => {
+const use_api_date_store = create<ExpensesStoreState>((set) => {
   const year_ago = subYears(new Date(), 1);
   const today_date = new Date();
   return {
-    expenses_qry_res: {
-      days: [],
-      expense_categories: [],
-    },
-    set_expenses_qry_res: (new_res: GetExpensesOverDateRangeRet) =>
-      set((prev_state) => ({ ...prev_state, expenses_qry_res: new_res })),
-    from_date: {
-      day: year_ago.getDate(),
-      month_idx: year_ago.getMonth(),
-      year: year_ago.getFullYear(),
-    },
-    set_from_date: (new_from_date: DMY) =>
-      set((prev_state) => ({ ...prev_state, from_date: new_from_date })),
-    to_date: {
-      day: today_date.getDate(),
-      month_idx: today_date.getMonth(),
-      year: today_date.getFullYear(),
-    },
-    set_to_date: (new_to_date: DMY) =>
-      set((prev_state) => ({ ...prev_state, to_date: new_to_date })),
+    from_year: year_ago.getFullYear(),
+    set_from_year: (new_from_year: number) =>
+      set((prev_state) => ({ ...prev_state, from_year: new_from_year })),
+    to_year: today_date.getFullYear(),
+    set_to_year: (new_to_year: number) =>
+      set((prev_state) => ({ ...prev_state, to_year: new_to_year })),
   };
 });
 
-function compare_dmy(
-  first: DMY,
-  operation: "is before" | "is equal",
-  second: DMY
+/*
+Always fetch whole years of dates. Filter on the frontend.
+Expenses page -> Should only be able to display 365 days of expenses at a time.
+*/
+
+export function use_expenses_over_date_range(
+  date_picker_dates: { from_date: DMY; to_date: DMY } | undefined
 ) {
-  if (operation === "is before") {
-    const is_year_before = first.year < second.year;
-    if (is_year_before) {
-      return true;
+  const expenses_store = use_api_date_store();
+  let api_from_year = expenses_store.from_year;
+  let api_to_year = expenses_store.to_year;
+  if (date_picker_dates) {
+    if (date_picker_dates.from_date.year < expenses_store.from_year) {
+      api_from_year = date_picker_dates.from_date.year;
+      expenses_store.set_from_year(date_picker_dates.from_date.year);
     }
-    const is_year_same_and_month_before =
-      first.year === second.year && first.month_idx < second.month_idx;
-    if (is_year_same_and_month_before) {
-      return true;
+    if (date_picker_dates.to_date.year > expenses_store.to_year) {
+      api_to_year = date_picker_dates.to_date.year;
+      expenses_store.set_to_year(date_picker_dates.to_date.year);
     }
-    const is_year_same_month_same_day_before =
-      first.year === second.year &&
-      first.month_idx === second.month_idx &&
-      first.day < second.day;
-    if (is_year_same_month_same_day_before) {
-      return true;
-    }
-    return false;
-  } else if (operation === "is equal") {
-    return (
-      first.year === second.year &&
-      first.month_idx === second.month_idx &&
-      first.day === second.day
-    );
-  }
-}
-
-export function use_jason(date_picker_dates: { from_date?: DMY; to_date?: DMY } | undefined) {
-  const expenses_store = use_expenses_store();
-  const api_utils = api.useContext();
-
-  let api_from_date = expenses_store.from_date;
-  let api_to_date = expenses_store.to_date;
-  if (date_picker_dates && date_picker_dates.from_date && date_picker_dates.to_date) {
-    api_from_date = compare_dmy(
-      date_picker_dates.from_date,
-      "is before",
-      expenses_store.from_date
-    )
-      ? date_picker_dates.from_date
-      : expenses_store.from_date;
-
-    api_to_date = compare_dmy(
-      expenses_store.to_date,
-      "is before",
-      date_picker_dates.to_date
-    )
-      ? date_picker_dates.to_date
-      : expenses_store.to_date;
   }
 
-  const expenses_qry = api.router.get_expenses_over_date_range.useQuery({
-    from_date: api_from_date,
-    to_date: api_to_date,
-  });
+  return api.router.get_expenses_over_date_range.useQuery(
+    {
+      from_year: api_from_year,
+      to_year: api_to_year,
+    },
+    {
+      select: (data) => {
+        let days: Array<DayWithExpenses> = [];
+        if (!date_picker_dates) {
+          days = data.days.slice(0, 30);
+        }
+        const from = date_picker_dates?.from_date;
+        const to = date_picker_dates?.to_date;
+        if (!from || !to) {
+          return { ...data, days: data.days.slice(0, 30) };
+        }
+        days = data.days.filter((d) => {
+          const from_year = from.year;
+          const from_month_idx = from.month_idx;
+          const from_day = from.day;
 
-  useEffect(() => {
-    if (expenses_qry.data) {
-      expenses_store.set_expenses_qry_res(expenses_qry.data);
-    }
-  }, [expenses_qry.data]);
+          const to_year = to.year;
+          const to_month_idx = to.month_idx;
+          const to_day = to.day;
 
-  if (expenses_qry.status === "loading") {
-    return { 
-      status: "loading", 
-      error: undefined, 
-      data: undefined, 
-      invalidate: () => {}
-    } as const;
-  }
-  if (expenses_qry.status === "error") {
-    return {
-      status: "error",
-      error: expenses_qry.error,
-      data: undefined,
-      invalidate: () => {}
-    } as const;
-  }
-  //Update dates in store if needed
-  if (compare_dmy(api_from_date, "is before", expenses_store.from_date)) {
-    expenses_store.set_from_date(api_from_date);
-  }
-  if (compare_dmy(expenses_store.to_date, "is before", api_to_date)) {
-    expenses_store.set_to_date(api_to_date);
-  }
+          if (d.year < from_year || d.year > to_year) {
+            return false;
+          }
+          if (d.year > from_year && d.year < to_year) {
+            return true;
+          }
 
-  expenses_store.expenses_qry_res.days.sort((a, b) => {
-    //Reverse sort
-    if (a.year !== b.year) {
-      return b.year - a.year;
+          let is_after_from = true;
+          if (d.year === from_year) {
+            const is_after_month = d.month > from_month_idx;
+            const same_month_but_after_day =
+              d.month === from_month_idx && d.day >= from_day;
+            is_after_from = is_after_month || same_month_but_after_day;
+          }
+          let is_before_to = true;
+          if (d.year === to_year) {
+            const is_before_month = d.month < to_month_idx;
+            const is_same_month_but_before_day =
+              d.month === to_month_idx && d.day <= to_day;
+            is_before_to = is_before_month || is_same_month_but_before_day;
+          }
+          return is_after_from && is_before_to;
+        });
+        return { ...data, days: days };
+      },
     }
-    if (a.month !== b.month) {
-      return b.month - a.month;
-    }
-    if (a.day !== b.day) {
-      return b.day - a.day;
-    }
-    return 0;
-  });
-  console.log("In success block", "store", expenses_store.expenses_qry_res, "qry", expenses_qry.data);
-  return {
-    status: "success",
-    error: undefined,
-    data: expenses_store.expenses_qry_res,
-    invalidate: () => {
-      api_utils.router.get_expenses_over_date_range.invalidate();
-      // expenses_qry.refetch();
-    }
-  } as const;
+  );
 }
 
 export type ExpenseDataByDay = {
@@ -284,7 +224,11 @@ export function use_expenses() {
   } as const;
 }
 
-export function process_days_with_expenses({ days }: { days: DayWithExpenses[] }) {
+export function process_days_with_expenses({
+  days,
+}: {
+  days: DayWithExpenses[];
+}) {
   const days_with_expenses = days.sort((a, b) => {
     //Reverse sort
     if (a.year !== b.year) {

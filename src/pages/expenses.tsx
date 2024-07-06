@@ -1,9 +1,8 @@
 import { Expense } from "@prisma/client";
-import * as RadixPopover from "@radix-ui/react-popover";
 import * as RadixModal from "@radix-ui/react-dialog";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import { ReactHTMLElement, ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Spinner } from "src/components/Spinner";
 import { api } from "src/utils/api";
 import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
@@ -14,8 +13,7 @@ import {
   DMY,
   ExpenseDataByDay,
   process_days_with_expenses,
-  use_expenses,
-  use_jason,
+  use_expenses_over_date_range,
 } from "src/utils/useExpenses";
 import Layout from "src/components/Layout";
 import {
@@ -37,7 +35,6 @@ import { get_category_ids_to_names } from "src/utils/getCategoryIdsToNames";
 import { get_category_ids_to_colors } from "src/utils/getCategoryIdsToColors";
 import { getDayName } from "./sign-in";
 
-//I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getServerAuthSession(ctx);
   return {
@@ -45,11 +42,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   };
 };
 
-export function date_to_dmy(date?: Date): DMY | undefined {
-  if (!date) {
-    return undefined;
-  }
-
+export function date_to_dmy(date: Date): DMY {
   return {
     year: date.getFullYear(),
     month_idx: date.getMonth(),
@@ -58,21 +51,24 @@ export function date_to_dmy(date?: Date): DMY | undefined {
 }
 export default function Expenses() {
   const session = useSession();
-  // const expense_data_query = use_expenses();
   const router = useRouter();
   const today = new Date();
-
   const [date, set_date] = useState<DateRange | undefined>({
     from: undefined,
     to: undefined,
-  }); //Default to the past week
-
-  const expense_data_query = use_jason({
-    from_date: date_to_dmy(date?.from ?? undefined),
-    to_date: date_to_dmy(date?.to ?? undefined),
   });
 
-  // console.log("jason_res", jason_res);
+  const date_range =
+    date && date?.from && date?.to //if from and to dates are selected...
+      ? { from_date: date_to_dmy(date.from), to_date: date_to_dmy(date.to) } //...send over date range
+      : undefined; //...otherwise not
+
+  const expense_qry = use_expenses_over_date_range(date_range);
+
+  //   {
+  //   from_date: date_to_dmy(date?.from ?? undefined),
+  //   to_date: date_to_dmy(date?.to ?? undefined),
+  // }
 
   useEffect(() => {
     if (session.status === "unauthenticated") {
@@ -96,136 +92,76 @@ export default function Expenses() {
       <div className="h-4" />
       <ul className="flex flex-col gap-4">
         {expense_qry.status === "loading" && (
-        <div className="flex h-[95vh] items-center justify-center">
+          <div className="flex h-[95vh] items-center justify-center">
             <Spinner className={SPINNER_CLASSES} />
-        </div>
-      )}
-      {expense_data_query.status === "error" && (
-        <div className="flex h-[95vh] items-center justify-center">
-          <h1 className="text-white">
-            Uh oh, there was a problem loading your expenses.
-          </h1>
-        </div>
-      )}
-      {expense_data_query.status === "success" &&
-        expense_data_query.data.days.length === 0 && (
+          </div>
+        )}
+        {expense_qry.status === "error" && (
           <div className="flex h-[95vh] items-center justify-center">
-            <h1 className="text-slate-700 dark:text-white italic">
-              Click the '+' button to add a new expense.
+            <h1 className="text-white">
+              Uh oh, there was a problem loading your expenses.
             </h1>
           </div>
         )}
-      {expense_data_query.status === "success" &&
-        expense_data_query.data.days.length > 0 &&
-        filtered_expenses_by_day.length === 0 && (
-          <div className="flex h-[95vh] items-center justify-center">
-            <h1 className="text-slate-700 dark:text-white text-wrap p-4 flex justify-center text-center italic">
-              No expenses found over selected date range
-            </h1>
-          </div>
-        )}
-      {expense_data_query.status === "success" &&
-        expense_data_query.data.days.length > 0 &&
-        filtered_expenses_by_day.length > 0 && (
-          <ChronologicalExpenseList
-            invalidate_expenses_qry={() => expense_data_query.invalidate()}
-            date={date}
-            set_date={set_date}
-            expenses_by_day={process_days_with_expenses({
-              days: filtered_expenses_by_day,
-            })}
-            category_id_to_name={get_category_ids_to_names(
-              expense_data_query.data.expense_categories
-            )}
-            category_id_to_color={get_category_ids_to_colors(
-              expense_data_query.data.expense_categories
-            )}
-          />
-        )}
-      <AddNewExpenseButtonAndModal
-        triggerClassnames={cn(
-          "fixed bottom-5 right-5 flex h-12 w-12 items-center justify-center rounded-full bg-squirtle p-0 shadow shadow-blue-300 hover:cursor-pointer dark:bg-rengar",
-          "md:bottom-14 md:right-14 md:h-14 md:w-14",
-          "lg:shadow-md lg:shadow-blue-300 lg:transition-all lg:hover:-translate-y-0.5 lg:hover:shadow-lg lg:hover:shadow-blue-300 lg:hover:brightness-110"
-        )}
-        on_create_success={() => expense_data_query.invalidate()}
-        month={today.getMonth() + 1}
-        day={today.getDate()}
-        year={today.getFullYear()}
-      >
-        {/* https://tailwindcomponents.com/component/tailwind-css-fab-buttons */}
-        <svg
-          viewBox="0 0 20 20"
-          enableBackground="new 0 0 20 20"
-          className={cn("inline-block h-6 w-6")}
+        {expense_qry.status === "success" &&
+          expense_qry.data.days.length === 0 && (
+            <div className="flex h-[95vh] items-center justify-center">
+              <h1 className="italic text-slate-700 dark:text-white">
+                Click the '+' button to add a new expense.
+              </h1>
+            </div>
+          )}
+        {expense_qry.status === "success" &&
+          expense_qry.data.days.length === 0 && (
+            <div className="flex h-[95vh] items-center justify-center">
+              <h1 className="text-wrap flex justify-center p-4 text-center italic text-slate-700 dark:text-white">
+                No expenses found over selected date range
+              </h1>
+            </div>
+          )}
+        {expense_qry.status === "success" &&
+          expense_qry.data.days.length > 0 && (
+            <ChronologicalExpenseList
+              invalidate_expenses_qry={() => {}}
+              expenses_by_day={process_days_with_expenses({
+                days: expense_qry.data.days,
+              })}
+              category_id_to_name={get_category_ids_to_names(
+                expense_qry.data.expense_categories
+              )}
+              category_id_to_color={get_category_ids_to_colors(
+                expense_qry.data.expense_categories
+              )}
+            />
+          )}
+        <AddNewExpenseButtonAndModal
+          triggerClassnames={cn(
+            "fixed bottom-5 right-5 flex h-12 w-12 items-center justify-center rounded-full bg-squirtle p-0 shadow shadow-blue-300 hover:cursor-pointer dark:bg-rengar",
+            "md:bottom-14 md:right-14 md:h-14 md:w-14",
+            "lg:shadow-md lg:shadow-blue-300 lg:transition-all lg:hover:-translate-y-0.5 lg:hover:shadow-lg lg:hover:shadow-blue-300 lg:hover:brightness-110"
+          )}
+          on_create_success={() => {}}
+          month={today.getMonth() + 1}
+          day={today.getDate()}
+          year={today.getFullYear()}
         >
-          <path
-            fill="#FFFFFF"
-            d="M16,10c0,0.553-0.048,1-0.601,1H11v4.399C11,15.951,10.553,16,10,16c-0.553,0-1-0.049-1-0.601V11H4.601 C4.049,11,4,10.553,4,10c0-0.553,0.049-1,0.601-1H9V4.601C9,4.048,9.447,4,10,4c0.553,0,1,0.048,1,0.601V9h4.399 C15.952,9,16,9.447,16,10z"
-          />
-        </svg>
-      </AddNewExpenseButtonAndModal>
+          {/* https://tailwindcomponents.com/component/tailwind-css-fab-buttons */}
+          <Fab />
+        </AddNewExpenseButtonAndModal>
+      </ul>
     </Layout>
   );
-}
-
-function filter_over_selected_dates(days: DayWithExpenses[], date?: DateRange) {
-  //Wtf typescript??
-  if (!date) {
-    return days.slice(0, 30);
-  }
-  const from = date.from;
-  const to = date.to;
-  if (!from || !to) {
-    return days.slice(0, 30);
-  }
-  return days.filter((d) => {
-    const from_year = from.getFullYear();
-    const from_month_idx = from.getMonth();
-    const from_day = from.getDate();
-
-    const to_year = to.getFullYear();
-    const to_month_idx = to.getMonth();
-    const to_day = to.getDate();
-
-    if (d.year < from_year || d.year > to_year) {
-      return false;
-    }
-    if (d.year > from_year && d.year < to_year) {
-      return true;
-    }
-
-    let is_after_from = true;
-    if (d.year === from_year) {
-      const is_after_month = d.month > from_month_idx;
-      const same_month_but_after_day =
-        d.month === from_month_idx && d.day >= from_day;
-      is_after_from = is_after_month || same_month_but_after_day;
-    }
-    let is_before_to = true;
-    if (d.year === to_year) {
-      const is_before_month = d.month < to_month_idx;
-      const is_same_month_but_before_day =
-        d.month === to_month_idx && d.day <= to_day;
-      is_before_to = is_before_month || is_same_month_but_before_day;
-    }
-    return is_after_from && is_before_to;
-  });
 }
 
 function ChronologicalExpenseList({
   expenses_by_day,
   category_id_to_name,
   category_id_to_color,
-  date,
-  set_date,
   invalidate_expenses_qry,
 }: {
   expenses_by_day: ExpenseDataByDay[];
   category_id_to_color: Map<string, BaseColor>;
   category_id_to_name: Map<string, string>;
-  date: DateRange | undefined;
-  set_date: (new_date: DateRange | undefined) => void;
   invalidate_expenses_qry: () => void;
 }) {
   return (
@@ -242,7 +178,12 @@ function ChronologicalExpenseList({
                 day={day}
                 year={year}
               >
-                <h1 className="inline rounded-lg bg-squirtle px-2 py-1 font-bold text-white dark:bg-rengar md:p-2">
+                <h1
+                  className={cn(
+                    "inline rounded-lg bg-squirtle px-2 py-1 text-sm font-bold text-white",
+                    "dark:bg-rengar lg:p-2 lg:text-base"
+                  )}
+                >
                   {getDayName(new Date(year, month - 1, day).getDay())}{" "}
                   {dwe.date_display} +
                 </h1>
@@ -252,7 +193,6 @@ function ChronologicalExpenseList({
             <ul className="flex flex-col gap-3 rounded-lg bg-pikachu p-4 shadow-sm dark:bg-leblanc dark:shadow-sm dark:shadow-leblanc">
               <ExpenseListForDay
                 day_with_expenses={dwe}
-                // category_id_to_expenses_for_day={dwe.category_id_to_expenses}
                 category_id_to_color={category_id_to_color}
                 category_id_to_name={category_id_to_name}
                 invalidate_expenses_qry={invalidate_expenses_qry}
@@ -806,5 +746,19 @@ function AddNewExpenseButtonAndModal({
         </RadixModal.Content>
       </RadixModal.Portal>
     </RadixModal.Root>
+  );
+}
+function Fab() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      enableBackground="new 0 0 20 20"
+      className={cn("inline-block h-6 w-6")}
+    >
+      <path
+        fill="#FFFFFF"
+        d="M16,10c0,0.553-0.048,1-0.601,1H11v4.399C11,15.951,10.553,16,10,16c-0.553,0-1-0.049-1-0.601V11H4.601 C4.049,11,4,10.553,4,10c0-0.553,0.049-1,0.601-1H9V4.601C9,4.048,9.447,4,10,4c0.553,0,1,0.048,1,0.601V9h4.399 C15.952,9,16,9.447,16,10z"
+      />
+    </svg>
   );
 }

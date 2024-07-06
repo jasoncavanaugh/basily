@@ -4,6 +4,7 @@ import { cn } from "./cn";
 export const EXPENSES_ROUTE = "/expenses" as const;
 export const VISUALIZE_ROUTE = "/visualize" as const;
 export const SIGN_IN_ROUTE = "/sign-in" as const;
+export const MANAGE_CATEGORIES_ROUTE = "/manage-categories" as const;
 
 /* TAILWIND */
 export const SPINNER_CLASSES =
