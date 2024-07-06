@@ -1,12 +1,27 @@
 import { signOut, useSession } from "next-auth/react";
-import { BarChart2Icon, ChevronDown, Home, LogOut } from "lucide-react";
+import {
+  BarChart2Icon,
+  ChevronDown,
+  CircleDollarSignIcon,
+  Coins,
+  CoinsIcon,
+  DollarSignIcon,
+  Home,
+  LogOut,
+  PieChartIcon,
+  PiggyBank,
+} from "lucide-react";
 import Image from "next/image";
 import * as RadixPopover from "@radix-ui/react-popover";
 import { cn } from "src/utils/cn";
 import { ThemeButton } from "./ThemeButton";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { EXPENSES_ROUTE, MANAGE_CATEGORIES_ROUTE } from "src/utils/constants";
+import {
+  EXPENSES_ROUTE,
+  MANAGE_CATEGORIES_ROUTE,
+  VISUALIZE_ROUTE,
+} from "src/utils/constants";
 
 export function ProfileNav({ to_categories }: { to_categories: boolean }) {
   const session = useSession();
@@ -62,17 +77,30 @@ export function ProfileNav({ to_categories }: { to_categories: boolean }) {
               </li>
             )}
             {!to_categories && (
-              <li>
-                <Link href={EXPENSES_ROUTE}>
-                  <button className="flex w-full gap-4 rounded-md p-2 hover:cursor-pointer hover:bg-slate-200 dark:hover:bg-jinx">
-                    <Home
-                      className="text-gray-500 dark:text-white"
-                      strokeWidth="0.08rem"
-                    />
-                    <p>Dashboard</p>
-                  </button>
-                </Link>
-              </li>
+              <>
+                <li>
+                  <Link href={EXPENSES_ROUTE}>
+                    <button className="flex w-full gap-4 rounded-md p-2 hover:cursor-pointer hover:bg-slate-200 dark:hover:bg-jinx">
+                      <CircleDollarSignIcon
+                        className="text-gray-500 dark:text-white"
+                        strokeWidth="0.08rem"
+                      />
+                      <p>Expenses</p>
+                    </button>
+                  </Link>
+                </li>
+                <li>
+                  <Link href={VISUALIZE_ROUTE}>
+                    <button className="flex w-full gap-4 rounded-md p-2 hover:cursor-pointer hover:bg-slate-200 dark:hover:bg-jinx">
+                      <PieChartIcon
+                        className="text-gray-500 dark:text-white"
+                        strokeWidth="0.08rem"
+                      />
+                      <p>Visualize</p>
+                    </button>
+                  </Link>
+                </li>
+              </>
             )}
             <li>
               <ThemeButton showText={true} className="w-full" />

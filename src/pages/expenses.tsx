@@ -50,6 +50,7 @@ export function date_to_dmy(date: Date): DMY {
   };
 }
 export default function Expenses() {
+  const api_ctx = api.useContext();
   const session = useSession();
   const router = useRouter();
   const today = new Date();
@@ -122,7 +123,9 @@ export default function Expenses() {
         {expense_qry.status === "success" &&
           expense_qry.data.days.length > 0 && (
             <ChronologicalExpenseList
-              invalidate_expenses_qry={() => {}}
+              invalidate_expenses_qry={() => {
+                api_ctx.router.get_expenses_over_date_range.invalidate();
+              }}
               expenses_by_day={process_days_with_expenses({
                 days: expense_qry.data.days,
               })}
@@ -140,12 +143,13 @@ export default function Expenses() {
             "md:bottom-14 md:right-14 md:h-14 md:w-14",
             "lg:shadow-md lg:shadow-blue-300 lg:transition-all lg:hover:-translate-y-0.5 lg:hover:shadow-lg lg:hover:shadow-blue-300 lg:hover:brightness-110"
           )}
-          on_create_success={() => {}}
+          on_create_success={() => {
+            api_ctx.router.get_expenses_over_date_range.invalidate();
+          }}
           month={today.getMonth() + 1}
           day={today.getDate()}
           year={today.getFullYear()}
         >
-          {/* https://tailwindcomponents.com/component/tailwind-css-fab-buttons */}
           <Fab />
         </AddNewExpenseButtonAndModal>
       </ul>
@@ -511,6 +515,7 @@ function AddNewExpenseButtonAndModal({
         set_category_text(expense_category_name ?? "");
         set_color(expense_category_color ?? "pink");
         set_is_modal_open(!is_modal_open);
+        set_is_category_dropdown_open(false);
       }}
       open={is_modal_open}
     >
@@ -642,6 +647,9 @@ function AddNewExpenseButtonAndModal({
                   <div className="w-full">
                     <input
                       name="category"
+                      onFocus={() => {
+                        set_is_category_dropdown_open(true);
+                      }}
                       value={category_text}
                       onChange={(e) => {
                         set_category_text(e.target.value);
@@ -653,58 +661,57 @@ function AddNewExpenseButtonAndModal({
                       type="text"
                     ></input>
                     <div className="relative m-0 h-0 p-0">
-                      {category_text.length > 0 &&
-                        is_category_dropdown_open && (
-                          <ul className="absolute z-20 flex max-h-[200px] w-full flex-col gap-2 overflow-y-scroll rounded border bg-white p-3 dark:bg-shaco">
-                            {expense_categories_qry.data
-                              ?.filter(
-                                (cat) =>
-                                  cat.name.includes(category_text) ||
-                                  category_text.includes(cat.name)
-                              )
-                              .map((exp) => {
-                                return (
-                                  <li
-                                    key={exp.id}
-                                    className={cn(
-                                      "flex items-center gap-3 rounded border border-squirtle_light px-3 py-2 dark:border-violet-300",
-                                      BUTTON_HOVER_CLASSES
-                                    )}
-                                    onClick={() => {
-                                      set_category_text(exp.name);
-                                      set_color(exp.color);
-                                      set_is_category_dropdown_open(false);
-                                      // set_is_category_color_selection_disabled(true);
-                                    }}
-                                  >
-                                    <div
-                                      className={cn(
-                                        "h-4 w-4 rounded-full",
-                                        TW_COLORS_MP["bg"][exp.color][500]
-                                      )}
-                                    />
-                                    <p>{exp.name}</p>
-                                  </li>
-                                );
-                              })}
-                            {category_text.length > 0 &&
-                              !does_category_exist && (
+                      {is_category_dropdown_open && (
+                        <ul className="absolute z-20 flex max-h-[200px] w-full flex-col gap-2 overflow-y-scroll rounded border bg-white p-3 dark:bg-shaco">
+                          {expense_categories_qry.data
+                            ?.filter((cat) => {
+                              return (
+                                cat.name.includes(category_text) ||
+                                category_text.includes(cat.name)
+                              );
+                            })
+                            .map((exp) => {
+                              return (
                                 <li
+                                  key={exp.id}
                                   className={cn(
-                                    "rounded p-2 text-slate-700 dark:text-white",
+                                    "flex items-center gap-3 rounded border border-squirtle_light px-3 py-2 dark:border-violet-300",
                                     BUTTON_HOVER_CLASSES
                                   )}
                                   onClick={() => {
+                                    set_category_text(exp.name);
+                                    set_color(exp.color);
                                     set_is_category_dropdown_open(false);
-                                    set_category_text(category_text.trim());
+                                    // set_is_category_color_selection_disabled(true);
                                   }}
                                 >
-                                  <span>+</span>
-                                  {` Create '${category_text.trim()}'`}
+                                  <div
+                                    className={cn(
+                                      "h-4 w-4 rounded-full",
+                                      TW_COLORS_MP["bg"][exp.color][500]
+                                    )}
+                                  />
+                                  <p>{exp.name}</p>
                                 </li>
+                              );
+                            })}
+                          {category_text.length > 0 && !does_category_exist && (
+                            <li
+                              className={cn(
+                                "rounded p-2 text-slate-700 dark:text-white",
+                                BUTTON_HOVER_CLASSES
                               )}
-                          </ul>
-                        )}
+                              onClick={() => {
+                                set_is_category_dropdown_open(false);
+                                set_category_text(category_text.trim());
+                              }}
+                            >
+                              <span>+</span>
+                              {` Create '${category_text.trim()}'`}
+                            </li>
+                          )}
+                        </ul>
+                      )}
                     </div>
                   </div>
                 )}
@@ -748,7 +755,8 @@ function AddNewExpenseButtonAndModal({
     </RadixModal.Root>
   );
 }
-function Fab() {
+export function Fab() {
+  /* https://tailwindcomponents.com/component/tailwind-css-fab-buttons */
   return (
     <svg
       viewBox="0 0 20 20"

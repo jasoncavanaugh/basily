@@ -1,5 +1,4 @@
 import { GetServerSideProps } from "next";
-import * as RadixPopover from "@radix-ui/react-popover";
 import * as RadixModal from "@radix-ui/react-dialog";
 import { BASE_COLORS, BaseColor } from "src/utils/colors";
 import { signIn, useSession } from "next-auth/react";
@@ -20,22 +19,17 @@ import {
   RADIX_MODAL_OVERLAY_CLASSES,
   SPINNER_CLASSES,
 } from "src/utils/constants";
-import basil_logo_light from "public/basil-logo-light.png";
-import basil_logo_dark from "public/basil-logo-dark.png";
-
-import Image from "next/image";
 import { useTheme } from "next-themes";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
 import { cn } from "src/utils/cn";
-import { is_valid_amount, is_valid_date } from "./expenses";
-import { ExpenseCategoryWithBaseColor } from "src/server/api/routers/router";
-import { Expense } from "@prisma/client";
+import { Fab, is_valid_amount, is_valid_date } from "./expenses";
 import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
 import { ThemeButton } from "src/components/ThemeButton";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { useWindowDimensions } from "src/utils/useWindowDimensions";
 import { breakpoints } from "src/utils/tailwindBreakpoints";
 import { TW_COLORS_TO_HEX_MP } from "src/utils/tailwindColorsToHexMp";
+import { Logo } from "src/components/Logo";
 
 type DayWithExpenses = {
   day: string;
@@ -48,7 +42,6 @@ type DayWithExpenses = {
   >;
 };
 
-//I should probably understand how this works, but I just ripped it from https://create.t3.gg/en/usage/next-auth
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getServerAuthSession(ctx);
   return {
@@ -58,7 +51,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 export default function SignIn() {
   const session = useSession();
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (session.status === "authenticated") {
@@ -74,13 +67,9 @@ export default function SignIn() {
     );
   }
   return (
-    <div className="flex h-[100vh] flex-col md:flex-row md:items-center md:justify-center">
+    <div className="flex h-[100vh] flex-col pt-8 md:flex-row md:items-center md:justify-center md:py-4">
       <div className="flex h-[20%] flex-col items-start justify-center gap-3 rounded-lg  px-4 py-8 md:h-[100%] md:w-[50%] md:gap-6 md:p-16">
-        <Image
-          className="w-40 md:w-72"
-          src={theme === "dark" ? basil_logo_dark : basil_logo_light}
-          alt="Basil logo"
-        />
+        <Logo />
         <p className="text-base text-slate-700 dark:text-white md:text-2xl md:text-lg">
           A minimalistic expense tracker
         </p>
@@ -97,13 +86,51 @@ export default function SignIn() {
 }
 
 function BasilPreview() {
+  const [is_client, set_is_client] = useState(false);
+  useEffect(() => {
+    if (!is_client) {
+      set_is_client(true);
+    }
+  }, []);
+  return is_client ? <BasilPreviewClientSide /> : null;
+}
+
+function get_initial_expenses() {
+  const hasWindow = typeof window !== "undefined";
+  if (!hasWindow) {
+    return [];
+  }
+  const expenses_json_str = localStorage.getItem("expenses_by_day");
+  let initial_expenses: Array<DayWithExpenses> = [];
+  if (expenses_json_str) {
+    initial_expenses = JSON.parse(expenses_json_str) as Array<DayWithExpenses>;
+  }
+  return initial_expenses;
+}
+
+function BasilPreviewClientSide() {
   const [page, set_page] = useState<"expenses" | "visualize">("expenses");
   const [expenses_by_day, set_expenses_by_day] = useState<
     Array<DayWithExpenses>
-  >([]);
+  >(get_initial_expenses());
+
+  useEffect(() => {
+    const hasWindow = typeof window !== "undefined";
+    if (!hasWindow) {
+      return;
+    }
+    const cur = JSON.stringify(expenses_by_day);
+    const stored = localStorage.getItem("expenses_by_day");
+    console.log("cur", cur, "stored", stored);
+    if (cur !== stored) {
+      console.log("running");
+      localStorage.setItem("expenses_by_day", JSON.stringify(expenses_by_day));
+    }
+  }, [JSON.stringify(expenses_by_day)]);
+
   return (
-    <div className="thin-scrollbar h-[80%] overflow-scroll px-2 py-4 md:h-[100%] md:w-[80%]">
-      <div className="flex h-[5%] items-center justify-between pr-4">
+    <div className="h-[80%] px-2 py-2 md:h-[100%] md:w-[80%]">
+      <div className="flex h-[10%] items-center justify-between pr-4">
         <div className="flex gap-1 rounded-lg  bg-slate-300 px-1 py-1 dark:bg-leblanc">
           <button
             className={cn(
@@ -145,20 +172,6 @@ function BasilPreview() {
   );
 }
 
-type BasilDay = {
-  month: number;
-  day: number;
-  year: number;
-  expenses: (Expense & { category_color: BaseColor })[];
-  //   user_id  String
-  //   user     User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  //   createdAt   DateTime        @default(now())
-  //   month    Int
-  //   day      Int
-  //   year     Int
-  //   expenses Expense[]
-};
-
 export function getDayName(day_idx: number) {
   if (day_idx === 0) {
     return "Sun";
@@ -186,8 +199,8 @@ function ExpensesPreview({
 }) {
   const today = new Date();
   return (
-    <div className="relative h-[95%]">
-      <ul className="h-[95%] ">
+    <div className="relative h-[90%] overflow-scroll">
+      <ul className="h-[95%]">
         {expenses_by_day.length === 0 && (
           <div className="flex h-[100%] items-center justify-center">
             <h1 className="text-slate-700 dark:text-white">
@@ -214,7 +227,7 @@ function ExpensesPreview({
             .map((ebd, i) => {
               const mdy = extract_mdy(ebd.day);
               return (
-                <li key={i} className="mr-1 px-1 py-4">
+                <li key={i} className="mr-4 px-1 py-4">
                   <div className="flex items-end justify-between ">
                     <h1 className="inline rounded-lg bg-squirtle px-2 py-1 font-bold text-white dark:bg-rengar md:p-2">
                       {getDayName(
@@ -233,17 +246,7 @@ function ExpensesPreview({
         expenses_by_day={expenses_by_day}
         set_expenses_by_day={set_expenses_by_day}
       >
-        {/* https://tailwindcomponents.com/component/tailwind-css-fab-buttons */}
-        <svg
-          viewBox="0 0 20 20"
-          enableBackground="new 0 0 20 20"
-          className={cn("inline-block h-6 w-6")}
-        >
-          <path
-            fill="#FFFFFF"
-            d="M16,10c0,0.553-0.048,1-0.601,1H11v4.399C11,15.951,10.553,16,10,16c-0.553,0-1-0.049-1-0.601V11H4.601 C4.049,11,4,10.553,4,10c0-0.553,0.049-1,0.601-1H9V4.601C9,4.048,9.447,4,10,4c0.553,0,1,0.048,1,0.601V9h4.399 C15.952,9,16,9.447,16,10z"
-          />
-        </svg>
+        <Fab />
       </AddNewExpenseButtonAndModal>
     </div>
   );
@@ -314,7 +317,7 @@ function VisualizePreview({
   const global_total = get_global_total(expenses_by_day);
   const pie_chart_data = get_pie_data(expenses_by_day, global_total);
   return (
-    <div className="flex h-[70vh] flex-col items-center md:h-[90vh] md:flex-row md:items-start">
+    <div className="flex h-[90%] flex-col items-center md:h-[90vh] md:flex-row md:items-start">
       <div className="min-h-[35vh] w-[92%] rounded-md px-4 dark:bg-khazix md:h-[100%] md:w-[50%]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart width={100} height={100}>
@@ -323,13 +326,13 @@ function VisualizePreview({
               innerRadius={
                 windowDimensions.width &&
                 windowDimensions.width <= breakpoints["md"]
-                  ? 80
+                  ? 60
                   : 160
               }
               outerRadius={
                 windowDimensions.width &&
                 windowDimensions.width <= breakpoints["md"]
-                  ? 120
+                  ? 100
                   : 220
               }
               paddingAngle={2}
@@ -372,7 +375,7 @@ function VisualizePreview({
           </PieChart>
         </ResponsiveContainer>
       </div>
-      <div className="thin-scrollbar w-[100%] overflow-x-hidden overflow-y-scroll pr-2 md:h-[100%] md:w-[50%] md:p-0">
+      <div className="w-[100%] overflow-x-hidden overflow-y-scroll pr-2 md:h-[100%] md:w-[50%] md:p-0">
         <div className="ml-2 px-4 text-xl font-bold text-squirtle dark:text-rengar">
           Total: {cents_to_dollars_display(global_total)}
         </div>

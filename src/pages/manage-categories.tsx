@@ -201,7 +201,6 @@ function ManageCategoriesDisplay({
               )}
             </button>
           </div>
-          {/* <h1 className="text-3xl font-bold text-squirtle">Out Eating</h1> */}
         </form>
       </div>
     </div>
