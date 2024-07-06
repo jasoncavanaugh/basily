@@ -2,11 +2,13 @@ import { type NextPage } from "next";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
-import { EXPENSES_ROUTE, SIGN_IN_ROUTE } from "src/utils/constants";
+import {
+  EXPENSES_ROUTE,
+  SIGN_IN_ROUTE,
+  SPINNER_CLASSES,
+} from "src/utils/constants";
 import { Spinner } from "src/components/Spinner";
 
-export const SPINNER_CLASSNAMES =
-  "border-squirtle dark:border-rengar dark:border-rengar_light h-16 w-16 border-4 border-solid lg:border-8" as const;
 const Home: NextPage = () => {
   // function Home(): NextPage {
   const session = useSession();
@@ -22,7 +24,7 @@ const Home: NextPage = () => {
 
   return (
     <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
-      <Spinner className={SPINNER_CLASSNAMES} />
+      <Spinner className={SPINNER_CLASSES} />
     </div>
   );
   // }

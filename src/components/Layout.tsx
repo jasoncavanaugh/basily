@@ -1,5 +1,4 @@
 import { cn } from "src/utils/cn";
-import { signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 import { ThemeButton } from "./ThemeButton";
 import { ReactNode } from "react";
@@ -9,6 +8,7 @@ import {
   VISUALIZE_ROUTE,
 } from "src/utils/constants";
 import Link from "next/link";
+import { ProfileNav } from "./ProfileNav";
 
 export default function Layout({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -45,9 +45,10 @@ export default function Layout({ children }: { children: ReactNode }) {
             </button>
           </Link>
         </div>
-        <div className="flex items-center justify-end gap-2 lg:gap-4">
-          <ThemeButton />
-          <button
+        {/* <div className="flex items-center justify-end gap-2 lg:gap-4"> */}
+        {/* <ThemeButton /> */}
+        <ProfileNav to_categories={true} />
+        {/* <button
             className={cn(
               "rounded-full bg-squirtle px-3 py-1 text-sm font-semibold text-white shadow-sm shadow-blue-300",
               "hover:brightness-110 dark:bg-rengar md:px-5 md:text-lg"
@@ -55,14 +56,10 @@ export default function Layout({ children }: { children: ReactNode }) {
             onClick={() => void signOut()}
           >
             Log Out
-          </button>
-        </div>
+          </button> */}
+        {/* </div> */}
       </div>
-      {cur_route === EXPENSES_ROUTE ? (
-        <ul className="flex flex-col gap-4">{children}</ul>
-      ) : (
-        <div className="flex h-[95%] flex-col gap-1">{children}</div>
-      )}
+      {children}
     </div>
   );
 }

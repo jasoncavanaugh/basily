@@ -6,6 +6,8 @@ export const VISUALIZE_ROUTE = "/visualize" as const;
 export const SIGN_IN_ROUTE = "/sign-in" as const;
 
 /* TAILWIND */
+export const SPINNER_CLASSES =
+  "border-squirtle dark:border-rengar dark:border-rengar_light h-16 w-16 border-4 border-solid lg:border-8" as const;
 export const BUTTON_HOVER_CLASSES =
   "hover:bg-squirtle_light hover:cursor-pointer hover:bg-opacity-20" as const;
 

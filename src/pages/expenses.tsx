@@ -23,6 +23,7 @@ import {
   RADIX_MODAL_CONTENT_CLASSES,
   RADIX_MODAL_OVERLAY_CLASSES,
   SIGN_IN_ROUTE,
+  SPINNER_CLASSES,
 } from "src/utils/constants";
 import { getServerAuthSession } from "src/server/auth";
 import { GetServerSideProps } from "next";
@@ -30,10 +31,7 @@ import {
   DayWithExpenses,
   ExpenseCategoryWithBaseColor,
 } from "src/server/api/routers/router";
-import { SPINNER_CLASSNAMES } from ".";
-import { TW_COLORS_TO_HEX_MP } from "src/utils/tailwindColorsToHexMp";
 import { DatePickerWithRange } from "src/components/DatePickerWithRange";
-import { subDays } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { get_category_ids_to_names } from "src/utils/getCategoryIdsToNames";
 import { get_category_ids_to_colors } from "src/utils/getCategoryIdsToColors";
@@ -85,22 +83,21 @@ export default function Expenses() {
   if (session.status === "loading" || session.status === "unauthenticated") {
     return (
       <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
-        <Spinner className={SPINNER_CLASSNAMES} />
+        <Spinner className={SPINNER_CLASSES} />
       </div>
     );
   }
-  const filtered_expenses_by_day = filter_over_selected_dates(
-    expense_data_query.data?.days ?? [],
-    date
-  );
+
   return (
     <Layout>
-      <div className="pt-4 px-4">
+      <div className="px-4 pt-4">
         <DatePickerWithRange date={date} set_date={set_date} />
       </div>
-      {expense_data_query.status === "loading" && (
+      <div className="h-4" />
+      <ul className="flex flex-col gap-4">
+        {expense_qry.status === "loading" && (
         <div className="flex h-[95vh] items-center justify-center">
-          <Spinner className={SPINNER_CLASSNAMES} />
+            <Spinner className={SPINNER_CLASSES} />
         </div>
       )}
       {expense_data_query.status === "error" && (

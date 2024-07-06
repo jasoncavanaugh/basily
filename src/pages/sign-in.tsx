@@ -18,8 +18,8 @@ import {
   EXPENSES_ROUTE,
   RADIX_MODAL_CONTENT_CLASSES,
   RADIX_MODAL_OVERLAY_CLASSES,
+  SPINNER_CLASSES,
 } from "src/utils/constants";
-import { SPINNER_CLASSNAMES } from ".";
 import basil_logo_light from "public/basil-logo-light.png";
 import basil_logo_dark from "public/basil-logo-dark.png";
 
@@ -69,7 +69,7 @@ export default function SignIn() {
   if (session.status === "loading" || session.status === "authenticated") {
     return (
       <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
-        <Spinner className={SPINNER_CLASSNAMES} />
+        <Spinner className={SPINNER_CLASSES} />
       </div>
     );
   }
@@ -103,8 +103,8 @@ function BasilPreview() {
   >([]);
   return (
     <div className="thin-scrollbar h-[80%] overflow-scroll px-2 py-4 md:h-[100%] md:w-[80%]">
-      <div className="flex h-[5%] items-center justify-between">
-        <div className="flex gap-1 rounded-lg bg-slate-300 px-1 py-1 dark:bg-leblanc">
+      <div className="flex h-[5%] items-center justify-between pr-4">
+        <div className="flex gap-1 rounded-lg  bg-slate-300 px-1 py-1 dark:bg-leblanc">
           <button
             className={cn(
               "rounded-lg",
@@ -130,7 +130,7 @@ function BasilPreview() {
             Visualize
           </button>
         </div>
-        <ThemeButton />
+        <ThemeButton showText={false} />
       </div>
       {page === "expenses" && (
         <ExpensesPreview

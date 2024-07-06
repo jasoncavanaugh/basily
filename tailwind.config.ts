@@ -10,7 +10,8 @@ export default {
         squirtle: "hsl(200, 80%, 45%)", //<- Primary blue color for light theme
         squirtle_light: "hsl(200, 80%, 65%)",
         charmander: "hsla(200, 20%, 90%, 1)",
-        pikachu: "hsla(0, 6%, 96%, 1)",
+        // pikachu: "hsla(0, 6%, 96%, 1)",
+        pikachu: "hsla(217, 100%, 98%, 1)",
         bulbasaur: "hsla(40, 50%, 98%, 1)",
         //dark -> League of Legends
         rengar: "hsl(200, 80%, 60%)", //<- Primary blue color for dark theme

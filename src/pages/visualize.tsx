@@ -8,14 +8,7 @@ import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
 import { cn } from "src/utils/cn";
 import { BaseColor } from "src/utils/colors";
 import { TW_COLORS_TO_HEX_MP } from "src/utils/tailwindColorsToHexMp";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "src/components/shadcn/Popover";
-import { Button } from "src/components/shadcn/Button";
-import { Calendar } from "src/components/shadcn/Calendar";
-import { SIGN_IN_ROUTE } from "src/utils/constants";
+import { SIGN_IN_ROUTE, SPINNER_CLASSES } from "src/utils/constants";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import Layout from "src/components/Layout";
@@ -23,7 +16,6 @@ import { getServerAuthSession } from "src/server/auth";
 import { GetServerSideProps } from "next";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
-import { SPINNER_CLASSNAMES } from ".";
 import { useWindowDimensions } from "src/utils/useWindowDimensions";
 import { breakpoints } from "src/utils/tailwindBreakpoints";
 import { DatePickerWithRange } from "src/components/DatePickerWithRange";
@@ -73,7 +65,7 @@ export default function Visualize() {
   if (session.status === "loading" || session.status === "unauthenticated") {
     return (
       <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
-        <Spinner className={SPINNER_CLASSNAMES} />
+        <Spinner className={SPINNER_CLASSES} />
       </div>
     );
   }
@@ -81,7 +73,7 @@ export default function Visualize() {
   if (expense_data_qry.status === "loading") {
     return (
       <div className="flex h-[95vh] items-center justify-center">
-        <Spinner className={SPINNER_CLASSNAMES} />
+        <Spinner className={SPINNER_CLASSES} />
       </div>
     );
   }

@@ -203,4 +203,23 @@ export const router = createTRPCRouter({
         },
       });
     }),
+  edit_category: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        new_name: z.string(),
+        new_color: z.enum(BASE_COLORS),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      await ctx.prisma.expenseCategory.update({
+        where: {
+          id: input.id,
+        },
+        data: {
+          name: input.new_name,
+          color: input.new_color,
+        },
+      });
+    }),
 });

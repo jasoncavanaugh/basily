@@ -1,9 +1,15 @@
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { cn } from "src/utils/cn";
 
-//I do not understand how this is interoping with Taiwind... I am not setting the "dark" attribute anywhere in my HTML tree
-export function ThemeButton() {
+export function ThemeButton({
+  className = "",
+  showText,
+}: {
+  className?: string;
+  showText: boolean;
+}) {
   const { theme, setTheme } = useTheme();
 
   //Honestly, this stuff is ridiculous imo. How is this the official way to do things??
@@ -21,15 +27,16 @@ export function ThemeButton() {
         setTheme(theme === "dark" ? "light" : "dark");
       }}
       className={cn(
-        "flex items-center justify-center rounded-full border-2 border-transparent p-2 text-lg text-white outline-none",
-        "hover:bg-pikachu focus-visible:border-gray-300",
-        "dark:text-gray-200 dark:hover:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200",
-        "dark:focus-visible:border-gray-700 dark:focus-visible:text-gray-200"
+        "flex gap-4 rounded-md p-2 hover:cursor-pointer hover:bg-slate-200 dark:hover:bg-jinx",
+        className
       )}
-      title={theme === "dark" ? "Toggle light mode" : "Toggle dark" + " mode"} //TailwindSort having some issues...
     >
-      {theme === "dark" && <DarkThemeIcon />}
-      {theme === "light" && <LightThemeIcon />}
+      {theme === "light" ? (
+        <Moon strokeWidth="0.08rem" className="text-gray-500" />
+      ) : (
+        <Sun strokeWidth="0.08rem" />
+      )}
+      {showText && <p>{theme === "light" ? "Dark Theme" : "Light Theme"}</p>}
     </button>
   );
 }
