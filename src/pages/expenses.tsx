@@ -66,11 +66,6 @@ export default function Expenses() {
 
   const expense_qry = use_expenses_over_date_range(date_range);
 
-  //   {
-  //   from_date: date_to_dmy(date?.from ?? undefined),
-  //   to_date: date_to_dmy(date?.to ?? undefined),
-  // }
-
   useEffect(() => {
     if (session.status === "unauthenticated") {
       router.push(SIGN_IN_ROUTE);
@@ -648,12 +643,22 @@ function AddNewExpenseButtonAndModal({
                     <input
                       name="category"
                       onFocus={() => {
-                        set_is_category_dropdown_open(true);
+                        if (
+                          expense_categories_qry.data &&
+                          expense_categories_qry.data.length > 0 &&
+                          category_text.length === 0
+                        ) {
+                          set_is_category_dropdown_open(true);
+                        }
                       }}
                       value={category_text}
                       onChange={(e) => {
                         set_category_text(e.target.value);
-                        set_is_category_dropdown_open(true);
+                        const is_open =
+                          e.target.value.length > 0 ||
+                          (!!expense_categories_qry.data &&
+                            expense_categories_qry.data.length > 0);
+                        set_is_category_dropdown_open(is_open);
                         // set_is_category_color_selection_disabled(false);
                       }}
                       className="w-full grow rounded border border-slate-400 px-2 py-1 focus:outline-slate-400"

@@ -78,6 +78,7 @@ export const router = createTRPCRouter({
       const days = await ctx.prisma.day.findMany({
         where: {
           year: { lte: to_year, gte: from_year },
+          user_id: ctx.session.user.id,
         },
         include: { expenses: true },
       });
