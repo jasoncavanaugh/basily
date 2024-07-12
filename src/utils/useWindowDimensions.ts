@@ -4,8 +4,8 @@ export function useWindowDimensions() {
   const hasWindow = typeof window !== "undefined";
 
   function getWindowDimensions() {
-    const width = hasWindow ? window.innerWidth : null;
-    const height = hasWindow ? window.innerHeight : null;
+    const width = hasWindow ? window.innerWidth : undefined;
+    const height = hasWindow ? window.innerHeight : undefined;
     return {
       width,
       height,
