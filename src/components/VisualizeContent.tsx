@@ -1,107 +1,28 @@
-import { subDays } from "date-fns";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { DateRange } from "react-day-picker";
-import { Spinner } from "src/components/Spinner";
 import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { DateRange } from "react-day-picker";
+import {
+  DayWithExpenses,
   ExpenseCategoryWithBaseColor,
   GetExpensesOverDateRangeRet,
 } from "src/server/api/routers/router";
-import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
-import { cn } from "src/utils/cn";
-import { BaseColor } from "src/utils/colors";
-import { TW_COLORS_TO_HEX_MP } from "src/utils/tailwindColorsToHexMp";
-import { SIGN_IN_ROUTE, SPINNER_CLASSES } from "src/utils/constants";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/router";
-import Layout from "src/components/Layout";
-import { getServerAuthSession } from "src/server/auth";
-import { GetServerSideProps } from "next";
-import { use_expenses_over_date_range } from "src/utils/useExpenses";
-import { date_to_dmy } from "./expenses";
-import { api } from "src/utils/api";
-import { useCallback, useRef } from "react";
 import { UseExpensesOverDateRangeData } from "src/utils/useExpenses";
 import { useWindowDimensions } from "src/utils/useWindowDimensions";
+import Layout from "./Layout";
+import { DatePickerWithRange } from "./DatePickerWithRange";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { breakpoints } from "src/utils/tailwindBreakpoints";
+import { TW_COLORS_TO_HEX_MP } from "src/utils/tailwindColorsToHexMp";
+import { cn } from "src/utils/cn";
+import { BaseColor } from "src/utils/colors";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
-import { DatePickerWithRange } from "src/components/DatePickerWithRange";
-
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const session = await getServerAuthSession(ctx);
-  return {
-    props: { session },
-  };
-};
-export default function Visualize() {
-  const session = useSession();
-  const router = useRouter();
-
-  const today_date = new Date();
-  const [date, set_date] = useState<DateRange | undefined>({
-    from: subDays(today_date, 7),
-    to: today_date,
-  }); //Default to the past week
-
-  const date_range =
-    date && date?.from && date?.to //if from and to dates are selected...
-      ? { from_date: date_to_dmy(date.from), to_date: date_to_dmy(date.to) } //...send over date range
-      : undefined; //...otherwise not
-
-  const expense_data_qry = use_expenses_over_date_range(date_range);
-  const categories_qry = api.router.get_categories.useQuery();
-  const [selected_categories, set_selected_categories] = useState<
-    Array<string>
-  >(categories_qry.data?.map((c) => c.id) ?? []);
-
-  useEffect(() => {
-    if (session.status === "unauthenticated") {
-      router.push(SIGN_IN_ROUTE);
-    }
-  }, [session.status]);
-  if (session.status === "loading" || session.status === "unauthenticated") {
-    return (
-      <div className="flex h-screen items-center justify-center bg-charmander p-1 dark:bg-khazix md:p-4">
-        <Spinner className={SPINNER_CLASSES} />
-      </div>
-    );
-  }
-
-  if (
-    expense_data_qry.status === "error" ||
-    categories_qry.status === "error"
-  ) {
-    return (
-      <Layout>
-        <div className="flex h-[95vh] items-center justify-center">
-          <h1 className="text-white">
-            Uh oh, there was a problem loading your expenses.
-          </h1>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (
-    expense_data_qry.status === "loading" ||
-    categories_qry.status === "loading"
-  ) {
-    return (
-      <div className="flex h-[95vh] items-center justify-center">
-        <Spinner className={SPINNER_CLASSES} />
-      </div>
-    );
-  }
-
-  return (
-    <VisualizeContent
-      expenses_over_date_range={expense_data_qry.data}
-      date={date}
-      set_date={set_date}
-      all_categories={categories_qry.data}
-    />
-  );
-}
+import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
 
 export function VisualizeContent({
   expenses_over_date_range,
@@ -116,16 +37,35 @@ export function VisualizeContent({
 }) {
   //What a hack...
   const [chart_idx, set_chart_idx] = useState(0);
+  const [is_active, set_is_active] = useState(true);
+  const onAnimationStart = useCallback(() => {
+    setTimeout(() => {
+      set_is_active(false);
+    }, 1500);
+  }, []);
+  const [focus_count, set_focus_count] = useState(0);
   const windowDimensions = useWindowDimensions();
   const [selected_categories, set_selected_categories] = useState(
     all_categories.map((c) => c.id)
   );
+  const o = usePrevious(focus_count);
   const p = usePrevious(selected_categories.length);
-  useEffect(() => {
-    if (selected_categories.length === p) {
-      set_chart_idx(Math.floor(Math.random() * 10));
-    }
-  });
+  //   useEffect(() => {
+  //     console.log("fc", focus_count, o);
+  //     console.log("sc", selected_categories.length, p);
+  //     if (selected_categories.length === p && focus_count !== o + 1) {
+  //       set_chart_idx(Math.floor(Math.random() * 10));
+  //     }
+  //   });
+  //   useEffect(() => {
+  //     function onFocus() {
+  //       set_focus_count((prev) => prev + 1);
+  //     }
+  //     window.addEventListener("focus", onFocus);
+  //     return () => {
+  //       window.removeEventListener("focus", onFocus);
+  //     };
+  //   }, []);
   const filtered = filter_data_over_date_range(expenses_over_date_range, date);
   const intermediate = get_data_intermediate(filtered, selected_categories);
   const pie_chart_data = get_pie_chart_data(intermediate, selected_categories);
@@ -142,7 +82,10 @@ export function VisualizeContent({
             <ResponsiveContainer width="100%" height="100%">
               <PieChart width={100} height={100}>
                 <Pie
-                  key={chart_idx}
+                  onAnimationStart={onAnimationStart}
+                  isAnimationActive={is_active}
+                  //   key={chart_idx}
+                  //   key={Math.floor(Math.random() * 10)}
                   animationDuration={800}
                   animationEasing="ease-in-out"
                   data={pie_chart_data.filter((pcd) =>
