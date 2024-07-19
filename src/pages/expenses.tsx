@@ -609,12 +609,7 @@ function AddNewExpenseButtonAndModal({
                   )}
                 ></button>
                 {is_color_selection_open && (
-                  <div
-                    className={cn(
-                      "flex grow flex-wrap items-center rounded-lg md:justify-between"
-                      // "md:h-[200px] md:w-[150px] md:flex-col md:gap-1"
-                    )}
-                  >
+                  <div className="flex grow flex-wrap items-center rounded-lg md:justify-between">
                     {BASE_COLORS.map((option) => {
                       return (
                         <button
@@ -731,9 +726,6 @@ function AddNewExpenseButtonAndModal({
                     "hover:brightness-110 lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
                   )}
                   type="button"
-                  // onClick={() => {
-                  //   set_is_modal_open(false);
-                  // }}
                 >
                   Cancel
                 </button>
