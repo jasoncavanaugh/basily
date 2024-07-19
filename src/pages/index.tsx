@@ -1,4 +1,4 @@
-import { type NextPage } from "next";
+import { GetServerSideProps, type NextPage } from "next";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
@@ -8,7 +8,14 @@ import {
   SPINNER_CLASSES,
 } from "src/utils/constants";
 import { Spinner } from "src/components/Spinner";
+import { getServerAuthSession } from "src/server/auth";
 
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const session = await getServerAuthSession(ctx);
+  return {
+    props: { session },
+  };
+};
 const Home: NextPage = () => {
   const session = useSession();
   const router = useRouter();
