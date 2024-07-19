@@ -45,19 +45,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             </button>
           </Link>
         </div>
-        {/* <div className="flex items-center justify-end gap-2 lg:gap-4"> */}
-        {/* <ThemeButton /> */}
         <ProfileNav to_categories={true} />
-        {/* <button
-            className={cn(
-              "rounded-full bg-squirtle px-3 py-1 text-sm font-semibold text-white shadow-sm shadow-blue-300",
-              "hover:brightness-110 dark:bg-rengar md:px-5 md:text-lg"
-            )}
-            onClick={() => void signOut()}
-          >
-            Log Out
-          </button> */}
-        {/* </div> */}
       </div>
       {children}
     </div>

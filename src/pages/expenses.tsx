@@ -322,7 +322,7 @@ function ExpenseButton({
               TW_COLORS_MP["bg"][category_color][500],
               "rounded-full px-2 text-white hover:cursor-pointer hover:opacity-80 dark:hover:opacity-100 dark:hover:brightness-110"
             )}
-            // title="Delete expense"
+            title="Delete expense"
           >
             {cents_to_dollars_display(expense.amount)}
           </button>
@@ -437,9 +437,7 @@ function AddNewExpenseButtonAndModal({
   const [is_color_selection_open, set_is_color_selection_open] =
     useState(false);
 
-  // const expense_data_qry = use_expenses();
   const expense_categories_qry = api.router.get_categories.useQuery();
-  const a = expense_categories_qry.data;
 
   const create_expense_mtn = api.router.create_expense.useMutation({
     onSuccess: () => {
@@ -477,7 +475,9 @@ function AddNewExpenseButtonAndModal({
       });
     } else {
       const id = expense_categories.find((c) => c.name === category_text)?.id;
-      if (!id) throw new Error("id undefined");
+      if (!id) {
+        throw new Error("id undefined");
+      }
       create_expense_mtn.mutate({
         category_id: id,
         amount: amount,
