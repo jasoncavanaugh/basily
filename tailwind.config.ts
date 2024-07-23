@@ -12,6 +12,7 @@ export default {
         charmander: "hsla(200, 20%, 90%, 1)",
         // pikachu: "hsla(0, 6%, 96%, 1)",
         pikachu: "hsla(217, 100%, 98%, 1)",
+        onyx: "hsl(210, 27%, 96%)",
         bulbasaur: "hsla(40, 50%, 98%, 1)",
         //dark -> League of Legends
         rengar: "hsl(200, 80%, 60%)", //<- Primary blue color for dark theme
@@ -25,3 +26,4 @@ export default {
   },
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;
+//#f1f4f7

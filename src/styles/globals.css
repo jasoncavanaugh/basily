@@ -72,6 +72,29 @@ body {
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+.day-picker-row > .day-picker-cell:first-child > .day-picker-day.day-picker-day-selected:not(.day-picker-day-range-end, .day-picker-day-range-start) {
+  border-radius: 0.375rem 0 0 0.375rem;
+}
+
+.day-picker-row > .day-picker-cell:last-child > .day-picker-day.day-picker-day-selected:not(.day-picker-day-range-start, .day-picker-day-range-end) {
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+.day-picker-day.day-picker-day-selected.day-picker-day-range-end,
+.day-picker-day.day-picker-day-selected.day-picker-day-range-start {
+  border-radius: 0.375rem;
+}
+
+.day-picker-cell:has(.day-picker-day-range-start) {
+  border-radius: 0.375rem 0 0 0.375rem;
+}
+.day-picker-cell:has(.day-picker-day-range-end) {
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+.day-picker-cell:has(.day-picker-day-range-start.day-picker-day-range-end) {
+  border-radius: 0.375rem; 
+}
+
 /* .first\:\[\&\:has\(\[aria-selected\]\)\]\:rounded-l-md:has([aria-selected]):first-child { */
 /*   border-top-left-radius: calc(var(--radius) - 2px); */
 /*   border-bottom-left-radius: calc(var(--radius) - 2px); */
