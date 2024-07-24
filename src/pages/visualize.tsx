@@ -54,7 +54,6 @@ const MemoizedPie = memo(
         <PieChart width={100} height={100}>
           <Pie
             animationDuration={800}
-            // animationEasing="ease-in-out"
             data={pie_chart_data.filter((pcd) =>
               selected_categories.includes(pcd.category_id)
             )}
