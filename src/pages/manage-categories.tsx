@@ -92,7 +92,7 @@ function ManageCategoriesDisplay({
     !has_changes || !is_category_text_valid;
   return (
     <div className="flex h-[85vh] flex-col flex-col-reverse justify-end md:flex-row md:justify-center md:gap-4">
-      <div className="h-[70%] overflow-scroll md:h-[100%] md:w-[15%]">
+      <div className="h-[70%] overflow-auto md:h-[100%] md:w-[15%]">
         <ul className="mr-2 flex flex-col gap-2 md:mr-4">
           {categories.map((cate, i) => {
             return (

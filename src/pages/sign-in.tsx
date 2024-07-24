@@ -199,7 +199,7 @@ function ExpensesPreview({
 }) {
   const today = new Date();
   return (
-    <div className="relative h-[90%] overflow-scroll">
+    <div className="relative h-[90%] overflow-auto">
       <ul className="h-[95%]">
         {expenses_by_day.length === 0 && (
           <div className="flex h-[100%] items-center justify-center">
@@ -385,7 +385,7 @@ function VisualizePreview({
         <ul
           className={cn(
             "thin-scrollbar mr-4 flex  w-[100%] flex-col dark:bg-khazix",
-            "min-h-0 grow gap-2 rounded pl-5 pr-2 md:m-0 md:overflow-scroll md:px-4 md:py-0"
+            "min-h-0 grow gap-2 rounded pl-5 pr-2 md:m-0 md:overflow-auto md:px-4 md:py-0"
           )}
         >
           {pie_chart_data.map((datum) => {

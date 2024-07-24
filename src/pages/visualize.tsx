@@ -258,7 +258,7 @@ export function VisualizeContent({
             <ul
               className={cn(
                 "mr-4 flex w-[100%] flex-col dark:bg-khazix md:h-[95%]",
-                "min-h-0 grow gap-2 rounded pl-5 pr-2 md:m-0 md:overflow-scroll md:px-4 md:py-0"
+                "min-h-0 grow gap-2 rounded pl-5 pr-2 md:m-0 md:overflow-auto md:px-4 md:py-0"
               )}
             >
               {pie_chart_data
