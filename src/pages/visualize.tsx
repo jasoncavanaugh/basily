@@ -39,9 +39,7 @@ const MemoizedPie = memo(
     pie_chart_data,
     selected_categories,
     window_width,
-  }: // chart_idx,
-  // chart_idx,
-  {
+  }: {
     pie_chart_data: Array<{
       category_id: string;
       value: number;
@@ -50,34 +48,11 @@ const MemoizedPie = memo(
     }>;
     selected_categories: Array<string>;
     window_width?: number;
-    // chart_idx: number;
   }) => {
-    const nci = Math.floor(Math.random() * 100);
-    const pci = usePrevious(nci);
-    let ci = nci;
-    const psc = usePrevious(selected_categories.length);
-    if (selected_categories.length !== psc) {
-      ci = pci;
-    }
-    console.log({ nci, pci, ci });
-
-    // const [chart_idx, set_chart_idx] = useState(0);
-    // const p = usePrevious(selected_categories.length);
-    // const c = usePrevious(chart_idx);
-    // let new_i = chart_idx;
-    // if ()
-    // useEffect(() => {
-    //   if (selected_categories.length === p) {
-    //     set_chart_idx(Math.floor(Math.random() * 10));
-    //   }
-    // });
-    // const windowDimensions = useWindowDimensions();
-    console.log("MemoizedPie");
     return (
       <ResponsiveContainer width="100%" height="100%">
         <PieChart width={100} height={100}>
           <Pie
-            // key={ci}
             animationDuration={800}
             animationEasing="ease-in-out"
             data={pie_chart_data.filter((pcd) =>
@@ -135,26 +110,16 @@ const MemoizedPie = memo(
     );
   },
   (prev, next) => {
-    console.log("Here");
-    // return true;
-    console.log("prev", prev, "next", next);
-    // if (prev.chart_idx !== next.chart_idx) {
-    //   return false;
-    // }
     const same_window_width = prev.window_width === next.window_width;
     if (!same_window_width) {
-      console.log("wut");
       return false;
     }
-    console.log("Here2");
     const pdsorted = [...prev.pie_chart_data].sort();
     const ndsorted = [...next.pie_chart_data].sort();
     let same_length = pdsorted.length === ndsorted.length;
     if (!same_length) {
       return false;
     }
-    console.log("Here3");
-    console.log("pdsorted", pdsorted, "ndsorted", ndsorted);
     for (let i = 0; i < pdsorted.length; i++) {
       const d = pdsorted[i]!;
       const o = ndsorted[i]!;
@@ -162,28 +127,22 @@ const MemoizedPie = memo(
         d.category_id !== o.category_id ||
         d.color !== o.color ||
         d.name !== o.name
-        // d.value !== o.value
       ) {
-        console.log("d", d, "o", o);
         return false;
       }
     }
     const pcsorted = [...prev.selected_categories].sort();
-    console.log("pcsorted", pcsorted);
     const ncsorted = [...next.selected_categories].sort();
-    console.log("ncsorted", ncsorted);
     same_length = pcsorted.length === ncsorted.length;
     if (!same_length) {
       return false;
     }
 
-    console.log("Here4");
     for (let i = 0; i < pcsorted.length; i++) {
       if (pcsorted[i] !== ncsorted[i]) {
         return false;
       }
     }
-    console.log("Here5");
     return true;
   }
 );
@@ -268,18 +227,10 @@ export function VisualizeContent({
   set_date: Dispatch<SetStateAction<DateRange | undefined>>;
   all_categories: Array<ExpenseCategoryWithBaseColor>;
 }) {
-  //What a hack...
-  const [chart_idx, set_chart_idx] = useState(0);
   const windowDimensions = useWindowDimensions();
   const [selected_categories, set_selected_categories] = useState(
     all_categories.map((c) => c.id)
   );
-  const p = usePrevious(selected_categories.length);
-  useEffect(() => {
-    if (selected_categories.length === p) {
-      set_chart_idx(Math.floor(Math.random() * 10));
-    }
-  });
   const filtered = filter_data_over_date_range(expenses_over_date_range, date);
   const intermediate = get_data_intermediate(filtered, selected_categories);
   const pie_chart_data = get_pie_chart_data(intermediate, selected_categories);
@@ -297,7 +248,6 @@ export function VisualizeContent({
               pie_chart_data={pie_chart_data}
               selected_categories={selected_categories}
               window_width={windowDimensions.width}
-              // chart_idx={chart_idx}
             />
           </div>
           <div className="w-[100%] gap-1 pr-2 md:flex md:h-[100%] md:w-[50%] md:flex-col md:p-0">
@@ -307,7 +257,7 @@ export function VisualizeContent({
             <div className="h-2 md:h-0" />
             <ul
               className={cn(
-                "thin-scrollbar mr-4 flex w-[100%] flex-col dark:bg-khazix md:h-[95%]",
+                "mr-4 flex w-[100%] flex-col dark:bg-khazix md:h-[95%]",
                 "min-h-0 grow gap-2 rounded pl-5 pr-2 md:m-0 md:overflow-scroll md:px-4 md:py-0"
               )}
             >
@@ -368,14 +318,6 @@ export function VisualizeContent({
       </div>
     </Layout>
   );
-}
-
-function usePrevious(value: number) {
-  const ref = useRef<number>(0);
-  useEffect(() => {
-    ref.current = value; //assign the value of ref to the argument
-  }, [value]); //this code will run when the value of 'value' changes
-  return ref.current; //in the end, return the current ref value.
 }
 
 //For now...
