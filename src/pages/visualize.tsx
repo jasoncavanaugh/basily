@@ -147,8 +147,8 @@ const MemoizedPie = memo(
       return false;
     }
     console.log("Here2");
-    const pdsorted = prev.pie_chart_data.toSorted();
-    const ndsorted = next.pie_chart_data.toSorted();
+    const pdsorted = [...prev.pie_chart_data].sort();
+    const ndsorted = [...next.pie_chart_data].sort();
     let same_length = pdsorted.length === ndsorted.length;
     if (!same_length) {
       return false;
