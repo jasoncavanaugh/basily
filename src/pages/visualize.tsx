@@ -1,5 +1,5 @@
 import { subDays } from "date-fns";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, memo, useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { Spinner } from "src/components/Spinner";
 import {
@@ -33,6 +33,160 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     props: { session },
   };
 };
+
+const MemoizedPie = memo(
+  ({
+    pie_chart_data,
+    selected_categories,
+    window_width,
+  }: // chart_idx,
+  // chart_idx,
+  {
+    pie_chart_data: Array<{
+      category_id: string;
+      value: number;
+      name: string;
+      color: BaseColor;
+    }>;
+    selected_categories: Array<string>;
+    window_width?: number;
+    // chart_idx: number;
+  }) => {
+    const nci = Math.floor(Math.random() * 100);
+    const pci = usePrevious(nci);
+    let ci = nci;
+    const psc = usePrevious(selected_categories.length);
+    if (selected_categories.length !== psc) {
+      ci = pci;
+    }
+    console.log({ nci, pci, ci });
+
+    // const [chart_idx, set_chart_idx] = useState(0);
+    // const p = usePrevious(selected_categories.length);
+    // const c = usePrevious(chart_idx);
+    // let new_i = chart_idx;
+    // if ()
+    // useEffect(() => {
+    //   if (selected_categories.length === p) {
+    //     set_chart_idx(Math.floor(Math.random() * 10));
+    //   }
+    // });
+    // const windowDimensions = useWindowDimensions();
+    console.log("MemoizedPie");
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart width={100} height={100}>
+          <Pie
+            // key={ci}
+            animationDuration={800}
+            animationEasing="ease-in-out"
+            data={pie_chart_data.filter((pcd) =>
+              selected_categories.includes(pcd.category_id)
+            )}
+            innerRadius={
+              window_width && window_width <= breakpoints["md"] ? 80 : 160
+            }
+            outerRadius={
+              window_width && window_width <= breakpoints["md"] ? 120 : 220
+            }
+            paddingAngle={2}
+            dataKey="value"
+          >
+            {pie_chart_data
+              .filter((pcd) => selected_categories.includes(pcd.category_id))
+              .map((datum, i) => {
+                return (
+                  <Cell
+                    key={`${datum.name}-${i}`}
+                    fill={TW_COLORS_TO_HEX_MP[datum.color]["500"]}
+                    stroke="none"
+                    className="hover:brightness-125 focus:outline-none focus:brightness-125"
+                  />
+                );
+              })}
+          </Pie>
+          <Tooltip
+            wrapperClassName="bg-red-500 p-0"
+            contentStyle={{
+              fontStyle: "italic",
+              backgroundColor: "blue",
+            }}
+            content={(v) => {
+              const stuff = v.payload ? v.payload[0] : null;
+              if (!stuff) {
+                return null;
+              }
+              const col = stuff.payload.color as BaseColor;
+              return (
+                <div
+                  className={cn(
+                    "rounded-lg px-3 py-2 font-semibold",
+                    TW_COLORS_MP["text"][col]["700"],
+                    TW_COLORS_MP["bg"][col]["200"]
+                  )}
+                >
+                  {stuff.name}
+                </div>
+              );
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    );
+  },
+  (prev, next) => {
+    console.log("Here");
+    // return true;
+    console.log("prev", prev, "next", next);
+    // if (prev.chart_idx !== next.chart_idx) {
+    //   return false;
+    // }
+    const same_window_width = prev.window_width === next.window_width;
+    if (!same_window_width) {
+      console.log("wut");
+      return false;
+    }
+    console.log("Here2");
+    const pdsorted = prev.pie_chart_data.toSorted();
+    const ndsorted = next.pie_chart_data.toSorted();
+    let same_length = pdsorted.length === ndsorted.length;
+    if (!same_length) {
+      return false;
+    }
+    console.log("Here3");
+    console.log("pdsorted", pdsorted, "ndsorted", ndsorted);
+    for (let i = 0; i < pdsorted.length; i++) {
+      const d = pdsorted[i]!;
+      const o = ndsorted[i]!;
+      if (
+        d.category_id !== o.category_id ||
+        d.color !== o.color ||
+        d.name !== o.name
+        // d.value !== o.value
+      ) {
+        console.log("d", d, "o", o);
+        return false;
+      }
+    }
+    const pcsorted = prev.selected_categories.toSorted();
+    console.log("pcsorted", pcsorted);
+    const ncsorted = next.selected_categories.toSorted();
+    console.log("ncsorted", ncsorted);
+    same_length = pcsorted.length === ncsorted.length;
+    if (!same_length) {
+      return false;
+    }
+
+    console.log("Here4");
+    for (let i = 0; i < pcsorted.length; i++) {
+      if (pcsorted[i] !== ncsorted[i]) {
+        return false;
+      }
+    }
+    console.log("Here5");
+    return true;
+  }
+);
 export default function Visualize() {
   const session = useSession();
   const router = useRouter();
@@ -139,72 +293,12 @@ export function VisualizeContent({
         </div>
         <div className="flex h-[83vh] flex-col items-center md:h-[80vh] md:flex-row md:items-start">
           <div className="min-h-[50%] w-[92%] rounded-md px-4 dark:bg-khazix md:h-[100%] md:w-[50%]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart width={100} height={100}>
-                <Pie
-                  key={chart_idx}
-                  animationDuration={800}
-                  animationEasing="ease-in-out"
-                  data={pie_chart_data.filter((pcd) =>
-                    selected_categories.includes(pcd.category_id)
-                  )}
-                  innerRadius={
-                    windowDimensions.width &&
-                    windowDimensions.width <= breakpoints["md"]
-                      ? 80
-                      : 160
-                  }
-                  outerRadius={
-                    windowDimensions.width &&
-                    windowDimensions.width <= breakpoints["md"]
-                      ? 120
-                      : 220
-                  }
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {pie_chart_data
-                    .filter((pcd) =>
-                      selected_categories.includes(pcd.category_id)
-                    )
-                    .map((datum, i) => {
-                      return (
-                        <Cell
-                          key={`${datum.name}-${i}`}
-                          fill={TW_COLORS_TO_HEX_MP[datum.color]["500"]}
-                          stroke="none"
-                          className="hover:brightness-125 focus:outline-none focus:brightness-125"
-                        />
-                      );
-                    })}
-                </Pie>
-                <Tooltip
-                  wrapperClassName="bg-red-500 p-0"
-                  contentStyle={{
-                    fontStyle: "italic",
-                    backgroundColor: "blue",
-                  }}
-                  content={(v) => {
-                    const stuff = v.payload ? v.payload[0] : null;
-                    if (!stuff) {
-                      return null;
-                    }
-                    const col = stuff.payload.color as BaseColor;
-                    return (
-                      <div
-                        className={cn(
-                          "rounded-lg px-3 py-2 font-semibold",
-                          TW_COLORS_MP["text"][col]["700"],
-                          TW_COLORS_MP["bg"][col]["200"]
-                        )}
-                      >
-                        {stuff.name}
-                      </div>
-                    );
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <MemoizedPie
+              pie_chart_data={pie_chart_data}
+              selected_categories={selected_categories}
+              window_width={windowDimensions.width}
+              // chart_idx={chart_idx}
+            />
           </div>
           <div className="w-[100%] gap-1 pr-2 md:flex md:h-[100%] md:w-[50%] md:flex-col md:p-0">
             <div className="ml-2 px-4 text-xl font-bold text-squirtle dark:text-rengar md:h-[5%]">
