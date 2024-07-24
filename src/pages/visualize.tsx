@@ -168,9 +168,9 @@ const MemoizedPie = memo(
         return false;
       }
     }
-    const pcsorted = prev.selected_categories.toSorted();
+    const pcsorted = [...prev.selected_categories].sort();
     console.log("pcsorted", pcsorted);
-    const ncsorted = next.selected_categories.toSorted();
+    const ncsorted = [...next.selected_categories].sort();
     console.log("ncsorted", ncsorted);
     same_length = pcsorted.length === ncsorted.length;
     if (!same_length) {
