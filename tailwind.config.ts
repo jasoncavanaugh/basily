@@ -22,6 +22,9 @@ export default {
         shaco: "hsla(277, 33%, 25%, 1)",
         jinx: "hsla(277, 35%, 8%, 1)",
       },
+      animation: {
+        "spin-fast": "spin 0.65s linear infinite",
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

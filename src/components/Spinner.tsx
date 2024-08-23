@@ -5,7 +5,7 @@ export function Spinner({ className = "" }: { className?: string }) {
     <div
       className={cn(
         className,
-        "animate-spin rounded-full border-t-transparent dark:border-t-transparent"
+        "animate-spin-fast rounded-full border-t-transparent dark:border-t-transparent"
       )}
     />
   );
