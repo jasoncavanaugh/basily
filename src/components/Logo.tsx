@@ -1,7 +1,6 @@
 import { useTheme } from "next-themes";
 import Image from "next/image";
-import basil_logo_light from "public/basil-logo-light.png";
-import basil_logo_dark from "public/basil-logo-dark.png";
+import basil_logo from "public/logo.png";
 import { useEffect, useState } from "react";
 
 export function Logo() {
@@ -17,10 +16,9 @@ export function Logo() {
 function BasilLogo() {
   const { theme } = useTheme();
   return (
-    <Image
-      className="w-40 md:w-72"
-      src={theme === "dark" ? basil_logo_dark : basil_logo_light}
-      alt="Basil logo"
-    />
+    <div className="flex items-center gap-2">
+      <Image className="mt-2 w-12" src={basil_logo} alt="Basil logo" />
+      <h1 className="text-6xl font-medium tracking-wide">BASILY</h1>
+    </div>
   );
 }
