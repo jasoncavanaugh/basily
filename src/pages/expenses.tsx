@@ -343,7 +343,7 @@ function ExpenseButton({
               delete_expense_mutn.mutate({ id: expense.id });
             }}
           >
-            <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-slate-700 dark:text-white">
+            <RadixModal.Title className="whitespace-nowrap text-2xl font-semibold text-slate-700 dark:text-white">
               Delete Expense
             </RadixModal.Title>
             <div className="h-1 lg:h-4" />
@@ -351,9 +351,13 @@ function ExpenseButton({
               Are you sure you wish to delete this expense?
             </div>
             <div className="h-8" />
-            <div className="flex justify-center gap-5">
+            <div className="flex justify-end gap-2">
               <button
-                className="h-[2rem] w-[4.5rem] rounded-full bg-slate-500 text-xs font-semibold text-white hover:brightness-110 lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
+                // className="h-[2rem] w-[4.5rem] rounded-full bg-slate-500 text-xs font-semibold text-white hover:brightness-110 lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
+                className={cn(
+                  "h-[2rem] w-[4.5rem] rounded-full bg-slate-500 text-xs font-medium text-white",
+                  "transition-colors hover:brightness-110 lg:h-[2.5rem] lg:w-[6rem] lg:text-base"
+                )}
                 type="button"
                 onClick={() => set_is_modal_open(false)}
               >
@@ -361,7 +365,9 @@ function ExpenseButton({
               </button>
               <button
                 className={cn(
-                  "flex w-[4.5rem] items-center justify-center rounded-full bg-red-500 text-xs font-semibold text-white lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
+                  "h-[2rem] w-[4.5rem] rounded-full bg-red-500 text-xs font-medium text-white",
+                  "flex items-center justify-center transition-colors hover:brightness-110 lg:h-[2.5rem] lg:w-[6rem] lg:text-base"
+                  // "flex w-[4.5rem] items-center justify-center rounded-full bg-red-500 text-xs font-semibold text-white lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
                 )}
                 type="submit"
               >
@@ -371,6 +377,7 @@ function ExpenseButton({
                 {delete_expense_mutn.status !== "loading" && "Delete"}
               </button>
             </div>
+            <div className="h-2" />
           </form>
         </RadixModal.Content>
       </RadixModal.Portal>
@@ -542,7 +549,7 @@ function AddNewExpenseButtonAndModal({
               handle_create_expense(expense_categories_qry.data!);
             }}
           >
-            <RadixModal.Title className="whitespace-nowrap text-3xl font-bold text-slate-700 dark:text-white">
+            <RadixModal.Title className="whitespace-nowrap text-2xl font-semibold text-slate-700 dark:text-white">
               Add Expense
             </RadixModal.Title>
             <div className="h-1 lg:h-4" />
@@ -717,13 +724,13 @@ function AddNewExpenseButtonAndModal({
                 )}
               </div>
             </div>
-            <div className="h-8" />
-            <div className="flex justify-center gap-5">
+            <div className="h-4" />
+            <div className="flex justify-end gap-3">
               <RadixModal.Close asChild>
                 <button
                   className={cn(
-                    "h-[2rem] w-[4.5rem] rounded-full bg-slate-500 text-xs font-semibold text-white",
-                    "hover:brightness-110 lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
+                    "h-[2rem] w-[4.5rem] rounded-full bg-slate-500 text-xs font-medium text-white",
+                    "transition-colors hover:brightness-110 lg:h-[2.5rem] lg:w-[6rem] lg:text-base"
                   )}
                   type="button"
                 >
@@ -732,7 +739,7 @@ function AddNewExpenseButtonAndModal({
               </RadixModal.Close>
               <button
                 className={cn(
-                  "flex w-[4.5rem] items-center justify-center rounded-full bg-squirtle text-xs font-semibold text-white dark:bg-rengar lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold",
+                  "flex h-[2rem] w-[4.5rem] items-center justify-center rounded-full bg-squirtle text-xs font-medium text-white dark:bg-rengar lg:h-[2.5rem] lg:w-[6rem] lg:text-base",
                   is_create_expense_button_disabled
                     ? "opacity-50"
                     : "hover:cursor-pointer hover:brightness-110"
@@ -746,6 +753,7 @@ function AddNewExpenseButtonAndModal({
                 )}
               </button>
             </div>
+            <div className="h-2" />
           </form>
         </RadixModal.Content>
       </RadixModal.Portal>
