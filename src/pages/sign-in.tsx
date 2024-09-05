@@ -814,12 +814,12 @@ function AddNewExpenseButtonAndModal({
               </div>
             </div>
             <div className="h-8" />
-            <div className="flex justify-center gap-5">
+            <div className="flex justify-end gap-3">
               <RadixModal.Close asChild>
                 <button
                   className={cn(
-                    "h-[2rem] w-[4.5rem] rounded-full bg-slate-500 text-xs font-semibold text-white",
-                    "hover:brightness-110 lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold"
+                    "h-[2rem] w-[4.5rem] rounded-full bg-slate-500 text-xs font-medium text-white",
+                    "transition-colors hover:brightness-110 lg:h-[2.5rem] lg:w-[6rem] lg:text-base"
                   )}
                   type="button"
                 >
@@ -828,7 +828,7 @@ function AddNewExpenseButtonAndModal({
               </RadixModal.Close>
               <button
                 className={cn(
-                  "flex w-[4.5rem] items-center justify-center rounded-full bg-squirtle text-xs font-semibold text-white dark:bg-rengar lg:h-[3rem] lg:w-[7rem] lg:text-base lg:font-bold",
+                  "flex h-[2rem] w-[4.5rem] items-center justify-center rounded-full bg-squirtle text-xs font-medium text-white dark:bg-rengar lg:h-[2.5rem] lg:w-[6rem] lg:text-base",
                   is_create_expense_button_disabled
                     ? "opacity-50"
                     : "hover:cursor-pointer hover:brightness-110"
