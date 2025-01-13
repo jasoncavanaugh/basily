@@ -192,6 +192,9 @@ export default function Visualize() {
         JSON.stringify(new_date)
       );
     }
+    if (!new_date) {
+      localStorage.removeItem(VISUALIZE_DATE_RANGE_LOCAL_STORAGE_KEY);
+    }
     set_date(new_date);
   }
 

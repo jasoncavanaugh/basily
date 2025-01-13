@@ -34,6 +34,7 @@ import { DateRange } from "react-day-picker";
 import { get_category_ids_to_names } from "src/utils/getCategoryIdsToNames";
 import { get_category_ids_to_colors } from "src/utils/getCategoryIdsToColors";
 import { getDayName } from "./sign-in";
+import { z } from "zod";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getServerAuthSession(ctx);
@@ -49,15 +50,54 @@ export function date_to_dmy(date: Date): DMY {
     day: date.getDate(),
   };
 }
+const EXPENSES_DATE_RANGE_LOCAL_STORAGE_KEY =
+  "expenses_page_date_range" as const;
+const DateRangeSchema = z.object({
+  from: z.string().datetime(),
+  to: z.string().datetime(),
+});
+function get_initial_date_range(): DateRange | undefined {
+  const hasWindow = typeof window !== "undefined";
+  if (!hasWindow) {
+    return undefined;
+  }
+  const local_storage_date_range_str = localStorage.getItem(
+    EXPENSES_DATE_RANGE_LOCAL_STORAGE_KEY
+  );
+  if (local_storage_date_range_str) {
+    const parsed = DateRangeSchema.safeParse(
+      JSON.parse(local_storage_date_range_str)
+    );
+    if (parsed.success) {
+      return {
+        from: new Date(parsed.data.from),
+        to: new Date(parsed.data.to),
+      };
+    }
+  }
+  return undefined;
+}
 export default function Expenses() {
   const api_ctx = api.useContext();
   const session = useSession();
   const router = useRouter();
   const today = new Date();
-  const [date, set_date] = useState<DateRange | undefined>({
-    from: undefined,
-    to: undefined,
-  });
+  const [client, set_client] = useState(false);
+  const [date, set_date] = useState<DateRange | undefined>(
+    get_initial_date_range()
+  );
+  function set_date_with_local_storage(new_date: DateRange | undefined) {
+    if (new_date && new_date.from && new_date.to) {
+      localStorage.setItem(
+        EXPENSES_DATE_RANGE_LOCAL_STORAGE_KEY,
+        JSON.stringify(new_date)
+      );
+    }
+    if (!new_date) {
+      localStorage.removeItem(EXPENSES_DATE_RANGE_LOCAL_STORAGE_KEY);
+    }
+    set_date(new_date);
+  }
 
   const date_range =
     date && date?.from && date?.to //if from and to dates are selected...
@@ -67,10 +107,16 @@ export default function Expenses() {
   const expense_qry = use_expenses_over_date_range(date_range);
 
   useEffect(() => {
+    set_client(true);
+  }, []);
+  useEffect(() => {
     if (session.status === "unauthenticated") {
       router.push(SIGN_IN_ROUTE);
     }
   }, [session.status]);
+  if (!client) {
+    return undefined;
+  }
 
   if (session.status === "loading" || session.status === "unauthenticated") {
     return (
@@ -83,7 +129,10 @@ export default function Expenses() {
   return (
     <Layout>
       <div className="px-4 pt-4">
-        <DatePickerWithRange date={date} set_date={set_date} />
+        <DatePickerWithRange
+          date={date}
+          set_date={set_date_with_local_storage}
+        />
       </div>
       <div className="h-4" />
       <ul className="flex flex-col gap-4">
