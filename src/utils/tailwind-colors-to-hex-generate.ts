@@ -6,8 +6,8 @@ import {
   BaseColorPrefixes,
   BaseColor,
   ColorValue,
-} from "./colors";
-import { colors } from "./jason";
+} from "./tailwind-colors";
+import { colors } from "./tailwind-colors-to-hex";
 import * as fs from "fs";
 //This is for generating the map that we use to access Tailwind colors
 const mp: {

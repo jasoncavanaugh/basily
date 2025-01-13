@@ -5,7 +5,7 @@ import {
   BaseColorPrefixes,
   BaseColor,
   ColorValue,
-} from "./colors";
+} from "./tailwind-colors";
 import * as fs from "fs";
 //This is for generating the map that we use to access Tailwind colors
 const mp: {

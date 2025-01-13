@@ -1,4 +1,4 @@
-import { BASE_COLORS, BaseColor } from "src/utils/colors";
+import { BASE_COLORS, BaseColor } from "src/utils/tailwind-colors";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { Expense, ExpenseCategory, Day } from "@prisma/client";

@@ -8,7 +8,7 @@ import {
 } from "src/server/api/routers/router";
 import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
 import { cn } from "src/utils/cn";
-import { BaseColor } from "src/utils/colors";
+import { BaseColor } from "src/utils/tailwind-colors";
 import { TW_COLORS_TO_HEX_MP } from "src/utils/tailwindColorsToHexMp";
 import { SIGN_IN_ROUTE, SPINNER_CLASSES } from "src/utils/constants";
 import { useSession } from "next-auth/react";

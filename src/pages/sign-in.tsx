@@ -1,6 +1,6 @@
 import { GetServerSideProps } from "next";
 import * as RadixModal from "@radix-ui/react-dialog";
-import { BASE_COLORS, BaseColor } from "src/utils/colors";
+import { BASE_COLORS, BaseColor } from "src/utils/tailwind-colors";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import {

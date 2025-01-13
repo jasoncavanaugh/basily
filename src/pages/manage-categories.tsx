@@ -5,7 +5,7 @@ import { ProfileNav } from "src/components/ProfileNav";
 import { ExpenseCategoryWithBaseColor } from "src/server/api/routers/router";
 import { api } from "src/utils/api";
 import { cn } from "src/utils/cn";
-import { BASE_COLORS, BaseColor } from "src/utils/colors";
+import { BASE_COLORS, BaseColor } from "src/utils/tailwind-colors";
 import { SPINNER_CLASSES } from "src/utils/constants";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
 

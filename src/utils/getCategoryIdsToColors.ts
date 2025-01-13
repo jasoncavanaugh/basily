@@ -1,5 +1,5 @@
 import { ExpenseCategoryWithBaseColor } from "src/server/api/routers/router";
-import { BaseColor } from "./colors";
+import { BaseColor } from "./tailwind-colors";
 
 export function get_category_ids_to_colors(
   expense_categories: ExpenseCategoryWithBaseColor[]

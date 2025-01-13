@@ -7,7 +7,7 @@ import { Spinner } from "src/components/Spinner";
 import { api } from "src/utils/api";
 import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
 import { cn } from "src/utils/cn";
-import { BASE_COLORS, BaseColor } from "src/utils/colors";
+import { BASE_COLORS, BaseColor } from "src/utils/tailwind-colors";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
 import {
   DMY,
