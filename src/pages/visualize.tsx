@@ -26,6 +26,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { breakpoints } from "src/utils/tailwindBreakpoints";
 import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
 import { DatePickerWithRange } from "src/components/DatePickerWithRange";
+import { z } from "zod";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getServerAuthSession(ctx);
@@ -145,15 +146,54 @@ const MemoizedPie = memo(
     return true;
   }
 );
+
+const VISUALIZE_DATE_RANGE_LOCAL_STORAGE_KEY = "visualize_date_range" as const;
+const DateRangeSchema = z.object({
+  from: z.string().datetime(),
+  to: z.string().datetime(),
+});
+function get_initial_date_range(): DateRange {
+  const TODAY_DATE = new Date();
+  const DEFAULT_DATE_RANGE = {
+    from: subDays(TODAY_DATE, 7),
+    to: TODAY_DATE,
+  };
+  const hasWindow = typeof window !== "undefined";
+  if (!hasWindow) {
+    return DEFAULT_DATE_RANGE;
+  }
+  const local_storage_date_range_str = localStorage.getItem(
+    VISUALIZE_DATE_RANGE_LOCAL_STORAGE_KEY
+  );
+  if (local_storage_date_range_str) {
+    const parsed = DateRangeSchema.safeParse(
+      JSON.parse(local_storage_date_range_str)
+    );
+    if (parsed.success) {
+      return {
+        from: new Date(parsed.data.from),
+        to: new Date(parsed.data.to),
+      };
+    }
+  }
+  return DEFAULT_DATE_RANGE;
+}
+
 export default function Visualize() {
   const session = useSession();
   const router = useRouter();
-
-  const today_date = new Date();
-  const [date, set_date] = useState<DateRange | undefined>({
-    from: subDays(today_date, 7),
-    to: today_date,
-  }); //Default to the past week
+  const [date, set_date] = useState<DateRange | undefined>(
+    get_initial_date_range()
+  );
+  function set_date_with_local_storage(new_date: DateRange | undefined) {
+    if (date && date.from && date.to) {
+      localStorage.setItem(
+        VISUALIZE_DATE_RANGE_LOCAL_STORAGE_KEY,
+        JSON.stringify(new_date)
+      );
+    }
+    set_date(new_date);
+  }
 
   const date_range =
     date && date?.from && date?.to //if from and to dates are selected...
@@ -209,7 +249,7 @@ export default function Visualize() {
     <VisualizeContent
       expenses_over_date_range={expense_data_qry.data}
       date={date}
-      set_date={set_date}
+      set_date={set_date_with_local_storage}
       all_categories={categories_qry.data}
     />
   );
@@ -223,7 +263,7 @@ export function VisualizeContent({
 }: {
   expenses_over_date_range: UseExpensesOverDateRangeData;
   date?: DateRange;
-  set_date: Dispatch<SetStateAction<DateRange | undefined>>;
+  set_date: (new_date: DateRange | undefined) => void;
   all_categories: Array<ExpenseCategoryWithBaseColor>;
 }) {
   const windowDimensions = useWindowDimensions();
