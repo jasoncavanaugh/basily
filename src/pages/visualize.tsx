@@ -186,7 +186,7 @@ export default function Visualize() {
     get_initial_date_range()
   );
   function set_date_with_local_storage(new_date: DateRange | undefined) {
-    if (date && date.from && date.to) {
+    if (new_date && new_date.from && new_date.to) {
       localStorage.setItem(
         VISUALIZE_DATE_RANGE_LOCAL_STORAGE_KEY,
         JSON.stringify(new_date)
