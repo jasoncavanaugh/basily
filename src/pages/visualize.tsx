@@ -1,31 +1,31 @@
 import { subDays } from "date-fns";
 import { Dispatch, SetStateAction, memo, useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
-import { Spinner } from "src/components/Spinner";
+import { Spinner } from "../components/Spinner";
 import {
   ExpenseCategoryWithBaseColor,
   GetExpensesOverDateRangeRet,
-} from "src/server/api/routers/router";
-import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
-import { cn } from "src/utils/cn";
-import { BaseColor } from "src/utils/tailwind-colors";
-import { TW_COLORS_TO_HEX_MP } from "src/utils/tailwindColorsToHexMp";
-import { SIGN_IN_ROUTE, SPINNER_CLASSES } from "src/utils/constants";
+} from "../server/api/routers/router";
+import { cents_to_dollars_display } from "../utils/centsToDollarDisplay";
+import { cn } from "../utils/cn";
+import { BaseColor } from "../utils/tailwind-colors";
+import { TW_COLORS_TO_HEX_MP } from "../utils/tailwindColorsToHexMp";
+import { SIGN_IN_ROUTE, SPINNER_CLASSES } from "../utils/constants";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import Layout from "src/components/Layout";
-import { getServerAuthSession } from "src/server/auth";
+import Layout from "../components/Layout";
+import { getServerAuthSession } from "../server/auth";
 import { GetServerSideProps } from "next";
-import { use_expenses_over_date_range } from "src/utils/useExpenses";
+import { use_expenses_over_date_range } from "../utils/useExpenses";
 import { date_to_dmy } from "./expenses";
-import { api } from "src/utils/api";
+import { api } from "../utils/api";
 import { useCallback, useRef } from "react";
-import { UseExpensesOverDateRangeData } from "src/utils/useExpenses";
-import { useWindowDimensions } from "src/utils/useWindowDimensions";
+import { UseExpensesOverDateRangeData } from "../utils/useExpenses";
+import { useWindowDimensions } from "../utils/useWindowDimensions";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { breakpoints } from "src/utils/tailwindBreakpoints";
-import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
-import { DatePickerWithRange } from "src/components/DatePickerWithRange";
+import { breakpoints } from "../utils/tailwindBreakpoints";
+import { TW_COLORS_MP } from "../utils/tailwindColorsMp";
+import { DatePickerWithRange } from "../components/DatePickerWithRange";
 import { z } from "zod";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {

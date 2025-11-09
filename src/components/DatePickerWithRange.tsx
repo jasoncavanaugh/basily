@@ -1,7 +1,7 @@
 import { DateRange } from "react-day-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "./shadcn/Popover";
 import { CalendarIcon } from "lucide-react";
-import { cn } from "src/utils/cn";
+import { cn } from "../utils/cn";
 import { Button } from "./shadcn/Button";
 import { format } from "date-fns";
 import { Calendar } from "./shadcn/Calendar";
@@ -15,7 +15,6 @@ export function DatePickerWithRange({
   date: DateRange | undefined;
   set_date: (new_date: DateRange | undefined) => void;
 }) {
-
   return (
     <div className="grid gap-2">
       <Popover>

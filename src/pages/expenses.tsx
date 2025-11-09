@@ -3,36 +3,36 @@ import * as RadixModal from "@radix-ui/react-dialog";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { ReactNode, useEffect, useState } from "react";
-import { Spinner } from "src/components/Spinner";
-import { api } from "src/utils/api";
-import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
-import { cn } from "src/utils/cn";
-import { BASE_COLORS, BaseColor } from "src/utils/tailwind-colors";
-import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
+import { api } from "../utils/api";
+import { cents_to_dollars_display } from "../utils/centsToDollarDisplay";
+import { cn } from "../utils/cn";
+import { BASE_COLORS, BaseColor } from "../utils/tailwind-colors";
+import { TW_COLORS_MP } from "../utils/tailwindColorsMp";
+import { Spinner } from "../components/Spinner";
 import {
   DMY,
   ExpenseDataByDay,
   process_days_with_expenses,
   use_expenses_over_date_range,
-} from "src/utils/useExpenses";
-import Layout from "src/components/Layout";
+} from "../utils/useExpenses";
+import Layout from "../components/Layout";
 import {
   BUTTON_HOVER_CLASSES,
   RADIX_MODAL_CONTENT_CLASSES,
   RADIX_MODAL_OVERLAY_CLASSES,
   SIGN_IN_ROUTE,
   SPINNER_CLASSES,
-} from "src/utils/constants";
-import { getServerAuthSession } from "src/server/auth";
+} from "../utils/constants";
+import { getServerAuthSession } from "../server/auth";
 import { GetServerSideProps } from "next";
 import {
   DayWithExpenses,
   ExpenseCategoryWithBaseColor,
-} from "src/server/api/routers/router";
-import { DatePickerWithRange } from "src/components/DatePickerWithRange";
+} from "../server/api/routers/router";
+import { DatePickerWithRange } from "../components/DatePickerWithRange";
 import { DateRange } from "react-day-picker";
-import { get_category_ids_to_names } from "src/utils/getCategoryIdsToNames";
-import { get_category_ids_to_colors } from "src/utils/getCategoryIdsToColors";
+import { get_category_ids_to_names } from "../utils/getCategoryIdsToNames";
+import { get_category_ids_to_colors } from "../utils/getCategoryIdsToColors";
 import { getDayName } from "./sign-in";
 import { z } from "zod";
 
@@ -78,7 +78,7 @@ function get_initial_date_range(): DateRange | undefined {
   return undefined;
 }
 export default function Expenses() {
-  const api_ctx = api.useContext();
+  const api_utils = api.useUtils();
   const session = useSession();
   const router = useRouter();
   const today = new Date();
@@ -159,7 +159,7 @@ export default function Expenses() {
         {expense_qry.status === "success" &&
           expense_qry.data.days.length === 0 && (
             <div className="flex h-[95vh] items-center justify-center">
-              <h1 className="text-wrap flex justify-center p-4 text-center italic text-slate-700 dark:text-white">
+              <h1 className="flex justify-center text-wrap p-4 text-center italic text-slate-700 dark:text-white">
                 No expenses found over selected date range
               </h1>
             </div>
@@ -168,7 +168,7 @@ export default function Expenses() {
           expense_qry.data.days.length > 0 && (
             <ChronologicalExpenseList
               invalidate_expenses_qry={() => {
-                api_ctx.router.get_expenses_over_date_range.invalidate();
+                api_utils.router.get_expenses_over_date_range.invalidate();
               }}
               expenses_by_day={process_days_with_expenses({
                 days: expense_qry.data.days,
@@ -188,7 +188,7 @@ export default function Expenses() {
             "lg:shadow-md lg:shadow-blue-300 lg:transition-all lg:hover:-translate-y-0.5 lg:hover:shadow-lg lg:hover:shadow-blue-300 lg:hover:brightness-110"
           )}
           on_create_success={() => {
-            api_ctx.router.get_expenses_over_date_range.invalidate();
+            api_utils.router.get_expenses_over_date_range.invalidate();
           }}
           month={today.getMonth() + 1}
           day={today.getDate()}

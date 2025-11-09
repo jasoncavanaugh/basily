@@ -1,7 +1,7 @@
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { cn } from "src/utils/cn";
+import { cn } from "../utils/cn";
 
 export function ThemeButton({
   className = "",

@@ -6,9 +6,9 @@ import {
   EXPENSES_ROUTE,
   SIGN_IN_ROUTE,
   SPINNER_CLASSES,
-} from "src/utils/constants";
-import { Spinner } from "src/components/Spinner";
-import { getServerAuthSession } from "src/server/auth";
+} from "../utils/constants";
+import { Spinner } from "../components/Spinner";
+import { getServerAuthSession } from "../server/auth";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getServerAuthSession(ctx);

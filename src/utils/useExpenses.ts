@@ -6,7 +6,7 @@ import { create } from "zustand";
 import {
   DayWithExpenses,
   ExpenseCategoryWithBaseColor,
-} from "src/server/api/routers/router";
+} from "../server/api/routers/router";
 
 export type DMY = {
   day: number;

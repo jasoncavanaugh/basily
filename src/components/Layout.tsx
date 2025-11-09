@@ -1,4 +1,4 @@
-import { cn } from "src/utils/cn";
+import { cn } from "../utils/cn";
 import { useRouter } from "next/router";
 import { ThemeButton } from "./ThemeButton";
 import { ReactNode } from "react";
@@ -6,7 +6,7 @@ import {
   BUTTON_HOVER_CLASSES,
   EXPENSES_ROUTE,
   VISUALIZE_ROUTE,
-} from "src/utils/constants";
+} from "../utils/constants";
 import Link from "next/link";
 import { ProfileNav } from "./ProfileNav";
 

@@ -3,25 +3,19 @@ import {
   BarChart2Icon,
   ChevronDown,
   CircleDollarSignIcon,
-  Coins,
-  CoinsIcon,
-  DollarSignIcon,
-  Home,
   LogOut,
   PieChartIcon,
-  PiggyBank,
 } from "lucide-react";
 import Image from "next/image";
 import * as RadixPopover from "@radix-ui/react-popover";
-import { cn } from "src/utils/cn";
+import { cn } from "../utils/cn";
 import { ThemeButton } from "./ThemeButton";
-import { useTheme } from "next-themes";
 import Link from "next/link";
 import {
   EXPENSES_ROUTE,
   MANAGE_CATEGORIES_ROUTE,
   VISUALIZE_ROUTE,
-} from "src/utils/constants";
+} from "../utils/constants";
 
 export function ProfileNav({ to_categories }: { to_categories: boolean }) {
   const session = useSession();

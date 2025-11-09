@@ -1,13 +1,12 @@
-import { PenSquare } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Spinner } from "src/components/Spinner";
-import { ProfileNav } from "src/components/ProfileNav";
-import { ExpenseCategoryWithBaseColor } from "src/server/api/routers/router";
-import { api } from "src/utils/api";
-import { cn } from "src/utils/cn";
-import { BASE_COLORS, BaseColor } from "src/utils/tailwind-colors";
-import { SPINNER_CLASSES } from "src/utils/constants";
-import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
+import { Spinner } from "../components/Spinner";
+import { ProfileNav } from "../components/ProfileNav";
+import { ExpenseCategoryWithBaseColor } from "../server/api/routers/router";
+import { api } from "../utils/api";
+import { cn } from "../utils/cn";
+import { BASE_COLORS, BaseColor } from "../utils/tailwind-colors";
+import { SPINNER_CLASSES } from "../utils/constants";
+import { TW_COLORS_MP } from "../utils/tailwindColorsMp";
 
 export default function ManageCategories() {
   const categories_qry = api.router.get_categories.useQuery();

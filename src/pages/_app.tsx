@@ -2,7 +2,7 @@ import { type AppType } from "next/app";
 import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
-import { api } from "src/utils/api";
+import { api } from "../utils/api";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import "src/styles/globals.css";

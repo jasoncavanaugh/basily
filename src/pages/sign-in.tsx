@@ -1,6 +1,6 @@
 import { GetServerSideProps } from "next";
 import * as RadixModal from "@radix-ui/react-dialog";
-import { BASE_COLORS, BaseColor } from "src/utils/tailwind-colors";
+import { BASE_COLORS, BaseColor } from "../utils/tailwind-colors";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import {
@@ -10,26 +10,26 @@ import {
   useEffect,
   useState,
 } from "react";
-import { Spinner } from "src/components/Spinner";
-import { getServerAuthSession } from "src/server/auth";
+import { Spinner } from "../components/Spinner";
+import { getServerAuthSession } from "../server/auth";
 import {
   BUTTON_HOVER_CLASSES,
   EXPENSES_ROUTE,
   RADIX_MODAL_CONTENT_CLASSES,
   RADIX_MODAL_OVERLAY_CLASSES,
   SPINNER_CLASSES,
-} from "src/utils/constants";
+} from "../utils/constants";
 import { useTheme } from "next-themes";
-import { TW_COLORS_MP } from "src/utils/tailwindColorsMp";
-import { cn } from "src/utils/cn";
+import { TW_COLORS_MP } from "../utils/tailwindColorsMp";
+import { cn } from "../utils/cn";
 import { Fab, is_valid_amount, is_valid_date } from "./expenses";
-import { cents_to_dollars_display } from "src/utils/centsToDollarDisplay";
-import { ThemeButton } from "src/components/ThemeButton";
+import { cents_to_dollars_display } from "../utils/centsToDollarDisplay";
+import { ThemeButton } from "../components/ThemeButton";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { useWindowDimensions } from "src/utils/useWindowDimensions";
-import { breakpoints } from "src/utils/tailwindBreakpoints";
-import { TW_COLORS_TO_HEX_MP } from "src/utils/tailwindColorsToHexMp";
-import { Logo } from "src/components/Logo";
+import { useWindowDimensions } from "../utils/useWindowDimensions";
+import { breakpoints } from "../utils/tailwindBreakpoints";
+import { TW_COLORS_TO_HEX_MP } from "../utils/tailwindColorsToHexMp";
+import { Logo } from "../components/Logo";
 
 type DayWithExpenses = {
   day: string;
