@@ -51,7 +51,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 export default function SignIn() {
   const session = useSession();
   const router = useRouter();
-  const { theme } = useTheme();
 
   useEffect(() => {
     if (session.status === "authenticated") {
