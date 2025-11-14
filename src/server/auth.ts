@@ -124,6 +124,8 @@ export const getServerAuthSession = (ctx: {
     throw new Error("'ctx.req.headers.host' is undefined");
   }
   const is_vercel_hostname = host?.includes(".vercel.app");
+  console.log("host", host);
+  console.log("is_vercel_hostname", is_vercel_hostname);
 
   return getServerSession(
     ctx.req,
