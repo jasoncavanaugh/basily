@@ -32,7 +32,6 @@ declare module "next-auth" {
 }
 
 export function get_auth_options(is_vercel_hostname: boolean) {
-  console.log({ env });
   const authOptions: NextAuthOptions = {
     callbacks: {
       session({ session, user }) {
@@ -85,8 +84,6 @@ export const getServerAuthSession = (ctx: {
     throw new Error("'ctx.req.headers.host' is undefined");
   }
   const is_vercel_hostname = host?.includes(".vercel.app");
-  console.log("host", host);
-  console.log("is_vercel_hostname", is_vercel_hostname);
 
   return getServerSession(
     ctx.req,
