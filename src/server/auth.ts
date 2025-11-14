@@ -72,6 +72,7 @@ export const authOptions: NextAuthOptions = {
 };
 
 function get_auth_options(is_vercel_hostname: boolean) {
+  console.log({ env });
   const authOptions: NextAuthOptions = {
     callbacks: {
       session({ session, user }) {
