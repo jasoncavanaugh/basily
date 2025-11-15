@@ -199,7 +199,6 @@ export const account = pgTable(
 );
 
 // RELATIONS
-
 export const expenseCategoryRelations = relations(
   expenseCategory,
   ({ one, many }) => ({
