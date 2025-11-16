@@ -1,4 +1,3 @@
-import { Expense } from "@prisma/client";
 import * as RadixModal from "@radix-ui/react-dialog";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
@@ -27,6 +26,7 @@ import { getServerAuthSession } from "../server/auth";
 import { GetServerSideProps } from "next";
 import {
   DayWithExpenses,
+  Expense,
   ExpenseCategoryWithBaseColor,
 } from "../server/api/routers/router";
 import { DatePickerWithRange } from "../components/DatePickerWithRange";

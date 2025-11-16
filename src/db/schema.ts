@@ -8,81 +8,35 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { relations } from "drizzle-orm/relations";
+import { BaseColor } from "src/utils/tailwind-colors";
 
-export const expenseCategory = pgTable(
-  "ExpenseCategory",
-  {
-    id: text().primaryKey().notNull(),
-    userId: text("user_id").notNull(),
-    createdAt: timestamp({ precision: 3, mode: "string" })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updatedAt: timestamp({ precision: 3, mode: "string" }).notNull(),
-    color: text().notNull(),
-    name: text().notNull(),
-  },
-  (table) => [
-    uniqueIndex("ExpenseCategory_user_id_name_key").using(
-      "btree",
-      table.userId.asc().nullsLast().op("text_ops"),
-      table.name.asc().nullsLast().op("text_ops")
-    ),
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [user.id],
-      name: "ExpenseCategory_user_id_fkey",
-    })
-      .onUpdate("cascade")
-      .onDelete("cascade"),
-  ]
-);
+export const expense_categories = pgTable("ExpenseCategory", {
+  id: text()
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => crypto.randomUUID()),
+  user_id: text("user_id").notNull(),
+  created_at: timestamp("created_at", { mode: "date", withTimezone: true })
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updated_at: timestamp("updated_at", { mode: "date", withTimezone: true })
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  color: text("color").notNull().$type<BaseColor>().default("pink"),
+  name: text().notNull(),
+});
 
-export const expense = pgTable(
-  "Expense",
-  {
-    id: text().primaryKey().notNull(),
-    createdAt: timestamp({ precision: 3, mode: "string" })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updatedAt: timestamp({ precision: 3, mode: "string" }).notNull(),
-    amount: integer().notNull(),
-    userId: text("user_id").notNull(),
-    categoryId: text("category_id").notNull(),
-    dayId: text("day_id").notNull(),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.categoryId],
-      foreignColumns: [expenseCategory.id],
-      name: "Expense_category_id_fkey",
-    })
-      .onUpdate("cascade")
-      .onDelete("cascade"),
-    foreignKey({
-      columns: [table.dayId],
-      foreignColumns: [day.id],
-      name: "Expense_day_id_fkey",
-    })
-      .onUpdate("cascade")
-      .onDelete("cascade"),
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [user.id],
-      name: "Expense_user_id_fkey",
-    })
-      .onUpdate("cascade")
-      .onDelete("cascade"),
-  ]
-);
-
-export const day = pgTable(
+export const days = pgTable(
   "Day",
   {
-    id: text().primaryKey().notNull(),
-    userId: text("user_id").notNull(),
-    createdAt: timestamp({ precision: 3, mode: "string" })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
+    id: text()
+      .primaryKey()
+      .notNull()
+      .$defaultFn(() => crypto.randomUUID()),
+    user_id: text("user_id").notNull(),
+    created_at: timestamp("created_at", { mode: "date", withTimezone: true })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
     month: integer().notNull(),
     day: integer().notNull(),
     year: integer().notNull(),
@@ -90,14 +44,14 @@ export const day = pgTable(
   (table) => [
     uniqueIndex("Day_user_id_month_day_year_key").using(
       "btree",
-      table.userId.asc().nullsLast().op("int4_ops"),
+      table.user_id.asc().nullsLast().op("int4_ops"),
       table.month.asc().nullsLast().op("int4_ops"),
       table.day.asc().nullsLast().op("int4_ops"),
       table.year.asc().nullsLast().op("int4_ops")
     ),
     foreignKey({
-      columns: [table.userId],
-      foreignColumns: [user.id],
+      columns: [table.user_id],
+      foreignColumns: [users.id],
       name: "Day_user_id_fkey",
     })
       .onUpdate("cascade")
@@ -105,14 +59,84 @@ export const day = pgTable(
   ]
 );
 
-// Next Auth stuff
-export const session = pgTable(
+export const expenses = pgTable(
+  "Expense",
+  {
+    id: text()
+      .primaryKey()
+      .notNull()
+      .$defaultFn(() => crypto.randomUUID()),
+    created_at: timestamp("created_at", { mode: "date", withTimezone: true })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updated_at: timestamp("updated_at", { mode: "date", withTimezone: true })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    amount: integer().notNull(),
+    user_id: text("user_id").notNull(),
+    category_id: text("category_id").notNull(),
+    day_id: text("day_id").notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.category_id],
+      foreignColumns: [expense_categories.id],
+      name: "Expense_category_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"),
+    foreignKey({
+      columns: [table.day_id],
+      foreignColumns: [days.id],
+      name: "Expense_day_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"),
+    foreignKey({
+      columns: [table.user_id],
+      foreignColumns: [users.id],
+      name: "Expense_user_id_fkey",
+    })
+      .onUpdate("cascade")
+      .onDelete("cascade"),
+  ]
+);
+
+// NextAuth tables, do not rename property names
+export const users = pgTable(
+  "User",
+  {
+    id: text()
+      .primaryKey()
+      .notNull()
+      .$defaultFn(() => crypto.randomUUID()),
+    name: text(),
+    email: text(),
+    emailVerified: timestamp("email_verified", {
+      mode: "date",
+      withTimezone: true,
+    }).default(sql`CURRENT_TIMESTAMP`),
+    image: text(),
+  },
+  (table) => [
+    uniqueIndex("User_email_key").using(
+      "btree",
+      table.email.asc().nullsLast().op("text_ops")
+    ),
+  ]
+);
+
+export const sessions = pgTable(
   "Session",
   {
-    id: text().primaryKey().notNull(),
-    sessionToken: text().notNull(),
+    sessionToken: text().primaryKey().notNull(),
     userId: text().notNull(),
-    expires: timestamp({ precision: 3, mode: "string" }).notNull(),
+    expires: timestamp("expires", {
+      mode: "date",
+      withTimezone: true,
+    })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [
     uniqueIndex("Session_sessionToken_key").using(
@@ -121,7 +145,7 @@ export const session = pgTable(
     ),
     foreignKey({
       columns: [table.userId],
-      foreignColumns: [user.id],
+      foreignColumns: [users.id],
       name: "Session_userId_fkey",
     })
       .onUpdate("cascade")
@@ -129,12 +153,17 @@ export const session = pgTable(
   ]
 );
 
-export const verificationToken = pgTable(
+export const verificationTokens = pgTable(
   "VerificationToken",
   {
     identifier: text().notNull(),
     token: text().notNull(),
-    expires: timestamp({ precision: 3, mode: "string" }).notNull(),
+    expires: timestamp("expires", {
+      mode: "date",
+      withTimezone: true,
+    })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [
     uniqueIndex("VerificationToken_identifier_token_key").using(
@@ -149,38 +178,24 @@ export const verificationToken = pgTable(
   ]
 );
 
-export const user = pgTable(
-  "User",
-  {
-    id: text().primaryKey().notNull(),
-    name: text(),
-    email: text(),
-    emailVerified: timestamp({ precision: 3, mode: "string" }),
-    image: text(),
-  },
-  (table) => [
-    uniqueIndex("User_email_key").using(
-      "btree",
-      table.email.asc().nullsLast().op("text_ops")
-    ),
-  ]
-);
-
-export const account = pgTable(
+export const accounts = pgTable(
   "Account",
   {
-    id: text().primaryKey().notNull(),
+    id: text()
+      .primaryKey()
+      .notNull()
+      .$defaultFn(() => crypto.randomUUID()),
     userId: text().notNull(),
     type: text().notNull(),
     provider: text().notNull(),
     providerAccountId: text().notNull(),
-    refreshToken: text("refresh_token"),
-    accessToken: text("access_token"),
-    expiresAt: integer("expires_at"),
-    tokenType: text("token_type"),
+    refresh_token: text("refresh_token"),
+    access_token: text("access_token"),
+    expires_at: integer("expires_at"),
+    token_type: text("token_type"),
     scope: text(),
-    idToken: text("id_token"),
-    sessionState: text("session_state"),
+    id_token: text("id_token"),
+    session_state: text("session_state"),
   },
   (table) => [
     uniqueIndex("Account_provider_providerAccountId_key").using(
@@ -190,7 +205,7 @@ export const account = pgTable(
     ),
     foreignKey({
       columns: [table.userId],
-      foreignColumns: [user.id],
+      foreignColumns: [users.id],
       name: "Account_userId_fkey",
     })
       .onUpdate("cascade")
@@ -199,58 +214,68 @@ export const account = pgTable(
 );
 
 // RELATIONS
-export const expenseCategoryRelations = relations(
-  expenseCategory,
-  ({ one, many }) => ({
-    user: one(user, {
-      fields: [expenseCategory.userId],
-      references: [user.id],
+export const userRelations = relations(users, ({ many }) => ({
+  expenseCategories: many(expense_categories),
+  sessions: many(sessions),
+  expenses: many(expenses),
+  days: many(days),
+  accounts: many(accounts),
+}));
+
+export const sessionRelations = relations(sessions, ({ one }) => ({
+  user: one(users, {
+    fields: [sessions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const verificationTokenRelations = relations(
+  verificationTokens,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [verificationTokens.identifier],
+      references: [users.email],
     }),
-    expenses: many(expense),
   })
 );
 
-export const userRelations = relations(user, ({ many }) => ({
-  expenseCategories: many(expenseCategory),
-  sessions: many(session),
-  expenses: many(expense),
-  days: many(day),
-  accounts: many(account),
-}));
-
-export const sessionRelations = relations(session, ({ one }) => ({
-  user: one(user, {
-    fields: [session.userId],
-    references: [user.id],
+export const accountRelations = relations(accounts, ({ one }) => ({
+  user: one(users, {
+    fields: [accounts.userId],
+    references: [users.id],
   }),
 }));
 
-export const expenseRelations = relations(expense, ({ one }) => ({
-  expenseCategory: one(expenseCategory, {
-    fields: [expense.categoryId],
-    references: [expenseCategory.id],
-  }),
-  day: one(day, {
-    fields: [expense.dayId],
-    references: [day.id],
-  }),
-  user: one(user, {
-    fields: [expense.userId],
-    references: [user.id],
+export const expenseCategoryRelations = relations(
+  expense_categories,
+  ({ one, many }) => ({
+    user: one(users, {
+      fields: [expense_categories.user_id],
+      references: [users.id],
+    }),
+    expenses: many(expenses),
+  })
+);
+
+export const dayRelations = relations(days, ({ one, many }) => ({
+  expenses: many(expenses),
+  user: one(users, {
+    fields: [days.user_id],
+    references: [users.id],
   }),
 }));
 
-export const dayRelations = relations(day, ({ one, many }) => ({
-  expenses: many(expense),
-  user: one(user, {
-    fields: [day.userId],
-    references: [user.id],
+export const expenseRelations = relations(expenses, ({ one }) => ({
+  expenseCategory: one(expense_categories, {
+    fields: [expenses.category_id],
+    references: [expense_categories.id],
   }),
-}));
-
-export const accountRelations = relations(account, ({ one }) => ({
-  user: one(user, {
-    fields: [account.userId],
-    references: [user.id],
+  day: one(days, {
+    fields: [expenses.day_id],
+    references: [days.id],
+  }),
+  user: one(users, {
+    fields: [expenses.user_id],
+    references: [users.id],
   }),
 }));

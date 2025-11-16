@@ -5,12 +5,16 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
-    "postinstall": "prisma generate",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
     "lint": "next lint",
     "start": "next start",
     "tailwind-colors-generate": "npx ts-node ./src/utils/tailwind-colors-generate.ts && npx prettier --write ./src/utils/tailwindColorsMp.ts"
   },
   "dependencies": {
+    "@auth/drizzle-adapter": "^1.11.1",
     "@next-auth/prisma-adapter": "^1.0.5",
     "@prisma/client": "^4.11.0",
     "@radix-ui/react-dialog": "^1.0.4",

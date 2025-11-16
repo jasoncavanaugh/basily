@@ -1,14 +1,19 @@
 import { BASE_COLORS, BaseColor } from "../../../utils/tailwind-colors";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { Expense, ExpenseCategory, Day } from "@prisma/client";
+import * as schema from "../../../db/schema";
+import { eq, and } from "drizzle-orm";
 
 /*
  * TYPES
  */
 
-//Use 'BaseColor' type instead of the 'string' type that comes back from Prisma
-export type ExpenseCategoryWithBaseColor = Omit<ExpenseCategory, "color"> & {
+// Infer types from Drizzle schema
+export type Expense = typeof schema.expenses.$inferSelect;
+export type ExpenseCategory = typeof schema.expense_categories.$inferSelect;
+export type Day = typeof schema.days.$inferSelect;
+
+export type ExpenseCategoryWithBaseColor = ExpenseCategory & {
   color: BaseColor;
 };
 export type ExpenseCategoryWithExpenses = ExpenseCategoryWithBaseColor & {
@@ -55,15 +60,14 @@ export const router = createTRPCRouter({
   get_expenses_paginated_by_days: protectedProcedure
     .input(z.object({ page: z.number().gte(0) }))
     .query(async ({ input, ctx }) => {
-      return ctx.prisma.day.findMany({
-        where: {
-          user_id: ctx.session.user.id,
-        },
-        include: {
+      return ctx.db.query.days.findMany({
+        where: (day, { eq }) => eq(day.user_id, ctx.session.user.id),
+        with: {
           expenses: true,
         },
-        skip: input.page * _NUMBER_OF_ROWS_PER_PAGE,
-        take: -_NUMBER_OF_ROWS_PER_PAGE,
+        offset: input.page * _NUMBER_OF_ROWS_PER_PAGE,
+        limit: _NUMBER_OF_ROWS_PER_PAGE,
+        orderBy: (day, { desc }) => desc(day.created_at),
       });
     }),
   get_expenses_over_date_range: protectedProcedure
@@ -75,12 +79,13 @@ export const router = createTRPCRouter({
     )
     .query(async ({ input, ctx }) => {
       const { from_year, to_year } = input;
-      const days = await ctx.prisma.day.findMany({
-        where: {
-          year: { lte: to_year, gte: from_year },
-          user_id: ctx.session.user.id,
-        },
-        include: { expenses: true },
+      const days = await ctx.db.query.days.findMany({
+        where: (day, { lte, gte, and, eq }) =>
+          and(
+            and(lte(day.year, to_year), gte(day.year, from_year)),
+            eq(day.user_id, ctx.session.user.id)
+          ),
+        with: { expenses: true },
       });
       //Sort from latest to oldest
       days.sort((a, b) => {
@@ -90,27 +95,21 @@ export const router = createTRPCRouter({
       });
 
       //Get categories
-      const expense_categories = (await ctx.prisma.expenseCategory.findMany({
-        where: { user_id: ctx.session.user.id },
-      })) as ExpenseCategoryWithBaseColor[];
+      const expense_categories =
+        (await ctx.db.query.expense_categories.findMany({
+          where: (ec, { eq }) => eq(ec.user_id, ctx.session.user.id),
+        })) as Array<ExpenseCategoryWithBaseColor>;
       return { days, expense_categories };
     }),
   get_categories: protectedProcedure.query(async ({ ctx }) => {
-    return ctx.prisma.expenseCategory.findMany({
-      where: {
-        user_id: ctx.session.user.id,
-      },
-    }) as Promise<ExpenseCategoryWithBaseColor[]>;
+    return ctx.db.query.expense_categories.findMany({
+      where: (ec, { eq }) => eq(ec.user_id, ctx.session.user.id),
+    });
   }),
   get_categories_with_expenses: protectedProcedure.query(async ({ ctx }) => {
-    return ctx.prisma.expenseCategory.findMany({
-      where: {
-        user_id: ctx.session.user.id,
-      },
-      include: {
-        expenses: true,
-      },
-    }) as Promise<ExpenseCategoryWithExpenses[]>;
+    return ctx.db.query.expense_categories.findMany({
+      where: (ec, { eq }) => eq(ec.user_id, ctx.session.user.id),
+    });
   }),
   create_expense: protectedProcedure
     .input(
@@ -121,46 +120,63 @@ export const router = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      let day = await ctx.prisma.day.findUnique({
-        where: {
-          user_id_month_day_year: {
-            user_id: ctx.session.user.id,
-            month: input.date.month_idx,
-            day: input.date.day,
-            year: input.date.year,
-          },
-        },
+      //2.) And this one
+      let day = await ctx.db.query.days.findFirst({
+        where: (day, { and, eq }) =>
+          and(
+            eq(day.user_id, ctx.session.user.id),
+            eq(day.month, input.date.month_idx),
+            eq(day.day, input.date.day),
+            eq(day.year, input.date.year)
+          ),
       });
       if (!day) {
-        day = await ctx.prisma.day.create({
-          data: {
+        //3.) And here too
+        const newDay = await ctx.db
+          .insert(schema.days)
+          .values({
+            id: crypto.randomUUID(),
             user_id: ctx.session.user.id,
             month: input.date.month_idx,
             day: input.date.day,
             year: input.date.year,
-          },
-        });
+          })
+          .returning();
+        if (newDay.length === 0) {
+          throw new Error("newDay.length === 0");
+        }
+        day = newDay[0]!;
       }
-      await ctx.prisma.expense.create({
-        data: {
-          amount: convert_to_cents(input.amount),
-          category_id: input.category_id,
-          user_id: ctx.session.user.id,
-          day_id: day.id,
-        },
+      await ctx.db.insert(schema.expenses).values({
+        amount: convert_to_cents(input.amount),
+        category_id: input.category_id,
+        user_id: ctx.session.user.id,
+        day_id: day.id,
       });
     }),
   delete_expense: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const deleted_expense = await ctx.prisma.expense.delete({
-        where: { id: input.id },
-      });
-      const other_expenses_for_day = await ctx.prisma.expense.findMany({
-        where: { day_id: deleted_expense.day_id },
+      //1.) This
+      const deleted_expenses = await ctx.db
+        .delete(schema.expenses)
+        .where(eq(schema.expenses.id, input.id))
+        .returning();
+
+      if (deleted_expenses.length === 0) {
+        throw new Error("Expense not found");
+      }
+      const deleted_expense = deleted_expenses[0]!;
+
+      //2.) And here
+      const other_expenses_for_day = await ctx.db.query.expenses.findMany({
+        where: (expense, { eq }) => eq(expense.day_id, deleted_expense.day_id),
       });
       if (other_expenses_for_day.length === 0) {
-        await ctx.prisma.day.delete({ where: { id: deleted_expense.day_id } });
+        //3.) Here too
+        await ctx.db
+          .delete(schema.days)
+          .where(eq(schema.days.id, deleted_expense.day_id));
       }
     }),
   create_category: protectedProcedure
@@ -171,22 +187,30 @@ export const router = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      return await ctx.prisma.expenseCategory.create({
-        data: {
+      const newCategories = await ctx.db
+        .insert(schema.expense_categories)
+        .values({
           name: input.name,
           color: input.color,
           user_id: ctx.session.user.id,
-        },
-      });
+        })
+        .returning();
+      if (newCategories.length === 0) {
+        throw new Error("Error creating new category!");
+      }
+      return newCategories[0]!;
     }),
   delete_category: protectedProcedure
     .input(z.object({ name: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      await ctx.prisma.expenseCategory.delete({
-        where: {
-          user_id_name: { user_id: ctx.session.user.id, name: input.name },
-        },
-      });
+      await ctx.db
+        .delete(schema.expense_categories)
+        .where(
+          and(
+            eq(schema.expense_categories.name, input.name),
+            eq(schema.expense_categories.user_id, ctx.session.user.id)
+          )
+        );
     }),
   edit_category: protectedProcedure
     .input(
@@ -197,14 +221,12 @@ export const router = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      await ctx.prisma.expenseCategory.update({
-        where: {
-          id: input.id,
-        },
-        data: {
+      await ctx.db
+        .update(schema.expense_categories)
+        .set({
           name: input.new_name,
           color: input.new_color,
-        },
-      });
+        })
+        .where(eq(schema.expense_categories.id, input.id));
     }),
 });

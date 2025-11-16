@@ -4,11 +4,13 @@ import {
   type NextAuthOptions,
   type DefaultSession,
 } from "next-auth";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { env } from "src/env.mjs";
-import { prisma } from "src/server/db";
 import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
+import { db } from "src/db";
+import { accounts, sessions, users, verificationTokens } from "src/db/schema";
+import { Adapter } from "next-auth/adapters";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -42,7 +44,12 @@ export function get_auth_options(is_vercel_hostname: boolean) {
         return session;
       },
     },
-    adapter: PrismaAdapter(prisma),
+    adapter: DrizzleAdapter(db, {
+      usersTable: users,
+      accountsTable: accounts,
+      sessionsTable: sessions,
+      verificationTokensTable: verificationTokens,
+    }) as Adapter,
     providers: [
       GithubProvider({
         clientId: is_vercel_hostname

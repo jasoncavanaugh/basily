@@ -1,10 +1,9 @@
-import { Day, Expense } from "@prisma/client";
-
 import { api } from "./api";
 import { subYears } from "date-fns";
 import { create } from "zustand";
 import {
   DayWithExpenses,
+  Expense,
   ExpenseCategoryWithBaseColor,
 } from "../server/api/routers/router";
 
